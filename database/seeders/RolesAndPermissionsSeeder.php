@@ -21,42 +21,35 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create permissions for each module and action
         foreach ($modules as $module) {
             foreach ($actions as $action) {
-                Permission::create(['name' => "{$action}_{$module}"]);
+                Permission::firstOrCreate(['name' => "{$action}_{$module}"]);
             }
         }
 
-        // Create roles and assign permissions
-        $supplierPermissions = [
+        // Create or get roles and assign permissions
+        $supplier = Role::firstOrCreate(['name' => 'Supplier']);
+        $supplier->syncPermissions([
             'create_source', 'view_source', 'edit_source',
             'create_product', 'view_product', 'edit_product',
             'view_batch', 'view_quality_test', 'view_shipment'
-        ];
+        ]);
 
-        $inspectorPermissions = [
+        $inspector = Role::firstOrCreate(['name' => 'Inspector']);
+        $inspector->syncPermissions([
             'view_source', 'view_product', 'view_batch',
             'create_quality_test', 'view_quality_test', 'edit_quality_test',
             'view_shipment'
-        ];
+        ]);
 
-        $logisticsPermissions = [
+        $logistics = Role::firstOrCreate(['name' => 'Logistics']);
+        $logistics->syncPermissions([
             'view_source', 'view_product', 'view_batch',
             'view_quality_test',
             'create_shipment', 'view_shipment', 'edit_shipment'
-        ];
+        ]);
 
-        // Create roles
-        $supplier = Role::create(['name' => 'Supplier']);
-        $supplier->givePermissionTo($supplierPermissions);
-
-        $inspector = Role::create(['name' => 'Inspector']);
-        $inspector->givePermissionTo($inspectorPermissions);
-
-        $logistics = Role::create(['name' => 'Logistics']);
-        $logistics->givePermissionTo($logisticsPermissions);
-
-        // Create Admin role with all permissions
-        $admin = Role::create(['name' => 'Admin']);
-        $admin->givePermissionTo(Permission::all());
+        // Create or get Admin role with all permissions
+        $admin = Role::firstOrCreate(['name' => 'Admin']);
+        $admin->syncPermissions(Permission::all());
 
         // Find or create admin user
         $adminUser = User::firstOrCreate(
