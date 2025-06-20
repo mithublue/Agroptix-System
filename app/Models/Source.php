@@ -35,6 +35,7 @@ class Source extends Model
     {
         return [
             'id' => 'integer',
+            'owner_id' => 'integer',
             'user_as_owner_id' => 'integer',
         ];
     }
@@ -42,5 +43,10 @@ class Source extends Model
     public function userAsOwner(): BelongsTo
     {
         return $this->belongsTo(UserAsOwner::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(OnDelete('cascade')>onUpdate('cascade')::class);
     }
 }

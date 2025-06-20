@@ -16,11 +16,15 @@ return new class extends Migration
             $table->string('type', 20, )->nullable();
             $table->string('gps_lat')->nullable();
             $table->string('gps_long')->nullable();
-            $table->enum('production_method', ["['Natural'",""]);
+            $table->string('production_method', 20, )->nullable();
             $table->string('area')->nullable();
             $table->string('status', 50, )->default('pending');
-            $table->string('owner_id')->nullable();
-            $table->foreignId('user_as_owner_id');
+            $table->unsignedBigInteger('owner_id');
+            $table->foreign('owner_id')
+                  ->references('id')
+                  ->on('users')
+                  ->onDelete('cascade')
+                  ->onUpdate('cascade');
             $table->timestamps();
         });
     }
@@ -33,3 +37,4 @@ return new class extends Migration
         Schema::dropIfExists('sources');
     }
 };
+

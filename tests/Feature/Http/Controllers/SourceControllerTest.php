@@ -4,6 +4,7 @@ namespace Tests\Feature\Http\Controllers;
 
 use App\Models\Source;
 use App\Models\UserAsOwner;
+use App\Models\Users,;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use JMac\Testing\Traits\AdditionalAssertions;
@@ -55,17 +56,20 @@ final class SourceControllerTest extends TestCase
     {
         $production_method = fake()->randomElement(/** enum_attributes **/);
         $status = fake()->word();
+        $owner = Users,::factory()->create();
         $user_as_owner = UserAsOwner::factory()->create();
 
         $response = $this->post(route('sources.store'), [
             'production_method' => $production_method,
             'status' => $status,
+            'owner_id' => $owner->id,
             'user_as_owner_id' => $user_as_owner->id,
         ]);
 
         $sources = Source::query()
             ->where('production_method', $production_method)
             ->where('status', $status)
+            ->where('owner_id', $owner->id)
             ->where('user_as_owner_id', $user_as_owner->id)
             ->get();
         $this->assertCount(1, $sources);
@@ -118,11 +122,13 @@ final class SourceControllerTest extends TestCase
         $source = Source::factory()->create();
         $production_method = fake()->randomElement(/** enum_attributes **/);
         $status = fake()->word();
+        $owner = Users,::factory()->create();
         $user_as_owner = UserAsOwner::factory()->create();
 
         $response = $this->put(route('sources.update', $source), [
             'production_method' => $production_method,
             'status' => $status,
+            'owner_id' => $owner->id,
             'user_as_owner_id' => $user_as_owner->id,
         ]);
 
@@ -133,6 +139,7 @@ final class SourceControllerTest extends TestCase
 
         $this->assertEquals($production_method, $source->production_method);
         $this->assertEquals($status, $source->status);
+        $this->assertEquals($owner->id, $source->owner_id);
         $this->assertEquals($user_as_owner->id, $source->user_as_owner_id);
     }
 

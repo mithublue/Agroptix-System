@@ -1,7 +1,7 @@
 created:
     - app/Http/Controllers/SourceController.php
     - database/factories/SourceFactory.php
-    - database/migrations/2025_06_20_064749_create_sources_table.php
+    - database/migrations/2025_06_20_090922_create_sources_table.php
     - app/Models/Source.php
     - tests/Feature/Http/Controllers/SourceControllerTest.php
     - app/Http/Requests/SourceStoreRequest.php
@@ -15,4 +15,4 @@ skipped:
     - resources/views/source/edit.blade.php
 models:
     User: { name: string, email: string, email_verified_at: 'timestamp nullable', password: string, remember_token: 'string:100 nullable' }
-    Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: "enum:['Natural', 'Organic', 'Synthetic', 'Mixed']", area: 'float, nullable', status: "string:50, nullable, default:'pending'", owner_id: 'id, foreign, nullable', relationships: { belongsTo: 'User as owner' } }
+    Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: "enum:['Natural']", area: 'string, nullable', status: "string:50, default:'pending'", owner_id: "id:users, foreign:onDelete('cascade')->onUpdate('cascade')", relationships: { belongsTo: 'User as owner' } }

@@ -5,17 +5,26 @@ models:
     type: string:20, nullable
     gps_lat: string, nullable
     gps_long: string, nullable
-    production_method: enum:['Natural', 'Organic', 'Synthetic', 'Mixed']
-    area: float, nullable
-    status: string:50, nullable, default:'pending'
-
-    # Explicitly define the column here
-    owner_id: id, foreign, nullable
+    production_method: string:20, nullable
+    area: string, nullable
+    status: string:50, default:'pending'
+    owner_id: id:users, foreign:onDelete('cascade')->onUpdate('cascade')
 
     relationships:
-      # This relationship now uses the existing 'owner_id' column
+      # Creates the owner() method in the Source model for the relationship.
       belongsTo: User as owner
+
+  Product:
+    name: string:20, nullable
+    type: string:20, nullable
+    is_perishable: tinyInteger, nullable
+    hs_code: string, nullable
 
 controllers:
   Source:
+    # Generates the resourceful controller and web routes.
+    resource: web
+  
+  Product:
+    # Generates the resourceful controller and web routes for products.
     resource: web
