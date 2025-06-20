@@ -3,28 +3,33 @@ created:
     - app/Http/Controllers/ProductController.php
     - app/Http/Controllers/BatchController.php
     - app/Http/Controllers/QualityTestController.php
+    - app/Http/Controllers/ShipmentController.php
     - database/factories/SourceFactory.php
     - database/factories/ProductFactory.php
     - database/factories/BatchFactory.php
     - database/factories/QualityTestFactory.php
-    - database/migrations/2025_06_20_100515_create_sources_table.php
-    - database/migrations/2025_06_20_100516_create_products_table.php
-    - database/migrations/2025_06_20_100517_create_batches_table.php
-    - database/migrations/2025_06_20_100518_create_quality_tests_table.php
+    - database/factories/ShipmentFactory.php
+    - database/migrations/2025_06_20_101203_create_sources_table.php
+    - database/migrations/2025_06_20_101204_create_products_table.php
+    - database/migrations/2025_06_20_101205_create_batches_table.php
+    - database/migrations/2025_06_20_101206_create_quality_tests_table.php
+    - database/migrations/2025_06_20_101207_create_shipments_table.php
     - app/Models/Source.php
     - app/Models/Product.php
     - app/Models/Batch.php
     - app/Models/QualityTest.php
+    - app/Models/Shipment.php
     - tests/Feature/Http/Controllers/SourceControllerTest.php
     - tests/Feature/Http/Controllers/ProductControllerTest.php
     - tests/Feature/Http/Controllers/BatchControllerTest.php
     - tests/Feature/Http/Controllers/QualityTestControllerTest.php
-    - app/Http/Requests/QualityTestStoreRequest.php
-    - app/Http/Requests/QualityTestUpdateRequest.php
-    - resources/views/qualityTest/index.blade.php
-    - resources/views/qualityTest/create.blade.php
-    - resources/views/qualityTest/show.blade.php
-    - resources/views/qualityTest/edit.blade.php
+    - tests/Feature/Http/Controllers/ShipmentControllerTest.php
+    - app/Http/Requests/ShipmentStoreRequest.php
+    - app/Http/Requests/ShipmentUpdateRequest.php
+    - resources/views/shipment/index.blade.php
+    - resources/views/shipment/create.blade.php
+    - resources/views/shipment/show.blade.php
+    - resources/views/shipment/edit.blade.php
 updated:
     - routes/web.php
 skipped:
@@ -40,9 +45,14 @@ skipped:
     - resources/views/batch/create.blade.php
     - resources/views/batch/show.blade.php
     - resources/views/batch/edit.blade.php
+    - resources/views/qualityTest/index.blade.php
+    - resources/views/qualityTest/create.blade.php
+    - resources/views/qualityTest/show.blade.php
+    - resources/views/qualityTest/edit.blade.php
 models:
     User: {  }
     Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: 'string:20, nullable', area: 'string, nullable', status: "string:50, default:'pending'", owner_id: "id:users, foreign:onDelete('cascade')->onUpdate('cascade')", relationships: { belongsTo: 'User as owner' } }
     Product: { name: 'string:20, nullable', type: 'string:20, nullable', is_perishable: 'tinyInteger, nullable', hs_code: 'string, nullable' }
     Batch: { batch_code: 'string, unique, nullable', source_id: 'id:sources, foreign, nullable', product_id: 'id:products, foreign, nullable', harvest_time: 'datetime, nullable', status: 'string:20, nullable', relationships: { belongsTo: 'Source as source, Product as product' } }
     QualityTest: { batch_id: 'id:batches, foreign, nullable', user_id: 'id:users, foreign, nullable', parameter_tested: 'string:50, nullable', result: 'string:100, nullable', result_status: 'string:10, nullable', relationships: { belongsTo: 'Batch as batch, User as user' } }
+    Shipment: { batch_id: 'id:batches, foreign, nullable', origin: "string, comment:'Source address', nullable", destination: "string, comment:'Destination address', nullable", vehicle_type: 'string, nullable', co2_estimate: 'decimal:8,2, nullable', departure_time: 'datetime, nullable', arrival_time: 'datetime, nullable', relationships: { belongsTo: 'Batch as batch' } }

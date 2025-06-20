@@ -79,3 +79,14 @@ Route::resource('products', App\Http\Controllers\ProductController::class);
 Route::resource('batches', App\Http\Controllers\BatchController::class);
 
 Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+Route::resource('products', App\Http\Controllers\ProductController::class);
+
+Route::resource('batches', App\Http\Controllers\BatchController::class);
+
+Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
+
+Route::resource('shipments', App\Http\Controllers\ShipmentController::class);

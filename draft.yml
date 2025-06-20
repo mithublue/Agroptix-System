@@ -40,6 +40,18 @@ models:
     relationships:
       belongsTo: Batch as batch, User as user
 
+  Shipment:
+    batch_id: id:batches, foreign, nullable
+    origin: string, comment:'Source address', nullable
+    destination: string, comment:'Destination address', nullable
+    vehicle_type: string, nullable
+    co2_estimate: decimal:8,2, nullable
+    departure_time: datetime, nullable
+    arrival_time: datetime, nullable
+
+    relationships:
+      belongsTo: Batch as batch
+
 controllers:
   Source:
     # Generates the resourceful controller and web routes.
@@ -55,4 +67,8 @@ controllers:
     
   QualityTest:
     # Generates the resourceful controller and web routes for quality tests.
+    resource: web
+    
+  Shipment:
+    # Generates the resourceful controller and web routes for shipments.
     resource: web
