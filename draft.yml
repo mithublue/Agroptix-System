@@ -20,11 +20,39 @@ models:
     is_perishable: tinyInteger, nullable
     hs_code: string, nullable
 
+  Batch:
+    batch_code: string, unique, nullable
+    source_id: id:sources, foreign, nullable
+    product_id: id:products, foreign, nullable
+    harvest_time: datetime, nullable
+    status: string:20, nullable
+
+    relationships:
+      belongsTo: Source as source, Product as product
+
+  QualityTest:
+    batch_id: id:batches, foreign, nullable
+    user_id: id:users, foreign, nullable
+    parameter_tested: string:50, nullable
+    result: string:100, nullable
+    result_status: string:10, nullable
+
+    relationships:
+      belongsTo: Batch as batch, User as user
+
 controllers:
   Source:
     # Generates the resourceful controller and web routes.
     resource: web
-  
+
   Product:
     # Generates the resourceful controller and web routes for products.
+    resource: web
+
+  Batch:
+    # Generates the resourceful controller and web routes for batches.
+    resource: web
+    
+  QualityTest:
+    # Generates the resourceful controller and web routes for quality tests.
     resource: web
