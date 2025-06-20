@@ -51,3 +51,8 @@ Route::resource('sources', App\Http\Controllers\SourceController::class);
 
 
 Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+Route::resource('products', App\Http\Controllers\ProductController::class);

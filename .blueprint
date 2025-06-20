@@ -1,11 +1,20 @@
 created:
     - app/Http/Controllers/SourceController.php
+    - app/Http/Controllers/ProductController.php
     - database/factories/SourceFactory.php
-    - database/migrations/2025_06_20_090922_create_sources_table.php
+    - database/factories/ProductFactory.php
+    - database/migrations/2025_06_20_093227_create_sources_table.php
+    - database/migrations/2025_06_20_093228_create_products_table.php
     - app/Models/Source.php
+    - app/Models/Product.php
     - tests/Feature/Http/Controllers/SourceControllerTest.php
-    - app/Http/Requests/SourceStoreRequest.php
-    - app/Http/Requests/SourceUpdateRequest.php
+    - tests/Feature/Http/Controllers/ProductControllerTest.php
+    - app/Http/Requests/ProductStoreRequest.php
+    - app/Http/Requests/ProductUpdateRequest.php
+    - resources/views/product/index.blade.php
+    - resources/views/product/create.blade.php
+    - resources/views/product/show.blade.php
+    - resources/views/product/edit.blade.php
 updated:
     - routes/web.php
 skipped:
@@ -15,4 +24,5 @@ skipped:
     - resources/views/source/edit.blade.php
 models:
     User: { name: string, email: string, email_verified_at: 'timestamp nullable', password: string, remember_token: 'string:100 nullable' }
-    Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: "enum:['Natural']", area: 'string, nullable', status: "string:50, default:'pending'", owner_id: "id:users, foreign:onDelete('cascade')->onUpdate('cascade')", relationships: { belongsTo: 'User as owner' } }
+    Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: 'string:20, nullable', area: 'string, nullable', status: "string:50, default:'pending'", owner_id: "id:users, foreign:onDelete('cascade')->onUpdate('cascade')", relationships: { belongsTo: 'User as owner' } }
+    Product: { name: 'string:20, nullable', type: 'string:20, nullable', is_perishable: 'tinyInteger, nullable', hs_code: 'string, nullable' }
