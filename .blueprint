@@ -1,0 +1,16 @@
+created:
+    - app/Http/Controllers/SourceController.php
+    - database/factories/SourceFactory.php
+    - database/migrations/2025_06_20_063956_create_sources_table.php
+    - app/Models/Source.php
+    - tests/Feature/Http/Controllers/SourceControllerTest.php
+    - app/Http/Requests/SourceStoreRequest.php
+    - app/Http/Requests/SourceUpdateRequest.php
+    - resources/views/source/index.blade.php
+    - resources/views/source/create.blade.php
+    - resources/views/source/show.blade.php
+    - resources/views/source/edit.blade.php
+updated:
+    - routes/web.php
+models:
+    Source: { type: 'string:20, nullable', gps_lat: 'string, nullable', gps_long: 'string, nullable', production_method: "enum:['Natural', 'Organic', 'Synthetic', 'Mixed']", area: 'float, nullable', status: "string:50, nullable, default:'pending'", relationships: { belongsTo: 'User as owner' } }
