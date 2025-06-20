@@ -53,11 +53,11 @@ class Batch extends Model
 
     public function source(): BelongsTo
     {
-        return $this->belongsTo(Sources,::class);
+        return $this->belongsTo(Source::class);
     }
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Products,::class);
+        return $this->belongsTo(Product::class);
     }
 }

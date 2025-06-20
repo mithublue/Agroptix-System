@@ -11,56 +11,66 @@ use Illuminate\View\View;
 
 class SourceController extends Controller
 {
-    public function index(Request $request): Response
-    {
-        $sources = Source::all();
 
-        return view('source.index', [
-            'sources' => $sources,
-        ]);
+    public function index(): View
+    {
+        $sources = Source::latest()->paginate(10);
+        return view('source.index', compact('sources'));
     }
 
-    public function create(Request $request): Response
+    public function create(): View
     {
         return view('source.create');
     }
 
-    public function store(SourceStoreRequest $request): Response
+    public function store(SourceStoreRequest $request): RedirectResponse
     {
-        $source = Source::create($request->validated());
-
-        $request->session()->flash('source.id', $source->id);
-
-        return redirect()->route('sources.index');
+        try {
+            Source::create($request->validated());
+            return redirect()
+                ->route('sources.index')
+                ->with('success', 'Source created successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create source. ' . $e->getMessage());
+        }
     }
 
-    public function show(Request $request, Source $source): Response
+    public function show(Source $source): View
     {
-        return view('source.show', [
-            'source' => $source,
-        ]);
+        return view('source.show', compact('source'));
     }
 
-    public function edit(Request $request, Source $source): Response
+    public function edit(Source $source): View
     {
-        return view('source.edit', [
-            'source' => $source,
-        ]);
+        return view('source.edit', compact('source'));
     }
 
-    public function update(SourceUpdateRequest $request, Source $source): Response
+    public function update(SourceUpdateRequest $request, Source $source): RedirectResponse
     {
-        $source->update($request->validated());
-
-        $request->session()->flash('source.id', $source->id);
-
-        return redirect()->route('sources.index');
+        try {
+            $source->update($request->validated());
+            return redirect()
+                ->route('sources.index')
+                ->with('success', 'Source updated successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update source. ' . $e->getMessage());
+        }
     }
 
-    public function destroy(Request $request, Source $source): Response
+    public function destroy(Source $source): RedirectResponse
     {
-        $source->delete();
-
-        return redirect()->route('sources.index');
+        try {
+            $source->delete();
+            return redirect()
+                ->route('sources.index')
+                ->with('success', 'Source deleted successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'Failed to delete source. ' . $e->getMessage());
+        }
     }
 }

@@ -5,62 +5,87 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BatchStoreRequest;
 use App\Http\Requests\BatchUpdateRequest;
 use App\Models\Batch;
+use App\Models\Source;
+use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class BatchController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct()
     {
-        $batches = Batch::all();
-
-        return view('batch.index', [
-            'batches' => $batches,
-        ]);
+        $this->middleware('can:view_batch')->only(['index', 'show']);
+        $this->middleware('can:create_batch')->only(['create', 'store']);
+        $this->middleware('can:edit_batch')->only(['edit', 'update']);
+        $this->middleware('can:delete_batch')->only('destroy');
     }
 
-    public function create(Request $request): Response
+    public function index(): View
     {
-        return view('batch.create');
+        $batches = Batch::with(['source', 'product'])->latest()->paginate(10);
+        return view('batch.index', compact('batches'));
     }
 
-    public function store(BatchStoreRequest $request): Response
+    public function create(): View
     {
-        $batch = Batch::create($request->validated());
-
-        $request->session()->flash('batch.id', $batch->id);
-
-        return redirect()->route('batches.index');
+        $sources = Source::pluck('name', 'id');
+        $products = Product::pluck('name', 'id');
+        return view('batch.create', compact('sources', 'products'));
     }
 
-    public function show(Request $request, Batch $batch): Response
+    public function store(BatchStoreRequest $request): RedirectResponse
     {
-        return view('batch.show', [
-            'batch' => $batch,
-        ]);
+        try {
+            $batch = Batch::create($request->validated());
+            return redirect()
+                ->route('batches.index')
+                ->with('success', 'Batch created successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create batch. ' . $e->getMessage());
+        }
     }
 
-    public function edit(Request $request, Batch $batch): Response
+    public function show(Batch $batch): View
     {
-        return view('batch.edit', [
-            'batch' => $batch,
-        ]);
+        $batch->load(['source', 'product']);
+        return view('batch.show', compact('batch'));
     }
 
-    public function update(BatchUpdateRequest $request, Batch $batch): Response
+    public function edit(Batch $batch): View
     {
-        $batch->update($request->validated());
-
-        $request->session()->flash('batch.id', $batch->id);
-
-        return redirect()->route('batches.index');
+        $sources = Source::pluck('name', 'id');
+        $products = Product::pluck('name', 'id');
+        return view('batch.edit', compact('batch', 'sources', 'products'));
     }
 
-    public function destroy(Request $request, Batch $batch): Response
+    public function update(BatchUpdateRequest $request, Batch $batch): RedirectResponse
     {
-        $batch->delete();
+        try {
+            $batch->update($request->validated());
+            return redirect()
+                ->route('batches.index')
+                ->with('success', 'Batch updated successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update batch. ' . $e->getMessage());
+        }
+    }
 
-        return redirect()->route('batches.index');
+    public function destroy(Batch $batch): RedirectResponse
+    {
+        try {
+            $batch->delete();
+            return redirect()
+                ->route('batches.index')
+                ->with('success', 'Batch deleted successfully.');
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'Failed to delete batch. ' . $e->getMessage());
+        }
     }
 }

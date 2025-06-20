@@ -15,78 +15,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+    Route::resource('products', App\Http\Controllers\ProductController::class);
+
+    Route::resource('batches', App\Http\Controllers\BatchController::class);
+
+    Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
+
+    Route::resource('shipments', App\Http\Controllers\ShipmentController::class);
+
 });
 
 require __DIR__.'/auth.php';
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-Route::resource('products', App\Http\Controllers\ProductController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-Route::resource('products', App\Http\Controllers\ProductController::class);
-
-Route::resource('batches', App\Http\Controllers\BatchController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-Route::resource('products', App\Http\Controllers\ProductController::class);
-
-Route::resource('batches', App\Http\Controllers\BatchController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-Route::resource('products', App\Http\Controllers\ProductController::class);
-
-Route::resource('batches', App\Http\Controllers\BatchController::class);
-
-Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
-
-
-Route::resource('sources', App\Http\Controllers\SourceController::class);
-
-Route::resource('products', App\Http\Controllers\ProductController::class);
-
-Route::resource('batches', App\Http\Controllers\BatchController::class);
-
-Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
-
-Route::resource('shipments', App\Http\Controllers\ShipmentController::class);
