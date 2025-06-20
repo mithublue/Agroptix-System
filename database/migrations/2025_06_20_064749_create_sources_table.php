@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('production_method', ["['Natural'",""]);
             $table->string('area')->nullable();
             $table->string('status', 50, )->default('pending');
+            $table->string('owner_id')->nullable();
             $table->foreignId('user_as_owner_id');
             $table->timestamps();
         });

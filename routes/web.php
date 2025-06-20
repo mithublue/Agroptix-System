@@ -21,3 +21,21 @@ require __DIR__.'/auth.php';
 
 
 Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);
+
+
+Route::resource('sources', App\Http\Controllers\SourceController::class);

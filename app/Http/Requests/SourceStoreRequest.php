@@ -26,6 +26,7 @@ class SourceStoreRequest extends FormRequest
             'production_method' => ['required', 'in:['Natural','],
             'area' => ['nullable', 'string'],
             'status' => ['required', 'string', 'max:50'],
+            'owner_id' => ['nullable', 'string'],
             'user_as_owner_id' => ['required', 'integer', 'exists:user_as_owners,id'],
         ];
     }

@@ -22,6 +22,7 @@ class Source extends Model
         'production_method',
         'area',
         'status',
+        'owner_id',
         'user_as_owner_id',
     ];
 

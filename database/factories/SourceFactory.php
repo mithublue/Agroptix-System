@@ -28,6 +28,7 @@ class SourceFactory extends Factory
             'production_method' => fake()->randomElement(["['Natural'",""]),
             'area' => fake()->word(),
             'status' => fake()->regexify('[A-Za-z0-9]{50}'),
+            'owner_id' => fake()->word(),
             'user_as_owner_id' => UserAsOwner::factory(),
         ];
     }

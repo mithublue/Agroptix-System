@@ -8,11 +8,14 @@ models:
     production_method: enum:['Natural', 'Organic', 'Synthetic', 'Mixed']
     area: float, nullable
     status: string:50, nullable, default:'pending'
+
+    # Explicitly define the column here
+    owner_id: id, foreign, nullable
+
     relationships:
+      # This relationship now uses the existing 'owner_id' column
       belongsTo: User as owner
 
 controllers:
   Source:
-    # This will generate the resourceful controller and web routes
-    # for index, create, store, show, edit, update, and destroy.
     resource: web
