@@ -16,15 +16,95 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('sources', App\Http\Controllers\SourceController::class);
+    // Protected routes with permission middleware
+    Route::middleware(['can:view_source'])->group(function () {
+        Route::get('sources', [App\Http\Controllers\SourceController::class, 'index'])->name('sources.index');
+        Route::get('sources/{source}', [App\Http\Controllers\SourceController::class, 'show'])->name('sources.show');
+    });
 
-    Route::resource('products', App\Http\Controllers\ProductController::class);
+    Route::middleware(['can:create_source'])->group(function () {
+        Route::get('sources/create', [App\Http\Controllers\SourceController::class, 'create'])->name('sources.create');
+        Route::post('sources', [App\Http\Controllers\SourceController::class, 'store'])->name('sources.store');
+    });
 
-    Route::resource('batches', App\Http\Controllers\BatchController::class);
+    Route::middleware(['can:edit_source'])->group(function () {
+        Route::get('sources/{source}/edit', [App\Http\Controllers\SourceController::class, 'edit'])->name('sources.edit');
+        Route::put('sources/{source}', [App\Http\Controllers\SourceController::class, 'update'])->name('sources.update');
+    });
 
-    Route::resource('quality-tests', App\Http\Controllers\QualityTestController::class);
+    Route::middleware(['can:delete_source'])->delete('sources/{source}', [App\Http\Controllers\SourceController::class, 'destroy'])->name('sources.destroy');
 
-    Route::resource('shipments', App\Http\Controllers\ShipmentController::class);
+    // Products
+    Route::middleware(['can:view_product'])->group(function () {
+        Route::get('products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+        Route::get('products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+    });
+
+    Route::middleware(['can:create_product'])->group(function () {
+        Route::get('products/create', [App\Http\Controllers\ProductController::class, 'create'])->name('products.create');
+        Route::post('products', [App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
+    });
+
+    Route::middleware(['can:edit_product'])->group(function () {
+        Route::get('products/{product}/edit', [App\Http\Controllers\ProductController::class, 'edit'])->name('products.edit');
+        Route::put('products/{product}', [App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
+    });
+
+    Route::middleware(['can:delete_product'])->delete('products/{product}', [App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Batches
+    Route::middleware(['can:view_batch'])->group(function () {
+        Route::get('batches', [App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
+        Route::get('batches/{batch}', [App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
+    });
+
+    Route::middleware(['can:create_batch'])->group(function () {
+        Route::get('batches/create', [App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
+        Route::post('batches', [App\Http\Controllers\BatchController::class, 'store'])->name('batches.store');
+    });
+
+    Route::middleware(['can:edit_batch'])->group(function () {
+        Route::get('batches/{batch}/edit', [App\Http\Controllers\BatchController::class, 'edit'])->name('batches.edit');
+        Route::put('batches/{batch}', [App\Http\Controllers\BatchController::class, 'update'])->name('batches.update');
+    });
+
+    Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
+
+    // Quality Tests
+    Route::middleware(['can:view_quality_test'])->group(function () {
+        Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
+        Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
+    });
+
+    Route::middleware(['can:create_quality_test'])->group(function () {
+        Route::get('quality-tests/create', [App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
+        Route::post('quality-tests', [App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
+    });
+
+    Route::middleware(['can:edit_quality_test'])->group(function () {
+        Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
+        Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
+    });
+
+    Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
+
+    // Shipments
+    Route::middleware(['can:view_shipment'])->group(function () {
+        Route::get('shipments', [App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
+        Route::get('shipments/{shipment}', [App\Http\Controllers\ShipmentController::class, 'show'])->name('shipments.show');
+    });
+
+    Route::middleware(['can:create_shipment'])->group(function () {
+        Route::get('shipments/create', [App\Http\Controllers\ShipmentController::class, 'create'])->name('shipments.create');
+        Route::post('shipments', [App\Http\Controllers\ShipmentController::class, 'store'])->name('shipments.store');
+    });
+
+    Route::middleware(['can:edit_shipment'])->group(function () {
+        Route::get('shipments/{shipment}/edit', [App\Http\Controllers\ShipmentController::class, 'edit'])->name('shipments.edit');
+        Route::put('shipments/{shipment}', [App\Http\Controllers\ShipmentController::class, 'update'])->name('shipments.update');
+    });
+
+    Route::middleware(['can:delete_shipment'])->delete('shipments/{shipment}', [App\Http\Controllers\ShipmentController::class, 'destroy'])->name('shipments.destroy');
 
 });
 
