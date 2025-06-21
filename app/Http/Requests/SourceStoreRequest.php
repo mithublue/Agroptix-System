@@ -23,10 +23,10 @@ class SourceStoreRequest extends FormRequest
             'type' => ['nullable', 'string', 'max:20'],
             'gps_lat' => ['nullable', 'string'],
             'gps_long' => ['nullable', 'string'],
-            'production_method' => ['required', 'in:['Natural']'],
+            'production_method' => ['required', 'in:[\'Natural\']'],
             'area' => ['nullable', 'string'],
             'status' => ['required', 'string', 'max:50'],
-            'owner_id' => ['required', 'integer', 'exists:onDelete('cascade')->onUpdate('cascade'),id'],
+            'owner_id' => ['required', 'integer', 'exists:onDelete(\'cascade\')->onUpdate(\'cascade\'),id'],
             'user_as_owner_id' => ['required', 'integer', 'exists:user_as_owners,id'],
         ];
     }
