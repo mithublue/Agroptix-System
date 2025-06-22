@@ -74,30 +74,27 @@
                                 @enderror
                             </div>
 
-                            <!-- Status -->
-                            <div>
+                            @can('manage_source')
+                            <div class="mt-4">
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select name="status" id="status"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="">Select status</option>
                                     <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                    <option value="rejected" {{ old('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                 </select>
                                 @error('status')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <!-- Owner ID -->
-                            <div>
+                            <div class="mt-4">
                                 <label for="owner_id" class="block text-sm font-medium text-gray-700">Owner</label>
                                 <select name="owner_id" id="owner_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="">Select owner</option>
-                                    @foreach($users as $user)
+                                    @foreach (App\Models\User::all() as $user)
                                         <option value="{{ $user->id }}" {{ old('owner_id') == $user->id ? 'selected' : '' }}>
-                                            {{ $user->name }} ({{ $user->email }})
+                                            {{ $user->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -105,6 +102,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
+                            @endcan
                         </div>
 
                         <!-- Form Actions -->

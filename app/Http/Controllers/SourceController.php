@@ -23,20 +23,34 @@ class SourceController extends Controller
     {
         // Get all users for the owner dropdown
         $users = \App\Models\User::all();
-        
+
         // Get all user owners for the user as owner dropdown
         // Adjust this based on your actual model name for user owners
         $userOwners = \App\Models\User::whereHas('roles', function($q) {
             $q->where('name', 'owner');
         })->get();
-        
+
         return view('source.create', compact('users', 'userOwners'));
     }
-
+//SourceStoreRequest
     public function store(SourceStoreRequest $request): RedirectResponse
     {
+        // 1. Get the validated data from the form request
+        $validated = $request->validated();
+
+        // 2. Check if owner_id was NOT provided in the request
+        //    (This means a normal user without 'manage_source' permission submitted the form)
+        if (!isset($validated['owner_id'])) {
+            // 3. Add the default values for a normal user
+            $validated['owner_id'] = auth()->id();
+            $validated['status'] = 'pending';
+        }
+
+        // 4. Create the Source record.
+        //    If an admin submitted, $validated already has the correct values.
+        //    If a normal user submitted, we just added the default values.
         try {
-            Source::create($request->validated());
+            Source::create($validated);
             return redirect()
                 ->route('sources.index')
                 ->with('success', 'Source created successfully.');

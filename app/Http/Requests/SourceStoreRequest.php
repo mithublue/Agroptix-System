@@ -19,14 +19,22 @@ class SourceStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Corrected 'in' rule syntax
-        return [
+        $rules = [
             'type' => ['nullable', 'string', 'max:20'],
             'gps_lat' => ['nullable', 'string'],
             'gps_long' => ['nullable', 'string'],
-            'production_method' => ['required', 'in:Natural,Organic,Mixed'], // Correct syntax
+            'production_method' => ['required', 'in:Natural,Organic,Mixed'],
             'area' => ['nullable', 'string'],
-            // We will make status and owner_id rules conditional in Step 2 below
         ];
+
+        // Check if the authenticated user has the required permission
+        if ($this->user()->can('manage_source')) {
+            // If they do, add the validation rules for the admin fields
+            $rules['status'] = ['required', 'string', 'max:50'];
+            // The 'exists' rule checks that the provided user ID exists in the 'users' table
+            $rules['owner_id'] = ['required', 'integer', 'exists:users,id'];
+        }
+
+        return $rules;
     }
 }
