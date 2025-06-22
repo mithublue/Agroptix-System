@@ -22,8 +22,7 @@ class Source extends Model
         'production_method',
         'area',
         'status',
-        'owner_id',
-        'user_as_owner_id',
+        'owner_id'
     ];
 
     /**
@@ -35,18 +34,21 @@ class Source extends Model
     {
         return [
             'id' => 'integer',
-            'owner_id' => 'integer',
-            'user_as_owner_id' => 'integer',
+            'owner_id' => 'integer'
         ];
     }
 
     public function userAsOwner(): BelongsTo
     {
-        return $this->belongsTo(UserAsOwner::class);
+        return $this->belongsTo(User::class);
     }
 
+    /**
+     * Get the owner of the source.
+     */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(OnDelete('cascade')>onUpdate('cascade')::class);
+        // This is the correct way to define the relationship
+        return $this->belongsTo(User::class, 'owner_id');
     }
 }
