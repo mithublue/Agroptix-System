@@ -213,5 +213,6 @@
             }));
         });
     </script>
+    @turboScripts
 </body>
 </html>
