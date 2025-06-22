@@ -141,3 +141,16 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Admin Routes
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    // Users
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+    
+    // Roles
+    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
+    
+    // Permissions
+    Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
+         ->name('permissions.index');
+});

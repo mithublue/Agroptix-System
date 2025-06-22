@@ -161,6 +161,83 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- Admin Section -->
+                    @can('create_source')
+                    <div class="pt-4 mt-4 border-t border-gray-200">
+                        <h3 class="px-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">Administration</h3>
+
+                        <!-- Users -->
+                        <div x-data="{ open: {{ request()->is('admin/users*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 mt-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/users*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 {{ request()->is('admin/users*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                    Users
+                                </div>
+                                <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" class="mt-1 space-y-1" x-collapse>
+                                <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('admin.users.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    All Users
+                                </a>
+                                <a href="{{ route('admin.users.create') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('admin.users.create') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    Add User
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Roles -->
+                        @can('manage_roles')
+                        <div x-data="{ open: {{ request()->is('admin/roles*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 mt-1 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/roles*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 {{ request()->is('admin/roles*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    Roles
+                                </div>
+                                <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" class="mt-1 space-y-1" x-collapse>
+                                <a href="{{ route('admin.roles.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('admin.roles.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    All Roles
+                                </a>
+                                <a href="{{ route('admin.roles.create') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('admin.roles.create') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    Create Role
+                                </a>
+                            </div>
+                        </div>
+                        @endcan
+
+                        <!-- Permissions -->
+                        @can('manage_permissions')
+                        <div x-data="{ open: {{ request()->is('admin/permissions*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 mt-1 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/permissions*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 {{ request()->is('admin/permissions*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    Permissions
+                                </div>
+                                <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" class="mt-1 space-y-1" x-collapse>
+                                <a href="{{ route('admin.permissions.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('admin.permissions.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    All Permissions
+                                </a>
+                            </div>
+                        </div>
+                        @endcan
+                    </div>
+                    @endcan
                 </nav>
 
                 <!-- User Profile -->

@@ -17,6 +17,18 @@ class RolesAndPermissionsSeeder extends Seeder
         // Define all modules
         $modules = ['source', 'product', 'batch', 'quality_test', 'shipment'];
         $actions = ['create', 'view', 'edit', 'delete'];
+        
+        // Admin specific permissions
+        $adminPermissions = [
+            'manage_users',
+            'manage_roles',
+            'manage_permissions',
+        ];
+        
+        // Create admin permissions
+        foreach ($adminPermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
 
         // Create permissions for each module and action
         foreach ($modules as $module) {
@@ -49,7 +61,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Create or get Admin role with all permissions
         $admin = Role::firstOrCreate(['name' => 'Admin']);
-        $admin->syncPermissions(Permission::all());
+        $allPermissions = Permission::all();
+        $admin->syncPermissions($allPermissions);
 
         // Find or create admin user
         $adminUser = User::firstOrCreate(
