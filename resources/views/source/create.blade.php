@@ -74,7 +74,7 @@
                                 @enderror
                             </div>
 
-                            @can('manage_source')
+                            @can('edit_source')
                             <div class="mt-4">
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select name="status" id="status"

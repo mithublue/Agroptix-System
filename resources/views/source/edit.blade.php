@@ -79,7 +79,7 @@
                                 @enderror
                             </div>
 
-                            @can('manage_source')
+                            @can('edit_source')
                             <!-- Status -->
                             <div>
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
