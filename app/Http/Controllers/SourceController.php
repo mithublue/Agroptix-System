@@ -8,6 +8,7 @@ use App\Models\Source;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Models\User;
 
 class SourceController extends Controller
 {
@@ -20,7 +21,16 @@ class SourceController extends Controller
 
     public function create(): View
     {
-        return view('source.create');
+        // Get all users for the owner dropdown
+        $users = \App\Models\User::all();
+        
+        // Get all user owners for the user as owner dropdown
+        // Adjust this based on your actual model name for user owners
+        $userOwners = \App\Models\User::whereHas('roles', function($q) {
+            $q->where('name', 'owner');
+        })->get();
+        
+        return view('source.create', compact('users', 'userOwners'));
     }
 
     public function store(SourceStoreRequest $request): RedirectResponse

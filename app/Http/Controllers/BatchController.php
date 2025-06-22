@@ -14,13 +14,6 @@ use Illuminate\View\View;
 
 class BatchController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('can:view_batch')->only(['index', 'show']);
-        $this->middleware('can:create_batch')->only(['create', 'store']);
-        $this->middleware('can:edit_batch')->only(['edit', 'update']);
-        $this->middleware('can:delete_batch')->only('destroy');
-    }
 
     public function index(): View
     {
