@@ -6,7 +6,7 @@
                 {{ __('Sources') }}
             </h2>
             @can('create', \App\Models\Source::class)
-                <a href="{{ route('sources.create') }}" 
+                <a href="{{ route('sources.create') }}"
                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     {{ __('Add New Source') }}
                 </a>
@@ -82,14 +82,14 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('sources.show', $source) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                            @can('update', $source)
+                                            @can('edit', $source)
                                                 <a href="{{ route('sources.edit', $source) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                                             @endcan
                                             @can('delete', $source)
                                                 <form action="{{ route('sources.destroy', $source) }}" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900" 
+                                                    <button type="submit" class="text-red-600 hover:text-red-900"
                                                             onclick="return confirm('Are you sure you want to delete this source?')">
                                                         Delete
                                                     </button>
