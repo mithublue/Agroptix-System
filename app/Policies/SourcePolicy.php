@@ -35,7 +35,7 @@ class SourcePolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Source $source): bool
+    public function edit(User $user, Source $source): bool
     {
         return $user->hasPermissionTo('edit_source');
     }

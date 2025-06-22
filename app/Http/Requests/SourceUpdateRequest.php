@@ -19,15 +19,21 @@ class SourceUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'type' => ['nullable', 'string', 'max:20'],
             'gps_lat' => ['nullable', 'string'],
             'gps_long' => ['nullable', 'string'],
-            'production_method' => ['required', 'in:['Natural']'],
+            'production_method' => ['required', 'in:Natural,Organic,Mixed'],
             'area' => ['nullable', 'string'],
-            'status' => ['required', 'string', 'max:50'],
-            'owner_id' => ['required', 'integer', 'exists:onDelete('cascade')->onUpdate('cascade'),id'],
-            'user_as_owner_id' => ['required', 'integer', 'exists:user_as_owners,id'],
         ];
+
+        // Check if the authenticated user has the required permission
+        if ($this->user()->can('manage_source')) {
+            // If they do, add the validation rules for the admin fields
+            $rules['status'] = ['required', 'string', 'in:pending,approved,rejected,active,inactive'];
+            $rules['owner_id'] = ['required', 'integer', 'exists:users,id'];
+        }
+
+        return $rules;
     }
 }
