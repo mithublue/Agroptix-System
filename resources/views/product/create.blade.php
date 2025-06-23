@@ -40,10 +40,7 @@
                             <div>
                                 <x-label for="price" :value="__('Price')" />
                                 <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">$</span>
-                                    </div>
-                                    <x-input id="price" class="pl-7 block w-full" type="number" step="0.01" name="price" :value="old('price')" required />
+                                    <x-input id="price" class="block w-full" type="number" step="0.01" name="price" :value="old('price')" required />
                                 </div>
                                 @error('price')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class ProductStoreRequest extends FormRequest
 {
@@ -20,10 +21,30 @@ class ProductStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['nullable', 'string', 'max:20'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'price' => ['required', 'numeric', 'min:0'],
             'type' => ['nullable', 'string', 'max:20'],
-            'is_perishable' => ['nullable', 'string'],
+            'is_perishable' => ['nullable', 'boolean'],
             'hs_code' => ['nullable', 'string'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        if ($this->has('price')) {
+            $this->merge([
+                'price' => (float) str_replace([',', '$'], '', $this->price)
+            ]);
+        }
+        
+        $this->merge([
+            'is_active' => $this->boolean('is_active'),
+            'is_perishable' => $this->boolean('is_perishable')
+        ]);
     }
 }

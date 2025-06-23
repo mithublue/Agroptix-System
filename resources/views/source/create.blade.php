@@ -56,7 +56,9 @@
                                 <select name="production_method" id="production_method" required
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                     <option value="">Select production method</option>
-                                    <option value="Natural" {{ old('production_method') == 'Natural' ? 'selected' : '' }}>Natural</option>
+                                    @foreach(config('at.production_methods') as $value => $label)
+                                        <option value="{{ $value }}" {{ old('production_method') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
                                 </select>
                                 @error('production_method')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -79,9 +81,9 @@
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select name="status" id="status"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                    <option value="rejected" {{ old('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                    @foreach(config('at.source_status') as $value => $label)
+                                        <option value="{{ $value }}" {{ old('status', 'pending') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
                                 </select>
                                 @error('status')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

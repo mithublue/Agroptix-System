@@ -28,9 +28,9 @@ class SourceUpdateRequest extends FormRequest
         ];
 
         // Check if the authenticated user has the required permission
-        if ($this->user()->can('manage_source')) {
+        if ($this->user()->can('edit_source')) {
             // If they do, add the validation rules for the admin fields
-            $rules['status'] = ['required', 'string', 'in:pending,approved,rejected,active,inactive'];
+            $rules['status'] = ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))];
             $rules['owner_id'] = ['required', 'integer', 'exists:users,id'];
         }
 

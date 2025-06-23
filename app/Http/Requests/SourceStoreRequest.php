@@ -23,15 +23,14 @@ class SourceStoreRequest extends FormRequest
             'type' => ['nullable', 'string', 'max:20'],
             'gps_lat' => ['nullable', 'string'],
             'gps_long' => ['nullable', 'string'],
-            'production_method' => ['required', 'in:Natural,Organic,Mixed'],
+            'production_method' => ['required', 'in:' . implode(',', array_keys(config('at.production_methods')))],
             'area' => ['nullable', 'string'],
         ];
 
         // Check if the authenticated user has the required permission
-        if ($this->user()->can('manage_source')) {
+        if ($this->user()->can('create_source')) {
             // If they do, add the validation rules for the admin fields
-            $rules['status'] = ['required', 'string', 'max:50'];
-            // The 'exists' rule checks that the provided user ID exists in the 'users' table
+            $rules['status'] = ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))];
             $rules['owner_id'] = ['required', 'integer', 'exists:users,id'];
         }
 
