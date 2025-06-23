@@ -142,15 +142,54 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
+// Debug route to check permissions
+Route::get('/debug-permissions', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return response()->json([
+            'authenticated' => false,
+            'message' => 'No authenticated user',
+            'session' => session()->all(),
+            'auth_check' => auth()->check()
+        ]);
+    }
+
+    return response()->json([
+        'authenticated' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'email_verified' => (bool)$user->email_verified_at,
+        ],
+        'roles' => $user->getRoleNames(),
+        'permissions' => $user->getAllPermissions()->pluck('name'),
+        'can_manage_roles' => $user->can('manage_roles'),
+        'can_manage_users' => $user->can('manage_users'),
+        'can_manage_permissions' => $user->can('manage_permissions'),
+        'session' => [
+            'auth' => session('auth'),
+            'permissions' => session('permissions')
+        ]
+    ]);
+})->middleware('auth');
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     // Users
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+    Route::middleware(['can:manage_users'])->group(function () {
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+    });
     
     // Roles
-    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
+    Route::middleware(['can:manage_roles'])->group(function () {
+        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
+    });
     
     // Permissions
-    Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
-         ->name('permissions.index');
+    Route::middleware(['can:manage_permissions'])->group(function () {
+        Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
+             ->name('permissions.index');
+    });
 });

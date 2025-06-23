@@ -11,21 +11,21 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
-        $products = Product::all();
+        $products = Product::latest()->paginate(10);
 
         return view('product.index', [
             'products' => $products,
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
         return view('product.create');
     }
 
-    public function store(ProductStoreRequest $request): Response
+    public function store(ProductStoreRequest $request): RedirectResponse
     {
         $product = Product::create($request->validated());
 
@@ -34,21 +34,21 @@ class ProductController extends Controller
         return redirect()->route('products.index');
     }
 
-    public function show(Request $request, Product $product): Response
+    public function show(Request $request, Product $product): View
     {
         return view('product.show', [
             'product' => $product,
         ]);
     }
 
-    public function edit(Request $request, Product $product): Response
+    public function edit(Request $request, Product $product): View
     {
         return view('product.edit', [
             'product' => $product,
         ]);
     }
 
-    public function update(ProductUpdateRequest $request, Product $product): Response
+    public function update(ProductUpdateRequest $request, Product $product): RedirectResponse
     {
         $product->update($request->validated());
 
@@ -57,7 +57,7 @@ class ProductController extends Controller
         return redirect()->route('products.index');
     }
 
-    public function destroy(Request $request, Product $product): Response
+    public function destroy(Request $request, Product $product): RedirectResponse
     {
         $product->delete();
 
