@@ -16,6 +16,9 @@ class Product extends Model
      */
     protected $fillable = [
         'name',
+        'description',
+        'price',
+        'is_active',
         'type',
         'is_perishable',
         'hs_code',
@@ -30,6 +33,11 @@ class Product extends Model
     {
         return [
             'id' => 'integer',
+            'price' => 'decimal:2',
+            'is_active' => 'boolean',
+            'is_perishable' => 'boolean',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 }

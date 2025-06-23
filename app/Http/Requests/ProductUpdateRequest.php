@@ -20,9 +20,12 @@ class ProductUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['nullable', 'string', 'max:20'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'is_active' => ['required', 'boolean'],
             'type' => ['nullable', 'string', 'max:20'],
-            'is_perishable' => ['nullable', 'string'],
+            'is_perishable' => ['nullable', 'boolean'],
             'hs_code' => ['nullable', 'string'],
         ];
     }
