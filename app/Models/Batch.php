@@ -23,8 +23,10 @@ class Batch extends Model
         'product_id',
         'harvest_time',
         'status',
-        'source_as_source_id',
-        'product_as_product_id',
+        'weight',
+        'grade',
+        'has_defect',
+        'remark',
     ];
 
     /**
@@ -36,8 +38,6 @@ class Batch extends Model
         'harvest_time' => 'datetime',
         'source_id' => 'integer',
         'product_id' => 'integer',
-        'source_as_source_id' => 'integer',
-        'product_as_product_id' => 'integer',
     ];
 
     /**
@@ -85,21 +85,7 @@ class Batch extends Model
         return $this->belongsTo(Product::class);
     }
 
-    /**
-     * Get the sourceAsSource associated with the batch.
-     */
-    public function sourceAsSource(): BelongsTo
-    {
-        return $this->belongsTo(SourceAsSource::class);
-    }
 
-    /**
-     * Get the productAsProduct associated with the batch.
-     */
-    public function productAsProduct(): BelongsTo
-    {
-        return $this->belongsTo(ProductAsProduct::class);
-    }
 
     /**
      * Scope a query to only include batches of a given status.

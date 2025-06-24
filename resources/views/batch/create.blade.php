@@ -112,10 +112,6 @@
                             </div>
                         </div>
 
-                        <!-- Hidden required fields -->
-                        <input type="hidden" name="source_as_source_id" value="1">
-                        <input type="hidden" name="product_as_product_id" value="1">
-
                         <div class="flex items-center justify-end mt-6">
                             <a href="{{ route('batches.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 {{ __('Cancel') }}
