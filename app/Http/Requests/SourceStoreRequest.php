@@ -21,7 +21,7 @@ class SourceStoreRequest extends FormRequest
     {
         $rules = [
             'type' => ['nullable', 'string', 'max:20'],
-            'gps_lat' => ['nullable', 'string'],
+            'gps_lat' => ['required', 'string'],
             'gps_long' => ['nullable', 'string'],
             'production_method' => ['required', 'in:' . implode(',', array_keys(config('at.production_methods')))],
             'area' => ['nullable', 'string'],
