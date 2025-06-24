@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\ValidationException;
 
 class BatchStoreRequest extends FormRequest
 {
@@ -20,27 +23,34 @@ class BatchStoreRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        // Ensure has_defect is a boolean
+        // Log the raw input for debugging
+        \Log::debug('Raw input data:', $this->all());
+
+        // Process inputs
         $this->merge([
-            'has_defect' => $this->has_defect ? true : false,
+            'batch_code' => trim($this->batch_code ?? ''),
+            'has_defect' => (bool)($this->has_defect ?? false),
         ]);
+
+        // Log the processed data
+        \Log::debug('Processed data:', $this->all());
     }
 
     public function rules(): array
     {
         return [
-            'batch_code' => ['nullable', 'string', 'max:255'],
+            'batch_code' => ['required', 'string', 'max:255'],
             'source_id' => ['nullable', 'integer', 'exists:sources,id'],
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
-            'harvest_time' => ['required', 'date'],
-            'status' => ['required', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::STATUSES))],
+            'harvest_time' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::STATUSES))],
             'weight' => ['nullable', 'numeric', 'min:0'],
             'grade' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::GRADES))],
             'has_defect' => ['sometimes', 'boolean'],
             'remark' => ['nullable', 'string', 'max:1000']
         ];
     }
-    
+
     public function messages()
     {
         return [
