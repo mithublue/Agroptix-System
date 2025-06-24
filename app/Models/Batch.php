@@ -45,6 +45,23 @@ class Batch extends Model
      *
      * @var array<string, string>
      */
+    /**
+     * The possible grade values for a batch.
+     *
+     * @var array<string, string>
+     */
+    public const GRADES = [
+        'A' => 'A (Premium)',
+        'B' => 'B (Good)',
+        'C' => 'C (Average)',
+        'D' => 'D (Below Average)',
+    ];
+
+    /**
+     * The possible status values for a batch.
+     *
+     * @var array<string, string>
+     */
     public const STATUSES = [
         'pending' => 'Pending',
         'processing' => 'Processing',

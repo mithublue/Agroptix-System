@@ -23,8 +23,17 @@ class BatchController extends Controller
 
     public function create(): View
     {
-        $sources = Source::pluck('name', 'id');
+        // Format sources as 'Type (ID: X)' or 'Source #X' if type is empty
+        $sources = Source::all()->mapWithKeys(function ($source) {
+            $display = $source->type 
+                ? "{$source->type} (ID: {$source->id})" 
+                : "Source #{$source->id}";
+            return [$source->id => $display];
+        });
+
+        // Get products with their names
         $products = Product::pluck('name', 'id');
+        
         return view('batch.create', compact('sources', 'products'));
     }
 
