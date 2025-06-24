@@ -8,6 +8,3 @@ window.Alpine = Alpine;
 document.addEventListener('DOMContentLoaded', () => {
     Alpine.start();
 });
-
-// Import Turbo (it auto-initializes itself when imported)
-import '@hotwired/turbo';

@@ -290,6 +290,5 @@
             }));
         });
     </script>
-    @turboScripts
 </body>
 </html>
