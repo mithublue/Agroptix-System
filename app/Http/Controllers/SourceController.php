@@ -91,10 +91,35 @@ class SourceController extends Controller
         return view('source.edit', compact('source'));
     }
 
-    public function update(SourceUpdateRequest $request, Source $source): RedirectResponse
+    public function update(Request $request, Source $source): RedirectResponse
     {
+        // Define validation rules
+        //    to get access to its rules and authorization logic.
+        $formRequest = new SourceUpdateRequest();
+
+        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        // 3. Get the validation rules from your Form Request class.
+        $rules = $formRequest->rules();
+
+        // 4. Create a new validator instance manually.
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate the request
+        if ($validator->fails()) {
+            // 6. Manually handle the failure.
+            //    To make it work with Hotwired Turbo, we must set the 422 status code.
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+
+        // 7. If validation passes, get the validated data.
+        $validatedData = $validator->validated();
+
         try {
-            $source->update($request->validated());
+            $source->update($validatedData);
             return redirect()
                 ->route('sources.index')
                 ->with('success', 'Source updated successfully.');
