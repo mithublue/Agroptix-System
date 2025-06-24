@@ -16,12 +16,12 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form action="{{ route('batches.store') }}" method="POST" class="space-y-6">
                         @csrf
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Batch Code -->
                             <div>
                                 <x-label for="batch_code" :value="__('Batch Code')" />
-                                <x-input id="batch_code" name="batch_code" type="text" class="mt-1 block w-full" 
+                                <x-input id="batch_code" name="batch_code" type="text" class="mt-1 block w-full"
                                     :value="old('batch_code')" />
                                 <x-input-error :messages="$errors->get('batch_code')" class="mt-2" />
                             </div>
@@ -53,8 +53,13 @@
                             <!-- Harvest Time -->
                             <div>
                                 <x-label for="harvest_time" :value="__('Harvest Time')" required />
-                                <x-input id="harvest_time" name="harvest_time" type="date" class="mt-1 block w-full" 
-                                    :value="old('harvest_time')" />
+                                <input id="harvest_time" name="harvest_time" type="date" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                    value="{{ old('harvest_time') }}" 
+                                    required
+                                    pattern="\d{4}-\d{2}-\d{2}"
+                                    oninvalid="this.setCustomValidity('Please select a valid date in YYYY-MM-DD format')"
+                                    oninput="this.setCustomValidity('')">
                                 <x-input-error :messages="$errors->get('harvest_time')" class="mt-2" />
                             </div>
 
@@ -72,7 +77,7 @@
                             <!-- Weight -->
                             <div>
                                 <x-label for="weight" :value="__('Weight (kg)')" />
-                                <x-input id="weight" name="weight" type="number" step="0.01" class="mt-1 block w-full" 
+                                <x-input id="weight" name="weight" type="number" step="0.01" class="mt-1 block w-full"
                                     :value="old('weight')" />
                                 <x-input-error :messages="$errors->get('weight')" class="mt-2" />
                             </div>
@@ -92,7 +97,7 @@
                             <!-- Has Defect -->
                             <div class="flex items-start">
                                 <div class="flex items-center h-5">
-                                    <input id="has_defect" name="has_defect" type="checkbox" 
+                                    <input id="has_defect" name="has_defect" type="checkbox"
                                         class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         {{ old('has_defect') ? 'checked' : '' }}
                                         value="1">

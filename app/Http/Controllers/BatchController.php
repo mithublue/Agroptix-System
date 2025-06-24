@@ -25,26 +25,40 @@ class BatchController extends Controller
     {
         // Format sources as 'Type (ID: X)' or 'Source #X' if type is empty
         $sources = Source::all()->mapWithKeys(function ($source) {
-            $display = $source->type 
-                ? "{$source->type} (ID: {$source->id})" 
+            $display = $source->type
+                ? "{$source->type} (ID: {$source->id})"
                 : "Source #{$source->id}";
             return [$source->id => $display];
         });
 
         // Get products with their names
         $products = Product::pluck('name', 'id');
-        
+
         return view('batch.create', compact('sources', 'products'));
     }
 
     public function store(BatchStoreRequest $request): RedirectResponse
     {
         try {
+            // Debug the validated data
+            \Log::info('Creating batch with data:', $request->validated());
+
             $batch = Batch::create($request->validated());
+
+            // Debug the created batch
+            \Log::info('Batch created successfully:', ['batch_id' => $batch->id]);
+
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch created successfully.');
         } catch (\Exception $e) {
+            // Log the full error
+            \Log::error('Error creating batch:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->all()
+            ]);
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create batch. ' . $e->getMessage());
