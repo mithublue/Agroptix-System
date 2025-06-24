@@ -23,7 +23,9 @@ class BatchController extends Controller
 
     public function create(): View
     {
-        $sources = Source::pluck('name', 'id');
+        $sources = Source::pluck('type', 'id')->map(function($type, $id) {
+            return $type ? "$type (ID: $id)" : "Source #$id";
+        });
         $products = Product::pluck('name', 'id');
         return view('batch.create', compact('sources', 'products'));
     }

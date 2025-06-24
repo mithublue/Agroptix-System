@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 class Batch extends Model
 {
@@ -13,7 +15,7 @@ class Batch extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'batch_code',
@@ -26,38 +28,83 @@ class Batch extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'id' => 'integer',
-            'source_id' => 'integer',
-            'product_id' => 'integer',
-            'source_as_source_id' => 'integer',
-            'product_as_product_id' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'harvest_time' => 'datetime',
+        'source_id' => 'integer',
+        'product_id' => 'integer',
+        'source_as_source_id' => 'integer',
+        'product_as_product_id' => 'integer',
+    ];
 
-    public function sourceAsSource(): BelongsTo
-    {
-        return $this->belongsTo(SourceAsSource::class);
-    }
+    /**
+     * The possible status values for a batch.
+     *
+     * @var array<string, string>
+     */
+    public const STATUSES = [
+        'pending' => 'Pending',
+        'processing' => 'Processing',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ];
 
-    public function productAsProduct(): BelongsTo
-    {
-        return $this->belongsTo(ProductAsProduct::class);
-    }
-
+    /**
+     * Get the source associated with the batch.
+     */
     public function source(): BelongsTo
     {
         return $this->belongsTo(Source::class);
     }
 
+    /**
+     * Get the product associated with the batch.
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the sourceAsSource associated with the batch.
+     */
+    public function sourceAsSource(): BelongsTo
+    {
+        return $this->belongsTo(SourceAsSource::class);
+    }
+
+    /**
+     * Get the productAsProduct associated with the batch.
+     */
+    public function productAsProduct(): BelongsTo
+    {
+        return $this->belongsTo(ProductAsProduct::class);
+    }
+
+    /**
+     * Scope a query to only include batches of a given status.
+     */
+    public function scopeStatus(Builder $query, string $status): void
+    {
+        $query->where('status', $status);
+    }
+
+    /**
+     * Scope a query to only include batches harvested after a given date.
+     */
+    public function scopeHarvestedAfter(Builder $query, string $date): void
+    {
+        $query->where('harvest_time', '>=', Carbon::parse($date));
+    }
+
+    /**
+     * Get the display name of the batch.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->batch_code ?: "Batch #{$this->id}";
     }
 }
