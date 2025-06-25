@@ -1,143 +1,208 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ isset($ecoProcess) ? 'Edit Eco Process' : 'Create Eco Process' }}
+            {{ isset($ecoProcess) ? 'Edit' : 'Create' }} Eco Process
         </h2>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            <form method="POST" action="{{ isset($ecoProcess) ? route('eco_processes.update', $ecoProcess) : route('batches.eco-processes.store', [$batch]) }}">
+    <div class="py-6">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8"
+             x-data="ecoProcessForm({{ json_encode(old() ?: $ecoProcess ?? []) }})"
+             x-init="init()"
+        >
+            <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', $ecoProcess) : route('batches.eco-processes.store', $batch) }}">
                 @csrf
                 @if(isset($ecoProcess))
                     @method('PUT')
                 @endif
 
-                <div x-data="formComponent()" x-init="init()">
-                    <!-- Stage Dropdown -->
-                    <div class="mb-4">
-                        <label for="stage" class="block font-medium text-gray-700">Stage</label>
-                        <select id="stage" name="stage" class="mt-1 block w-full" x-model="stage">
-                            <option value="">Select Stage</option>
-                            <option value="washing_n_treatment">Washing & Treatment</option>
-                            <option value="drying_n_pre_cooling">Drying & Pre Cooling</option>
-                            <option value="waste_handling">Waste Handling</option>
-                        </select>
+                <!-- Stage -->
+                <div class="mb-4">
+                    <label for="stage" class="block text-sm font-medium text-gray-700">Stage</label>
+                    <select id="stage" name="stage" x-model="form.stage" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <template x-for="(label, value) in stageOptions" :key="value">
+                            <option :value="value" x-text="label"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Conditional Fields -->
+                <template x-if="form.stage">
+                    <div>
+                        <template x-if="stageFieldGroups[form.stage]">
+                            <template x-for="(field, key) in stageFieldGroups[form.stage]" :key="key">
+                                <div class="mb-4" x-html="renderField(key, field, form.stage)"></div>
+                            </template>
+                        </template>
                     </div>
+                </template>
 
-                    <!-- Washing & Treatment Fields -->
-                    <template x-if="stage === 'washing_n_treatment'">
-                        <div>
-                            <div class="mb-4">
-                                <label class="block">Washing Water Usage</label>
-                                <input type="number" min="0" max="100" class="mt-1 block w-full" name="washing_water_usage" x-model="formData.washing_water_usage">
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block">Disinfection Steps</label>
-                                <div>
-                                    <label><input type="checkbox" value="temperature" x-model="disinfectionSteps"> Temperature</label>
-                                    <label><input type="checkbox" value="chlorine_solution_strength" x-model="disinfectionSteps"> Chlorine Strength</label>
-                                </div>
-                            </div>
-
-                            <template x-if="disinfectionSteps.includes('temperature')">
-                                <div class="mb-4">
-                                    <label class="block">Temperature</label>
-                                    <input type="number" min="0" max="100" class="mt-1 block w-full" name="temperature" x-model="formData.temperature">
-                                </div>
-                            </template>
-
-                            <template x-if="disinfectionSteps.includes('chlorine_solution_strength')">
-                                <div class="mb-4">
-                                    <label class="block">Chlorine Solution Strength</label>
-                                    <input type="number" min="0" max="100" class="mt-1 block w-full" name="chlorine_solution_strength" x-model="formData.chlorine_solution_strength">
-                                </div>
-                            </template>
-
-                            <div class="mb-4">
-                                <label><input type="checkbox" value="1" x-model="formData.us_export"> US Export</label>
-                            </div>
-
-                            <template x-if="formData.us_export">
-                                <div>
-                                    <div class="mb-4">
-                                        <label class="block">Hot Water Temperature</label>
-                                        <input type="number" class="mt-1 block w-full" name="hot_water_temperature" x-model="formData.hot_water_temperature">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="block">Hot Water Duration</label>
-                                        <input type="number" class="mt-1 block w-full" name="hot_water_duration" x-model="formData.hot_water_duration">
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-
-                    <!-- Drying & Pre Cooling Fields -->
-                    <template x-if="stage === 'drying_n_pre_cooling'">
-                        <div>
-                            <div class="mb-4">
-                                <label><input type="checkbox" value="1" x-model="formData.cold_storage"> Cold Storage</label>
-                            </div>
-
-                            <template x-if="formData.cold_storage">
-                                <div>
-                                    <div class="mb-4">
-                                        <label class="block">Temperature</label>
-                                        <input type="number" class="mt-1 block w-full" name="cold_storage_temperature" x-model="formData.cold_storage_temperature">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="block">Humidity</label>
-                                        <input type="number" class="mt-1 block w-full" name="cold_storage_humidity" x-model="formData.cold_storage_humidity">
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-
-                    <!-- Waste Handling Fields -->
-                    <template x-if="stage === 'waste_handling'">
-                        <div>
-                            <div class="mb-4">
-                                <label class="block">Washwater Amount</label>
-                                <input type="number" class="mt-1 block w-full" name="washwater_amount" x-model="formData.washwater_amount">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block">Rejection Weight</label>
-                                <input type="number" class="mt-1 block w-full" name="rejection_weight" x-model="formData.rejection_weight">
-                            </div>
-                        </div>
-                    </template>
-
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+                <div class="mt-6">
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        {{ isset($ecoProcess) ? 'Update' : 'Save' }}
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        function formComponent() {
+        function ecoProcessForm(initialData) {
             return {
-                stage: '{{ old('stage', $ecoProcess->stage ?? '') }}',
-                disinfectionSteps: @json(old('disinfection_steps', $ecoProcess->disinfection_steps ?? [])),
-                formData: {
-                    washing_water_usage: '{{ old('washing_water_usage', $ecoProcess->washing_water_usage ?? '') }}',
-                    temperature: '{{ old('temperature', $ecoProcess->temperature ?? '') }}',
-                    chlorine_solution_strength: '{{ old('chlorine_solution_strength', $ecoProcess->chlorine_solution_strength ?? '') }}',
-                    us_export: @json(old('us_export', $ecoProcess->us_export ?? false)),
-                    hot_water_temperature: '{{ old('hot_water_temperature', $ecoProcess->hot_water_temperature ?? '') }}',
-                    hot_water_duration: '{{ old('hot_water_duration', $ecoProcess->hot_water_duration ?? '') }}',
-                    cold_storage: @json(old('cold_storage', $ecoProcess->cold_storage ?? false)),
-                    cold_storage_temperature: '{{ old('cold_storage_temperature', $ecoProcess->cold_storage_temperature ?? '') }}',
-                    cold_storage_humidity: '{{ old('cold_storage_humidity', $ecoProcess->cold_storage_humidity ?? '') }}',
-                    washwater_amount: '{{ old('washwater_amount', $ecoProcess->washwater_amount ?? '') }}',
-                    rejection_weight: '{{ old('rejection_weight', $ecoProcess->rejection_weight ?? '') }}',
+                form: {
+                    stage: initialData.stage || '',
+                    ...initialData
+                },
+                stageOptions: {
+                    harvest_processing: 'Harvest Processing',
+                    cutting_peeling: 'Cutting/Peeling',
+                    packaging_prep: 'Packaging Preparation',
+                    washing_n_treatment: 'Washing & Treatment',
+                    drying_n_pre_cooling: 'Drying & Pre Cooling',
+                    waste_handling: 'Waste Handling',
+                },
+                stageFieldGroups: {
+                    harvest_processing: {
+                        delatex_steps: { label: 'De-Latex Steps', type: 'textarea', required: true },
+                        delatex_operator: { label: 'Operator Name', type: 'text', required: true },
+                        delatex_timestamp: { label: 'Date & Time', type: 'datetime-local', required: true },
+                        delatex_notes: { label: 'Additional Notes', type: 'textarea', required: false },
+                    },
+                    cutting_peeling: {
+                        processing_type: {
+                            label: 'Processing Type',
+                            type: 'checkbox',
+                            values: {
+                                peeling: 'Peeling',
+                                segmenting: 'Segmenting',
+                                chipping: 'Chipping',
+                                pulping: 'Pulping'
+                            }
+                        },
+                        sanitization: {
+                            label: 'Sanitization',
+                            type: 'group',
+                            fields: {
+                                sanitizer_type: {
+                                    label: 'Sanitizer Type',
+                                    type: 'select',
+                                    values: {
+                                        citric_acid: 'Citric Acid',
+                                        chlorine: 'Chlorine',
+                                        other: 'Other'
+                                    }
+                                },
+                                sanitizer_concentration: {
+                                    label: 'Concentration (ppm)',
+                                    type: 'number',
+                                    min: 0
+                                },
+                                immersion_time: {
+                                    label: 'Immersion Time (minutes)',
+                                    type: 'number',
+                                    min: 0
+                                }
+                            }
+                        },
+                        preservative_used: {
+                            label: 'Preservative Used',
+                            type: 'checkbox',
+                            values: {
+                                citric_acid: 'Citric Acid',
+                                ascorbic_acid: 'Ascorbic Acid',
+                                calcium_chloride: 'Calcium Chloride',
+                                none: 'None'
+                            }
+                        },
+                        operator_signature: { label: 'Operator Signature', type: 'text', required: true }
+                    },
+                    packaging_prep: {
+                        package_type: {
+                            label: 'Package Type',
+                            type: 'select',
+                            values: {
+                                ventilated_crate: 'Ventilated Crate',
+                                vacuum_bag: 'Vacuum Bag',
+                                plastic_container: 'Plastic Container',
+                                other: 'Other'
+                            },
+                            required: true
+                        },
+                        batch_id: { label: 'Batch ID', type: 'text', required: true },
+                        package_details: {
+                            label: 'Package Details',
+                            type: 'group',
+                            fields: {
+                                package_id: { label: 'Package ID/QR Code', type: 'text', required: true },
+                                net_weight: { label: 'Net Weight (kg)', type: 'number', step: 0.01, min: 0, required: true },
+                                packer_id: { label: 'Packer ID', type: 'text', required: true }
+                            }
+                        },
+                        storage_conditions: {
+                            label: 'Storage Conditions',
+                            type: 'group',
+                            fields: {
+                                temperature: { label: 'Temperature (°C)', type: 'number', required: true },
+                                humidity: { label: 'Humidity (%)', type: 'number', min: 0, max: 100 }
+                            }
+                        }
+                    },
+                    washing_n_treatment: {
+                        washing_water_usage: {
+                            label: 'Washing Water Usage (L)',
+                            type: 'number',
+                            min: 0,
+                            max: 100
+                        }
+                    }
                 },
                 init() {
-                    if (!Array.isArray(this.disinfectionSteps)) {
-                        this.disinfectionSteps = [];
+                    // For default field visibility in edit mode
+                },
+                renderField(key, field, stage) {
+                    const name = key;
+                    const value = this.form[key] || '';
+                    const label = field.label;
+
+                    switch (field.type) {
+                        case 'text':
+                        case 'datetime-local':
+                        case 'number':
+                            return `<label class="block mb-1">${label}</label>
+                                <input type="${field.type}" name="${name}" value="${value}" class="w-full border rounded px-3 py-2" ${field.required ? 'required' : ''}>`;
+
+                        case 'textarea':
+                            return `<label class="block mb-1">${label}</label>
+                                <textarea name="${name}" class="w-full border rounded px-3 py-2" ${field.required ? 'required' : ''}>${value}</textarea>`;
+
+                        case 'select':
+                            return `<label class="block mb-1">${label}</label>
+                                <select name="${name}" class="w-full border rounded px-3 py-2">
+                                    ${Object.entries(field.values).map(([val, lbl]) =>
+                                `<option value="${val}" ${val === value ? 'selected' : ''}>${lbl}</option>`
+                            ).join('')}
+                                </select>`;
+
+                        case 'checkbox':
+                            return `<label class="block mb-1">${label}</label>
+                                ${Object.entries(field.values).map(([val, lbl]) =>
+                                `<label class="inline-flex items-center mr-4">
+                                        <input type="checkbox" name="${name}[]" value="${val}" ${Array.isArray(value) && value.includes(val) ? 'checked' : ''}>
+                                        <span class="ml-1">${lbl}</span>
+                                    </label>`
+                            ).join('')}`;
+
+                        case 'group':
+                            return `<fieldset class="border p-3 rounded mb-4">
+                                <legend class="text-sm font-semibold mb-2">${label}</legend>
+                                ${Object.entries(field.fields).map(([subKey, subField]) =>
+                                this.renderField(`${key}[${subKey}]`, subField, stage)
+                            ).join('')}
+                            </fieldset>`;
                     }
+
+                    return '';
                 }
             }
         }
