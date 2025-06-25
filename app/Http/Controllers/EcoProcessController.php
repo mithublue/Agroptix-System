@@ -7,9 +7,19 @@ use App\Models\EcoProcess;
 use App\Http\Requests\EcoProcessRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
 
 class EcoProcessController extends Controller
 {
+    /**
+     * Display a listing of the eco processes for a batch.
+     */
+    public function index(Batch $batch): View
+    {
+        $ecoProcesses = $batch->ecoProcesses()->latest()->paginate(10);
+        
+        return view('eco_processes.index', compact('batch', 'ecoProcesses'));
+    }
     /**
      * Show the form for creating a new eco process.
      */

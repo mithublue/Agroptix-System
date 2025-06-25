@@ -157,18 +157,23 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
 
     // Eco Processes
-    Route::prefix('batches/{batch}')->middleware(['can:create_batch'])->group(function () {
-        Route::get('/eco-processes/create', [App\Http\Controllers\EcoProcessController::class, 'create'])
-            ->name('batches.eco-processes.create');
+    Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
+        Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
+            ->name('batches.eco-processes.index');
             
-        Route::post('/eco-processes', [App\Http\Controllers\EcoProcessController::class, 'store'])
-            ->name('batches.eco-processes.store');
-            
-        Route::get('/eco-processes/{ecoProcess}/edit', [App\Http\Controllers\EcoProcessController::class, 'edit'])
-            ->name('batches.eco-processes.edit');
-            
-        Route::put('/eco-processes/{ecoProcess}', [App\Http\Controllers\EcoProcessController::class, 'update'])
-            ->name('batches.eco-processes.update');
+        Route::middleware(['can:create_batch'])->group(function () {
+            Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
+                ->name('batches.eco-processes.create');
+                
+            Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
+                ->name('batches.eco-processes.store');
+                
+            Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
+                ->name('batches.eco-processes.edit');
+                
+            Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
+                ->name('batches.eco-processes.update');
+        });
     });
 });
 
@@ -220,24 +225,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         
         Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
-        // Eco Process Routes
-        Route::prefix('batches/{batch}')->group(function () {
-            Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
-                ->name('batches.eco-processes.create')
-                ->middleware('can:create_batch');
-                
-            Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
-                ->name('batches.eco-processes.store')
-                ->middleware('can:create_batch');
-                
-            Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
-                ->name('batches.eco-processes.edit')
-                ->middleware('can:create_batch');
-                
-            Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
-                ->name('batches.eco-processes.update')
-                ->middleware('can:create_batch');
-        });
     });
     
     // Permissions

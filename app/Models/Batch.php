@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
@@ -85,7 +86,13 @@ class Batch extends Model
         return $this->belongsTo(Product::class);
     }
 
-
+    /**
+     * Get all eco processes for the batch.
+     */
+    public function ecoProcesses(): HasMany
+    {
+        return $this->hasMany(EcoProcess::class);
+    }
 
     /**
      * Scope a query to only include batches of a given status.

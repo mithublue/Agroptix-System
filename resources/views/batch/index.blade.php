@@ -74,7 +74,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-2">
                                                 @can('create_batch')
-                                                    <a href="{{ route('batches.show', $batch) }}" class="text-yellow-600 hover:text-blue-900">{{ __('Eco Process') }}</a>
+                                                    <a href="{{ route('batches.eco-processes.index', $batch) }}" class="text-yellow-600 hover:text-blue-900">{{ __('Eco Process') }}</a>
                                                 @endcan
                                                 @can('view_batch')
                                                     <a href="{{ route('batches.show', $batch) }}" class="text-blue-600 hover:text-blue-900">View</a>
