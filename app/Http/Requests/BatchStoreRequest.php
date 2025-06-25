@@ -40,9 +40,9 @@ class BatchStoreRequest extends FormRequest
     {
         return [
             'batch_code' => ['required', 'string', 'max:255'],
-            'source_id' => ['nullable', 'integer', 'exists:sources,id'],
-            'product_id' => ['nullable', 'integer', 'exists:products,id'],
-            'harvest_time' => ['nullable', 'date'],
+            'source_id' => ['required', 'integer', 'exists:sources,id'],
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'harvest_time' => ['required', 'date'],
             'status' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::STATUSES))],
             'weight' => ['nullable', 'numeric', 'min:0'],
             'grade' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::GRADES))],

@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BatchStoreRequest;
 use App\Http\Requests\BatchUpdateRequest;
+use App\Http\Requests\ProductStoreRequest;
+use App\Http\Requests\SourceUpdateRequest;
 use App\Models\Batch;
 use App\Models\Source;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class BatchController extends Controller
@@ -37,17 +40,32 @@ class BatchController extends Controller
         return view('batch.create', compact('sources', 'products'));
     }
 
-    public function store(BatchStoreRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
+
+        //    to get access to its rules and authorization logic.
+        $formRequest = new BatchStoreRequest();
+
+        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        // 3. Get the validation rules from your Form Request class.
+        $rules = $formRequest->rules();
+
+        // 4. Create a new validator instance manually.
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate the request
+        if ($validator->fails()) {
+            // 6. Manually handle the failure.
+            //    To make it work with Hotwired Turbo, we must set the 422 status code.
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+
         try {
-            // Debug the validated data
-            \Log::info('Creating batch with data:', $request->validated());
-
-            $batch = Batch::create($request->validated());
-
-            // Debug the created batch
-            \Log::info('Batch created successfully:', ['batch_id' => $batch->id]);
-
+            Batch::create($request->validated());
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch created successfully.');

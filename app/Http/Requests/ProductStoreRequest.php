@@ -36,12 +36,12 @@ class ProductStoreRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        if ($this->has('price')) {
+        if (Auth()->has('price')) {
             $this->merge([
                 'price' => (float) str_replace([',', '$'], '', $this->price)
             ]);
         }
-        
+
         $this->merge([
             'is_active' => $this->boolean('is_active'),
             'is_perishable' => $this->boolean('is_perishable')

@@ -16,14 +16,13 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form action="{{ route('batches.store') }}" method="POST" class="space-y-6">
                         @csrf
-
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Batch Code -->
                             <div>
                                 <x-label for="batch_code" :value="__('Batch Code')" />
                                 <x-input id="batch_code" name="batch_code" type="text" class="mt-1 block w-full"
                                     :value="old('batch_code')" />
-                                <x-input-error :messages="$errors->get('batch_code')" class="mt-2" />
+
                             </div>
 
                             <!-- Source -->

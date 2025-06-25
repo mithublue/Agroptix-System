@@ -93,7 +93,6 @@ class SourceController extends Controller
 
     public function update(Request $request, Source $source): RedirectResponse
     {
-        // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new SourceUpdateRequest();
 
