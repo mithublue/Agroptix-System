@@ -4,12 +4,14 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Batch List') }}
             </h2>
-            @can('create_batch')
-                <a href="{{ route('batches.create') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    {{ __('Add New Batch') }}
-                </a>
-            @endcan
+            <div class="flex space-x-2">
+                @can('create_batch')
+                    <a href="{{ route('batches.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        {{ __('Add New Batch') }}
+                    </a>
+                @endcan
+            </div>
         </div>
     </x-slot>
 
@@ -71,19 +73,22 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-2">
+                                                @can('create_batch')
+                                                    <a href="{{ route('batches.show', $batch) }}" class="text-yellow-600 hover:text-blue-900">{{ __('Eco Process') }}</a>
+                                                @endcan
                                                 @can('view_batch')
                                                     <a href="{{ route('batches.show', $batch) }}" class="text-blue-600 hover:text-blue-900">View</a>
                                                 @endcan
-                                                
+
                                                 @can('edit_batch')
                                                     <a href="{{ route('batches.edit', $batch) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                                 @endcan
-                                                
+
                                                 @can('delete_batch')
                                                     <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900" 
+                                                        <button type="submit" class="text-red-600 hover:text-red-900"
                                                             onclick="return confirm('Are you sure you want to delete this batch?')">
                                                             Delete
                                                         </button>
@@ -96,7 +101,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     @if($batches->hasPages())
                         <div class="px-6 py-4 bg-gray-50">
                             {{ $batches->links() }}
@@ -104,7 +109,7 @@
                     @endif
                 @else
                     <div class="p-6 text-center text-gray-500">
-                        No batches found. 
+                        No batches found.
                         @can('create_batch')
                             <a href="{{ route('batches.create') }}" class="text-blue-600 hover:underline">Create one now</a>.
                         @endcan

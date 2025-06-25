@@ -64,50 +64,50 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware(['can:edit_source'])->group(function () {
-        Route::get('sources/{source}/edit', [App\Http\Controllers\SourceController::class, 'edit'])->name('sources.edit');
-        Route::put('sources/{source}', [App\Http\Controllers\SourceController::class, 'update'])->name('sources.update');
+        Route::get('sources/{source}/edit', [\App\Http\Controllers\SourceController::class, 'edit'])->name('sources.edit');
+        Route::put('sources/{source}', [\App\Http\Controllers\SourceController::class, 'update'])->name('sources.update');
     });
 
-    Route::middleware(['can:delete_source'])->delete('sources/{source}', [App\Http\Controllers\SourceController::class, 'destroy'])->name('sources.destroy');
+    Route::middleware(['can:delete_source'])->delete('sources/{source}', [\App\Http\Controllers\SourceController::class, 'destroy'])->name('sources.destroy');
 
     // Products
     Route::middleware(['can:create_product'])->group(function () {
-        Route::get('products/create', [App\Http\Controllers\ProductController::class, 'create'])->name('products.create');
-        Route::post('products', [App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
+        Route::get('products/create', [\App\Http\Controllers\ProductController::class, 'create'])->name('products.create');
+        Route::post('products', [\App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
     });
     Route::middleware(['can:view_product'])->group(function () {
-        Route::get('products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
-        Route::get('products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+        Route::get('products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+        Route::get('products/{product}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
     });
 
     Route::middleware(['can:edit_product'])->group(function () {
-        Route::get('products/{product}/edit', [App\Http\Controllers\ProductController::class, 'edit'])->name('products.edit');
-        Route::put('products/{product}', [App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
+        Route::get('products/{product}/edit', [\App\Http\Controllers\ProductController::class, 'edit'])->name('products.edit');
+        Route::put('products/{product}', [\App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
     });
 
-    Route::middleware(['can:delete_product'])->delete('products/{product}', [App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
+    Route::middleware(['can:delete_product'])->delete('products/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
 
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
-        Route::get('batches/create', [App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
-        Route::post('batches', [App\Http\Controllers\BatchController::class, 'store'])->name('batches.store');
+        Route::get('batches/create', [\App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
+        Route::post('batches', [\App\Http\Controllers\BatchController::class, 'store'])->name('batches.store');
     });
     Route::middleware(['can:view_batch'])->group(function () {
-        Route::get('batches', [App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
-        Route::get('batches/{batch}', [App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
+        Route::get('batches', [\App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
+        Route::get('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
     });
 
     Route::middleware(['can:edit_batch'])->group(function () {
-        Route::get('batches/{batch}/edit', [App\Http\Controllers\BatchController::class, 'edit'])->name('batches.edit');
-        Route::put('batches/{batch}', [App\Http\Controllers\BatchController::class, 'update'])->name('batches.update');
+        Route::get('batches/{batch}/edit', [\App\Http\Controllers\BatchController::class, 'edit'])->name('batches.edit');
+        Route::put('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'update'])->name('batches.update');
     });
 
-    Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
+    Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
 
     // Quality Tests
     Route::middleware(['can:create_quality_test'])->group(function () {
-        Route::get('quality-tests/create', [App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
-        Route::post('quality-tests', [App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
+        Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
+        Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
     });
     Route::middleware(['can:view_quality_test'])->group(function () {
         Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
@@ -138,6 +138,38 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['can:delete_shipment'])->delete('shipments/{shipment}', [App\Http\Controllers\ShipmentController::class, 'destroy'])->name('shipments.destroy');
 
+    // Batches
+    Route::middleware(['can:create_batch'])->group(function () {
+        Route::get('batches/create', [App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
+        Route::post('batches', [App\Http\Controllers\BatchController::class, 'store'])->name('batches.store');
+    });
+    
+    Route::middleware(['can:view_batch'])->group(function () {
+        Route::get('batches', [App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
+        Route::get('batches/{batch}', [App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
+    });
+
+    Route::middleware(['can:edit_batch'])->group(function () {
+        Route::get('batches/{batch}/edit', [App\Http\Controllers\BatchController::class, 'edit'])->name('batches.edit');
+        Route::put('batches/{batch}', [App\Http\Controllers\BatchController::class, 'update'])->name('batches.update');
+    });
+
+    Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
+
+    // Eco Processes
+    Route::prefix('batches/{batch}')->middleware(['can:create_batch'])->group(function () {
+        Route::get('/eco-processes/create', [App\Http\Controllers\EcoProcessController::class, 'create'])
+            ->name('batches.eco-processes.create');
+            
+        Route::post('/eco-processes', [App\Http\Controllers\EcoProcessController::class, 'store'])
+            ->name('batches.eco-processes.store');
+            
+        Route::get('/eco-processes/{ecoProcess}/edit', [App\Http\Controllers\EcoProcessController::class, 'edit'])
+            ->name('batches.eco-processes.edit');
+            
+        Route::put('/eco-processes/{ecoProcess}', [App\Http\Controllers\EcoProcessController::class, 'update'])
+            ->name('batches.eco-processes.update');
+    });
 });
 
 require __DIR__.'/auth.php';
@@ -184,7 +216,28 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     
     // Roles
     Route::middleware(['can:manage_roles'])->group(function () {
-        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
+        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
+        
+        Route::resource('batches', \App\Http\Controllers\BatchController::class);
+
+        // Eco Process Routes
+        Route::prefix('batches/{batch}')->group(function () {
+            Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
+                ->name('batches.eco-processes.create')
+                ->middleware('can:create_batch');
+                
+            Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
+                ->name('batches.eco-processes.store')
+                ->middleware('can:create_batch');
+                
+            Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
+                ->name('batches.eco-processes.edit')
+                ->middleware('can:create_batch');
+                
+            Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
+                ->name('batches.eco-processes.update')
+                ->middleware('can:create_batch');
+        });
     });
     
     // Permissions
