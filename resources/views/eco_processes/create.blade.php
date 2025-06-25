@@ -10,7 +10,7 @@
              x-data="ecoProcessForm({{ json_encode(old() ?: $ecoProcess ?? []) }})"
              x-init="init()"
         >
-            <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', $ecoProcess) : route('batches.eco-processes.store', $batch) }}">
+            <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess] ) : route('batches.eco-processes.store', $batch) }}">
                 @csrf
                 @if(isset($ecoProcess))
                     @method('PUT')
@@ -36,7 +36,7 @@
                         </template>
                     </div>
                 </template>
-
+                <input type="hidden" name="stage" x-model="form.stage">
                 <div class="mt-6">
                     <button type="submit"
                             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -52,7 +52,7 @@
             return {
                 form: {
                     stage: initialData.stage || '',
-                    ...initialData
+                    ...(initialData.data || {})
                 },
                 stageOptions: {
                     harvest_processing: 'Harvest Processing',
