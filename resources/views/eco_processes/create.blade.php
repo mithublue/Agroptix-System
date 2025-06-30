@@ -6,203 +6,642 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8"
-             x-data="ecoProcessForm({{ json_encode(old() ?: $ecoProcess ?? []) }})"
-             x-init="init()"
-        >
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess] ) : route('batches.eco-processes.store', $batch) }}">
                 @csrf
                 @if(isset($ecoProcess))
                     @method('PUT')
                 @endif
 
-                <!-- Stage -->
-                <div class="mb-4">
-                    <label for="stage" class="block text-sm font-medium text-gray-700">Stage</label>
-                    <select id="stage" name="stage" x-model="form.stage" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <template x-for="(label, value) in stageOptions" :key="value">
-                            <option :value="value" x-text="label"></option>
-                        </template>
-                    </select>
-                </div>
+                <div class="max-w-4xl mx-auto px-6">
+                    <!-- Main Form Component -->
+                    <div x-data="foodProcessingForm({{ json_encode(old() ?: $ecoProcess ?? []) }})" class="bg-white rounded-lg shadow-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h1 class="text-2xl font-bold text-gray-900">Food Processing Tracking Form</h1>
+                        </div>
+                        <div class="p-6">
+                            <form @submit.prevent="submitForm" class="space-y-6">
+                                <!-- Stage Selection -->
+                                <div class="space-y-2">
+                                    <label for="stage" class="block text-sm font-medium text-gray-700">
+                                        Stage <span class="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        id="stage"
+                                        x-model="formData.stage"
+                                        @change="handleStageChange"
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="">Select processing stage</option>
+                                        <template x-for="(label, value) in config.stage.values" :key="value">
+                                            <option :value="value" x-text="label"></option>
+                                        </template>
+                                    </select>
+                                </div>
 
-                <!-- Conditional Fields -->
-                <template x-if="form.stage">
-                    <div>
-                        <template x-if="stageFieldGroups[form.stage]">
-                            <template x-for="(field, key) in stageFieldGroups[form.stage]" :key="key">
-                                <div class="mb-4" x-html="renderField(key, field, form.stage)"></div>
-                            </template>
-                        </template>
+                                <!-- Conditional Fields -->
+                                <div x-show="formData.stage" x-transition class="border-t pt-6">
+                                    <h3 x-text="getStageTitle()" class="text-lg font-semibold mb-4"></h3>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <template x-for="fieldGroup in getConditionalFields()" :key="fieldGroup.on">
+                                            <template x-for="(fieldConfig, fieldKey) in fieldGroup.fields" :key="fieldKey">
+                                                <div :class="getFieldClass(fieldConfig)">
+                                                    <!-- Text Input -->
+                                                    <template x-if="fieldConfig.type === 'text'">
+                                                        <div class="space-y-2">
+                                                            <label :for="fieldKey" class="block text-sm font-medium text-gray-700">
+                                                                <span x-text="fieldConfig.label"></span>
+                                                                <span x-show="fieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <input
+                                                                :id="fieldKey"
+                                                                :name="fieldKey"
+                                                                type="text"
+                                                                x-model="formData[fieldKey]"
+                                                                :placeholder="fieldConfig.placeholder || ''"
+                                                                :required="fieldConfig.required || false"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Textarea -->
+                                                    <template x-if="fieldConfig.type === 'textarea'">
+                                                        <div class="space-y-2">
+                                                            <label :for="fieldKey" class="block text-sm font-medium text-gray-700">
+                                                                <span x-text="fieldConfig.label"></span>
+                                                                <span x-show="fieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <textarea
+                                                                :id="fieldKey"
+                                                                :name="fieldKey"
+                                                                x-model="formData[fieldKey]"
+                                                                :placeholder="fieldConfig.placeholder || ''"
+                                                                :required="fieldConfig.required || false"
+                                                                rows="3"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            ></textarea>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Number Input -->
+                                                    <template x-if="fieldConfig.type === 'number'">
+                                                        <div class="space-y-2">
+                                                            <label :for="fieldKey" class="block text-sm font-medium text-gray-700">
+                                                                <span x-text="fieldConfig.label"></span>
+                                                                <span x-show="fieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <input
+                                                                :id="fieldKey"
+                                                                :name="fieldKey"
+                                                                type="number"
+                                                                x-model="formData[fieldKey]"
+                                                                :min="fieldConfig.min || ''"
+                                                                :max="fieldConfig.max || ''"
+                                                                :step="fieldConfig.step || ''"
+                                                                :required="fieldConfig.required || false"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- DateTime Input -->
+                                                    <template x-if="fieldConfig.type === 'datetime-local'">
+                                                        <div class="space-y-2">
+                                                            <label :for="fieldKey" class="block text-sm font-medium text-gray-700">
+                                                                <span x-text="fieldConfig.label"></span>
+                                                                <span x-show="fieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <input
+                                                                :id="fieldKey"
+                                                                :name="fieldKey"
+                                                                type="datetime-local"
+                                                                x-model="formData[fieldKey]"
+                                                                :required="fieldConfig.required || false"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Select Dropdown -->
+                                                    <template x-if="fieldConfig.type === 'select'">
+                                                        <div class="space-y-2">
+                                                            <label :for="fieldKey" class="block text-sm font-medium text-gray-700">
+                                                                <span x-text="fieldConfig.label"></span>
+                                                                <span x-show="fieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <select
+                                                                :id="fieldKey"
+                                                                :name="fieldKey"
+                                                                x-model="formData[fieldKey]"
+                                                                :required="fieldConfig.required || false"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                <option value="">Select option</option>
+                                                                <template x-for="(label, value) in fieldConfig.values" :key="value">
+                                                                    <option :value="value" x-text="label"></option>
+                                                                </template>
+                                                            </select>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Checkbox -->
+                                                    <template x-if="fieldConfig.type === 'checkbox'">
+                                                        <div class="space-y-2">
+                                                            <label class="block text-sm font-medium text-gray-700" x-text="fieldConfig.label"></label>
+                                                            <div class="space-y-2">
+                                                                <template x-for="(label, value) in fieldConfig.values" :key="value">
+                                                                    <label class="flex items-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            :name="fieldKey + '[]'"
+                                                                            :value="value"
+                                                                            x-model="formData[fieldKey]"
+                                                                            @change="handleCheckboxChange(fieldKey, value, fieldConfig)"
+                                                                            class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                                        >
+                                                                        <span x-text="label" class="text-sm text-gray-700"></span>
+                                                                    </label>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Group Fields -->
+                                                    <template x-if="fieldConfig.type === 'group'">
+                                                        <div class="space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                                                            <h4 x-text="fieldConfig.label" class="font-medium text-gray-900"></h4>
+                                                            <div class="grid grid-cols-1 gap-4">
+                                                                <template x-for="(subFieldConfig, subFieldKey) in fieldConfig.fields" :key="subFieldKey">
+                                                                    <div>
+                                                                        <!-- Render sub-fields recursively -->
+                                                                        <template x-if="subFieldConfig.type === 'text' || subFieldConfig.type === 'number'">
+                                                                            <div class="space-y-2">
+                                                                                <label :for="subFieldKey" class="block text-sm font-medium text-gray-700">
+                                                                                    <span x-text="subFieldConfig.label"></span>
+                                                                                    <span x-show="subFieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                                                </label>
+                                                                                <input
+                                                                                    :id="subFieldKey"
+                                                                                    :name="subFieldKey"
+                                                                                    :type="subFieldConfig.type"
+                                                                                    x-model="formData[subFieldKey]"
+                                                                                    :min="subFieldConfig.min || ''"
+                                                                                    :max="subFieldConfig.max || ''"
+                                                                                    :step="subFieldConfig.step || ''"
+                                                                                    :required="subFieldConfig.required || false"
+                                                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                                >
+                                                                            </div>
+                                                                        </template>
+                                                                        <template x-if="subFieldConfig.type === 'select'">
+                                                                            <div class="space-y-2">
+                                                                                <label :for="subFieldKey" class="block text-sm font-medium text-gray-700">
+                                                                                    <span x-text="subFieldConfig.label"></span>
+                                                                                    <span x-show="subFieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                                                </label>
+                                                                                <select
+                                                                                    :id="subFieldKey"
+                                                                                    :name="subFieldKey"
+                                                                                    x-model="formData[subFieldKey]"
+                                                                                    :required="subFieldConfig.required || false"
+                                                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                                >
+                                                                                    <option value="">Select option</option>
+                                                                                    <template x-for="(label, value) in subFieldConfig.values" :key="value">
+                                                                                        <option :value="value" x-text="label"></option>
+                                                                                    </template>
+                                                                                </select>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+
+                                        <!-- Conditional Sub-fields -->
+                                        <template x-for="conditionalField in getConditionalSubFields()" :key="conditionalField.fieldKey">
+                                            <div x-show="shouldShowConditionalField(conditionalField)" x-transition>
+                                                <template x-for="(subFieldConfig, subFieldKey) in conditionalField.fields" :key="subFieldKey">
+                                                    <div class="space-y-2">
+                                                        <label :for="subFieldKey" class="block text-sm font-medium text-gray-700">
+                                                            <span x-text="subFieldConfig.label"></span>
+                                                            <span x-show="subFieldConfig.required" class="text-red-500 ml-1">*</span>
+                                                        </label>
+                                                        <input
+                                                            :id="subFieldKey"
+                                                            :name="subFieldKey"
+                                                            :type="subFieldConfig.type"
+                                                            x-model="formData[subFieldKey]"
+                                                            :min="subFieldConfig.min || ''"
+                                                            :max="subFieldConfig.max || ''"
+                                                            :step="subFieldConfig.step || ''"
+                                                            :required="subFieldConfig.required || false"
+                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        >
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="flex justify-end pt-6">
+                                    <button
+                                        type="submit"
+                                        :disabled="!formData.stage"
+                                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Submit Form
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </template>
-                <input type="hidden" name="stage" x-model="form.stage">
-                <div class="mt-6">
-                    <button type="submit"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        {{ isset($ecoProcess) ? 'Update' : 'Save' }}
-                    </button>
+
+                    <!-- Debug Panel -->
+                    <div x-show="Object.keys(formData).length > 1" x-transition class="bg-white rounded-lg shadow-lg mt-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-900">Form Data (Debug)</h2>
+                        </div>
+                        <div class="p-6">
+                            <pre x-text="JSON.stringify(formData, null, 2)" class="bg-gray-100 p-4 rounded text-sm "></pre>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        function ecoProcessForm(initialData) {
+        function foodProcessingForm(ecoProcess) {
             return {
-                form: {
-                    stage: initialData.stage || '',
-                    ...(initialData.data || {})
-                },
-                stageOptions: {
-                    harvest_processing: 'Harvest Processing',
-                    cutting_peeling: 'Cutting/Peeling',
-                    packaging_prep: 'Packaging Preparation',
-                    washing_n_treatment: 'Washing & Treatment',
-                    drying_n_pre_cooling: 'Drying & Pre Cooling',
-                    waste_handling: 'Waste Handling',
-                },
-                stageFieldGroups: {
-                    harvest_processing: {
-                        delatex_steps: { label: 'De-Latex Steps', type: 'textarea', required: true },
-                        delatex_operator: { label: 'Operator Name', type: 'text', required: true },
-                        delatex_timestamp: { label: 'Date & Time', type: 'datetime-local', required: true },
-                        delatex_notes: { label: 'Additional Notes', type: 'textarea', required: false },
-                    },
-                    cutting_peeling: {
-                        processing_type: {
-                            label: 'Processing Type',
-                            type: 'checkbox',
-                            values: {
-                                peeling: 'Peeling',
-                                segmenting: 'Segmenting',
-                                chipping: 'Chipping',
-                                pulping: 'Pulping'
-                            }
+                // Form configuration (converted from PHP array)
+                config: {
+                    "stage": {
+                        "label": "Stage",
+                        "type": "select",
+                        "values": {
+                            "harvest_processing": "Harvest Processing",
+                            "cutting_peeling": "Cutting\/Peeling",
+                            "packaging_prep": "Packaging Preparation",
+                            "washing_n_treatment": "Washing & Treatment",
+                            "drying_n_pre_cooling": "Drying & Pre Cooling",
+                            "waste_handling": "Waste Handling"
                         },
-                        sanitization: {
-                            label: 'Sanitization',
-                            type: 'group',
-                            fields: {
-                                sanitizer_type: {
-                                    label: 'Sanitizer Type',
-                                    type: 'select',
-                                    values: {
-                                        citric_acid: 'Citric Acid',
-                                        chlorine: 'Chlorine',
-                                        other: 'Other'
+                        "conditional_field_group": [
+                            {
+                                "on": "stage:harvest_processing",
+                                "fields": {
+                                    "delatex_steps": {
+                                        "label": "De-Latex Steps",
+                                        "type": "textarea",
+                                        "placeholder": "E.g., Stand fruit on plywood, trim prickles, coat cuts with oil",
+                                        "required": true
+                                    },
+                                    "delatex_operator": {
+                                        "label": "Operator Name",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    "delatex_timestamp": {
+                                        "label": "Date & Time",
+                                        "type": "datetime-local",
+                                        "required": true
+                                    },
+                                    "delatex_notes": {
+                                        "label": "Additional Notes",
+                                        "type": "textarea",
+                                        "required": false
                                     }
-                                },
-                                sanitizer_concentration: {
-                                    label: 'Concentration (ppm)',
-                                    type: 'number',
-                                    min: 0
-                                },
-                                immersion_time: {
-                                    label: 'Immersion Time (minutes)',
-                                    type: 'number',
-                                    min: 0
+                                }
+                            },
+                            {
+                                "on": "stage:cutting_peeling",
+                                "fields": {
+                                    "processing_type": {
+                                        "label": "Processing Type",
+                                        "type": "checkbox",
+                                        "values": {
+                                            "peeling": "Peeling",
+                                            "segmenting": "Segmenting",
+                                            "chipping": "Chipping",
+                                            "pulping": "Pulping"
+                                        }
+                                    },
+                                    "sanitization": {
+                                        "label": "Sanitization",
+                                        "type": "group",
+                                        "fields": {
+                                            "sanitizer_type": {
+                                                "label": "Sanitizer Type",
+                                                "type": "select",
+                                                "values": {
+                                                    "citric_acid": "Citric Acid",
+                                                    "chlorine": "Chlorine",
+                                                    "other": "Other"
+                                                }
+                                            },
+                                            "sanitizer_concentration": {
+                                                "label": "Concentration (ppm)",
+                                                "type": "number",
+                                                "min": 0
+                                            },
+                                            "immersion_time": {
+                                                "label": "Immersion Time (minutes)",
+                                                "type": "number",
+                                                "min": 0
+                                            }
+                                        }
+                                    },
+                                    "preservative_used": {
+                                        "label": "Preservative Used",
+                                        "type": "checkbox",
+                                        "values": {
+                                            "citric_acid": "Citric Acid",
+                                            "ascorbic_acid": "Ascorbic Acid",
+                                            "calcium_chloride": "Calcium Chloride",
+                                            "none": "None"
+                                        }
+                                    },
+                                    "operator_signature": {
+                                        "label": "Operator Signature",
+                                        "type": "text",
+                                        "required": true
+                                    }
+                                }
+                            },
+                            {
+                                "on": "stage:packaging_prep",
+                                "fields": {
+                                    "package_type": {
+                                        "label": "Package Type",
+                                        "type": "select",
+                                        "values": {
+                                            "ventilated_crate": "Ventilated Crate",
+                                            "vacuum_bag": "Vacuum Bag",
+                                            "plastic_container": "Plastic Container",
+                                            "other": "Other"
+                                        },
+                                        "required": true
+                                    },
+                                    "batch_id": {
+                                        "label": "Batch ID",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    "package_details": {
+                                        "label": "Package Details",
+                                        "type": "group",
+                                        "fields": {
+                                            "package_id": {
+                                                "label": "Package ID\/QR Code",
+                                                "type": "text",
+                                                "required": true
+                                            },
+                                            "net_weight": {
+                                                "label": "Net Weight (kg)",
+                                                "type": "number",
+                                                "step": "0.01",
+                                                "min": 0,
+                                                "required": true
+                                            },
+                                            "packer_id": {
+                                                "label": "Packer ID",
+                                                "type": "text",
+                                                "required": true
+                                            }
+                                        }
+                                    },
+                                    "storage_conditions": {
+                                        "label": "Storage Conditions",
+                                        "type": "group",
+                                        "fields": {
+                                            "temperature": {
+                                                "label": "Temperature (°C)",
+                                                "type": "number",
+                                                "required": true
+                                            },
+                                            "humidity": {
+                                                "label": "Humidity (%)",
+                                                "type": "number",
+                                                "min": 0,
+                                                "max": 100
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "on": "stage:washing_n_treatment",
+                                "fields": {
+                                    "washing_water_usage": {
+                                        "label": "Washing Water Usage",
+                                        "type": "number",
+                                        "min": 0,
+                                        "max": 100
+                                    },
+                                    "disinfection_steps": {
+                                        "label": "Disinfection Steps",
+                                        "type": "checkbox",
+                                        "values": {
+                                            "chlorine_solution_strength": "Chlorine Solution Strength",
+                                            "temperature": "Temperature"
+                                        },
+                                        "conditional_field_group": [
+                                            {
+                                                "on": "disinfection_steps:temperature",
+                                                "fields": {
+                                                    "temperature": {
+                                                        "label": "Temperature (°C)",
+                                                        "type": "number",
+                                                        "min": 0,
+                                                        "max": 100
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "on": "disinfection_steps:chlorine_solution_strength",
+                                                "fields": {
+                                                    "chlorine_solution_strength": {
+                                                        "label": "Chlorine Solution Strength",
+                                                        "type": "number",
+                                                        "min": 0,
+                                                        "max": 100
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "us_export": {
+                                        "label": "US Export",
+                                        "type": "checkbox",
+                                        "values": {
+                                            "us_export": "US Export"
+                                        },
+                                        "conditional_field_group": [
+                                            {
+                                                "on": "us_export:us_export",
+                                                "fields": {
+                                                    "hot_water_temperature": {
+                                                        "label": "Hot Water Temperature (°C)",
+                                                        "type": "number"
+                                                    },
+                                                    "hot_water_duration": {
+                                                        "label": "Hot Water Duration (minutes)",
+                                                        "type": "number"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "on": "stage:drying_n_pre_cooling",
+                                "fields": {
+                                    "cold_storage": {
+                                        "label": "Cold Storage",
+                                        "type": "checkbox",
+                                        "values": {
+                                            "cold_storage": "Cold Storage"
+                                        },
+                                        "conditional_field_group": [
+                                            {
+                                                "on": "cold_storage:cold_storage",
+                                                "fields": {
+                                                    "temperature": {
+                                                        "label": "Temperature (°C)",
+                                                        "type": "number"
+                                                    },
+                                                    "humidity": {
+                                                        "label": "Humidity (%)",
+                                                        "type": "number"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "on": "stage:waste_handling",
+                                "fields": {
+                                    "washwater_amount": {
+                                        "label": "Washwater Amount (L)",
+                                        "type": "number"
+                                    },
+                                    "rejection_weight": {
+                                        "label": "Rejection Weight (kg)",
+                                        "type": "number"
+                                    }
                                 }
                             }
-                        },
-                        preservative_used: {
-                            label: 'Preservative Used',
-                            type: 'checkbox',
-                            values: {
-                                citric_acid: 'Citric Acid',
-                                ascorbic_acid: 'Ascorbic Acid',
-                                calcium_chloride: 'Calcium Chloride',
-                                none: 'None'
-                            }
-                        },
-                        operator_signature: { label: 'Operator Signature', type: 'text', required: true }
-                    },
-                    packaging_prep: {
-                        package_type: {
-                            label: 'Package Type',
-                            type: 'select',
-                            values: {
-                                ventilated_crate: 'Ventilated Crate',
-                                vacuum_bag: 'Vacuum Bag',
-                                plastic_container: 'Plastic Container',
-                                other: 'Other'
-                            },
-                            required: true
-                        },
-                        batch_id: { label: 'Batch ID', type: 'text', required: true },
-                        package_details: {
-                            label: 'Package Details',
-                            type: 'group',
-                            fields: {
-                                package_id: { label: 'Package ID/QR Code', type: 'text', required: true },
-                                net_weight: { label: 'Net Weight (kg)', type: 'number', step: 0.01, min: 0, required: true },
-                                packer_id: { label: 'Packer ID', type: 'text', required: true }
-                            }
-                        },
-                        storage_conditions: {
-                            label: 'Storage Conditions',
-                            type: 'group',
-                            fields: {
-                                temperature: { label: 'Temperature (°C)', type: 'number', required: true },
-                                humidity: { label: 'Humidity (%)', type: 'number', min: 0, max: 100 }
-                            }
-                        }
-                    },
-                    washing_n_treatment: {
-                        washing_water_usage: {
-                            label: 'Washing Water Usage (L)',
-                            type: 'number',
-                            min: 0,
-                            max: 100
-                        }
+                        ]
                     }
                 },
+
+                // Form data
+                formData: {"stage": 'washing_n_treatment'},
+
+                // Initialize checkboxes as arrays
                 init() {
-                    // For default field visibility in edit mode
+                    this.initializeCheckboxFields();
+                    console.log(ecoProcess);
                 },
-                renderField(key, field, stage) {
-                    const name = key;
-                    const value = this.form[key] || '';
-                    const label = field.label;
 
-                    switch (field.type) {
-                        case 'text':
-                        case 'datetime-local':
-                        case 'number':
-                            return `<label class="block mb-1">${label}</label>
-                                <input type="${field.type}" name="${name}" value="${value}" class="w-full border rounded px-3 py-2" ${field.required ? 'required' : ''}>`;
+                initializeCheckboxFields() {
+                    // Initialize checkbox fields as arrays
+                    this.config.stage.conditional_field_group.forEach(group => {
+                        Object.entries(group.fields).forEach(([key, field]) => {
+                            if (field.type === 'checkbox') {
+                                this.formData[key] = [];
+                            }
+                        });
+                    });
+                },
 
-                        case 'textarea':
-                            return `<label class="block mb-1">${label}</label>
-                                <textarea name="${name}" class="w-full border rounded px-3 py-2" ${field.required ? 'required' : ''}>${value}</textarea>`;
+                handleStageChange() {console.log(Object.keys(this.formData));
+                    console.log(Object.values(this.formData));
+                    // Reset form data when stage changes
+                    const stage = this.formData.stage;
+                    this.formData = { stage };
+                    this.initializeCheckboxFields();
 
-                        case 'select':
-                            return `<label class="block mb-1">${label}</label>
-                                <select name="${name}" class="w-full border rounded px-3 py-2">
-                                    ${Object.entries(field.values).map(([val, lbl]) =>
-                                `<option value="${val}" ${val === value ? 'selected' : ''}>${lbl}</option>`
-                            ).join('')}
-                                </select>`;
+                },
 
-                        case 'checkbox':
-                            return `<label class="block mb-1">${label}</label>
-                                ${Object.entries(field.values).map(([val, lbl]) =>
-                                `<label class="inline-flex items-center mr-4">
-                                        <input type="checkbox" name="${name}[]" value="${val}" ${Array.isArray(value) && value.includes(val) ? 'checked' : ''}>
-                                        <span class="ml-1">${lbl}</span>
-                                    </label>`
-                            ).join('')}`;
+                getStageTitle() {
+                    if (!this.formData.stage) return '';
+                    return this.config.stage.values[this.formData.stage] + ' Details';
+                },
 
-                        case 'group':
-                            return `<fieldset class="border p-3 rounded mb-4">
-                                <legend class="text-sm font-semibold mb-2">${label}</legend>
-                                ${Object.entries(field.fields).map(([subKey, subField]) =>
-                                this.renderField(`${key}[${subKey}]`, subField, stage)
-                            ).join('')}
-                            </fieldset>`;
+                getConditionalFields() {
+                    if (!this.formData.stage) return [];
+                    return this.config.stage.conditional_field_group.filter(
+                        group => group.on === `stage:${this.formData.stage}`
+                    );
+                },
+
+                getFieldClass(fieldConfig) {
+                    // Return appropriate CSS classes based on field type
+                    if (fieldConfig.type === 'textarea' || fieldConfig.type === 'group') {
+                        return 'md:col-span-2';
+                    }
+                    return '';
+                },
+
+                handleCheckboxChange(fieldKey, value, fieldConfig) {
+                    // Ensure the field is initialized as an array
+                    if (!Array.isArray(this.formData[fieldKey])) {
+                        this.formData[fieldKey] = [];
+                    }
+                },
+
+                getConditionalSubFields() {
+                    const conditionalFields = [];
+
+                    if (!this.formData.stage) return conditionalFields;
+
+                    const currentStageFields = this.getConditionalFields();
+
+                    currentStageFields.forEach(group => {
+                        Object.entries(group.fields).forEach(([fieldKey, fieldConfig]) => {
+                            if (fieldConfig.conditional_field_group) {
+                                fieldConfig.conditional_field_group.forEach(conditionalGroup => {
+                                    conditionalFields.push({
+                                        fieldKey,
+                                        condition: conditionalGroup.on,
+                                        fields: conditionalGroup.fields
+                                    });
+                                });
+                            }
+                        });
+                    });
+
+                    return conditionalFields;
+                },
+
+                shouldShowConditionalField(conditionalField) {
+                    const [parentField, expectedValue] = conditionalField.condition.split(':');
+                    const currentValue = this.formData[parentField];
+
+                    if (Array.isArray(currentValue)) {
+                        return currentValue.includes(expectedValue);
                     }
 
-                    return '';
+                    return currentValue === expectedValue;
+                },
+
+                submitForm() {
+                    console.log('Form submitted:', this.formData);
+                    alert('Form submitted! Check console and debug panel for data.');
                 }
             }
         }
