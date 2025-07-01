@@ -7,7 +7,12 @@
     {{ json_encode(old() ?: $ecoProcess ?? []) }}
 
     <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8" x-data="foodProcessingForm({{ json_encode(old() ?: $ecoProcess ?? []) }})">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8" 
+             x-data="foodProcessingForm({{ json_encode(array_merge(
+                ['stage' => ''],
+                old() ?: [],
+                isset($ecoProcess) ? ['stage' => $ecoProcess->stage] : []
+             )) }})">
             <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess] ) : route('batches.eco-processes.store', $batch) }}">
                 @csrf
                 @if(isset($ecoProcess))
@@ -27,18 +32,37 @@
                                     <label for="stage" class="block text-sm font-medium text-gray-700">
                                         Stage <span class="text-red-500">*</span>
                                     </label>
-                                    <select
-                                        id="stage"
-                                        x-model="formData.stage"
-                                        @change="handleStageChange"
-                                        required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="">Select processing stage</option>
-                                        <template x-for="(label, value) in config.stage.values" :key="value">
-                                            <option :value="value" x-text="label" :selected="formData.stage === value"></option>
-                                        </template>
-                                    </select>
+                                    <!-- Debug Info -->
+                                    <div class="mb-2 p-2 bg-gray-100 rounded text-xs">
+                                        <div>formData.stage: <span x-text="formData.stage || 'null'"></span></div>
+                                        <div>config.stage.values: <span x-text="JSON.stringify(config.stage.values)"></span></div>
+                                    </div>
+                                    
+                                    <!-- Stage Selector -->
+                                    <div>
+                                        <select
+                                            id="stage"
+                                            x-model="formData.stage"
+                                            @change="handleStageChange"
+                                            required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">Select processing stage</option>
+                                            <option value="harvest_processing">Harvest Processing</option>
+                                            <option value="cutting_peeling">Cutting/Peeling</option>
+                                            <option value="packaging_prep">Packaging Preparation</option>
+                                            <option value="washing_n_treatment">Washing & Treatment</option>
+                                            <option value="drying_n_pre_cooling">Drying & Pre Cooling</option>
+                                            <option value="waste_handling">Waste Handling</option>
+                                        </select>
+                                        
+                                        <!-- Debug Info -->
+                                        <div class="mt-2 p-2 bg-blue-50 rounded text-xs">
+                                            <div>formData.stage: <span x-text="formData.stage || 'null'"></span></div>
+                                            <div>Select value: <span x-text="$el.querySelector('#stage').value || 'null'"></span></div>
+                                            <div>EcoProcess ID: <span>{{ $ecoProcess->id ?? 'null' }}</span></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Conditional Fields -->
@@ -282,8 +306,33 @@
     </div>
 
     <script>
-        function foodProcessingForm(ecoProcess) {
+        function foodProcessingForm(initialData) {
+            // Ensure initialData is an object
+            initialData = initialData || {};
+            
+            // Log initial data for debugging
+            console.log('Form initial data:', initialData);
+            
             return {
+                // Form data with default values
+                formData: {
+                    stage: initialData.stage || ''
+                },
+                
+                // Initialize the component
+                init() {
+                    // Log when the component is initialized
+                    console.log('Component initialized with stage:', this.formData.stage);
+                    
+                    // Ensure the select element has the correct value
+                    this.$nextTick(() => {
+                        const select = this.$el.querySelector('#stage');
+                        if (select) {
+                            select.value = this.formData.stage || '';
+                            console.log('Select element value set to:', select.value);
+                        }
+                    });
+                },
                 // Form configuration (converted from PHP array)
                 config: {
                     "stage": {
@@ -549,8 +598,7 @@
                     }
                 },
 
-                // Form data
-                formData: ecoProcess,
+
 
                 // Initialize checkboxes as arrays
                 init() {
