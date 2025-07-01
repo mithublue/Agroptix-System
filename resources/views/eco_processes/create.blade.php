@@ -40,21 +40,31 @@
                                     
                                     <!-- Stage Selector -->
                                     <div>
-                                        <select
-                                            id="stage"
-                                            x-model="formData.stage"
-                                            @change="handleStageChange"
-                                            required
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="">Select processing stage</option>
-                                            <option value="harvest_processing">Harvest Processing</option>
-                                            <option value="cutting_peeling">Cutting/Peeling</option>
-                                            <option value="packaging_prep">Packaging Preparation</option>
-                                            <option value="washing_n_treatment">Washing & Treatment</option>
-                                            <option value="drying_n_pre_cooling">Drying & Pre Cooling</option>
-                                            <option value="waste_handling">Waste Handling</option>
-                                        </select>
+                                        <div x-data="{ 
+                                            init() {
+                                                // Wait for the options to be rendered
+                                                this.$nextTick(() => {
+                                                    // Set the select value after options are rendered
+                                                    const select = this.$el.querySelector('select');
+                                                    if (select) {
+                                                        select.value = this.$parent.formData.stage || '';
+                                                    }
+                                                });
+                                            }
+                                        }">
+                                            <select
+                                                id="stage"
+                                                x-model="formData.stage"
+                                                @change="handleStageChange"
+                                                required
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="">Select processing stage</option>
+                                                <template x-for="[value, label] in Object.entries(config.stage.values)" :key="value">
+                                                    <option :value="value" x-text="label" :selected="formData.stage === value"></option>
+                                                </template>
+                                            </select>
+                                        </div>
                                         
                                         <!-- Debug Info -->
                                         <div class="mt-2 p-2 bg-blue-50 rounded text-xs">
@@ -324,14 +334,8 @@
                     // Log when the component is initialized
                     console.log('Component initialized with stage:', this.formData.stage);
                     
-                    // Ensure the select element has the correct value
-                    this.$nextTick(() => {
-                        const select = this.$el.querySelector('#stage');
-                        if (select) {
-                            select.value = this.formData.stage || '';
-                            console.log('Select element value set to:', select.value);
-                        }
-                    });
+                    // No need to set select value here anymore as it's handled in the nested component
+                    console.log('Form data:', this.formData);
                 },
                 // Form configuration (converted from PHP array)
                 config: {
