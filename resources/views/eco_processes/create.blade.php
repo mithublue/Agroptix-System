@@ -39,32 +39,52 @@
                                     </div>
                                     
                                     <!-- Stage Selector -->
-                                    <div>
-                                        <div x-data="{ 
-                                            init() {
-                                                // Wait for the options to be rendered
-                                                this.$nextTick(() => {
-                                                    // Set the select value after options are rendered
-                                                    const select = this.$el.querySelector('select');
-                                                    if (select) {
-                                                        select.value = this.$parent.formData.stage || '';
-                                                    }
-                                                });
-                                            }
-                                        }">
-                                            <select
-                                                id="stage"
-                                                x-model="formData.stage"
-                                                @change="handleStageChange"
-                                                required
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="">Select processing stage</option>
-                                                <template x-for="[value, label] in Object.entries(config.stage.values)" :key="value">
-                                                    <option :value="value" x-text="label" :selected="formData.stage === value"></option>
-                                                </template>
-                                            </select>
-                                        </div>
+                                    <div x-data="{ 
+                                        selectedValue: formData.stage || '',
+                                        init() {
+                                            // Set up a watcher to update the select when options are available
+                                            const updateSelect = () => {
+                                                if (this.selectedValue && Object.keys(this.config.stage.values).length > 0) {
+                                                    this.$nextTick(() => {
+                                                        const select = this.$el.querySelector('select');
+                                                        if (select) {
+                                                            select.value = this.selectedValue;
+                                                            console.log('Select value set to:', this.selectedValue);
+                                                        }
+                                                    });
+                                                }
+                                            };
+                                            
+                                            // Initial update
+                                            updateSelect();
+                                            
+                                            // Watch for changes to the stage values
+                                            this.$watch('config.stage.values', () => updateSelect());
+                                            
+                                            // Watch for changes to the selected value
+                                            this.$watch('selectedValue', () => updateSelect());
+                                            
+                                            // Update the parent formData when selection changes
+                                            this.$watch('$el.querySelector(\'select\').value', (value) => {
+                                                if (value !== undefined) {
+                                                    this.formData.stage = value;
+                                                    this.selectedValue = value;
+                                                }
+                                            });
+                                        }
+                                    }">
+                                        <select
+                                            id="stage"
+                                            x-model="selectedValue"
+                                            @change="handleStageChange"
+                                            required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">Select processing stage</option>
+                                            <template x-for="[value, label] in Object.entries(config.stage.values)" :key="value">
+                                                <option :value="value" x-text="label"></option>
+                                            </template>
+                                        </select>
                                         
                                         <!-- Debug Info -->
                                         <div class="mt-2 p-2 bg-blue-50 rounded text-xs">
