@@ -4,9 +4,10 @@
             {{ isset($ecoProcess) ? 'Edit' : 'Create' }} Eco Process
         </h2>
     </x-slot>
+    {{ json_encode(old() ?: $ecoProcess ?? []) }}
 
     <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8" x-data="foodProcessingForm({{ json_encode(old() ?: $ecoProcess ?? []) }})">
             <form method="POST" action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess] ) : route('batches.eco-processes.store', $batch) }}">
                 @csrf
                 @if(isset($ecoProcess))
@@ -15,7 +16,7 @@
 
                 <div class="max-w-4xl mx-auto px-6">
                     <!-- Main Form Component -->
-                    <div x-data="foodProcessingForm({{ json_encode(old() ?: $ecoProcess ?? []) }})" class="bg-white rounded-lg shadow-lg">
+                    <div class="bg-white rounded-lg shadow-lg">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h1 class="text-2xl font-bold text-gray-900">Food Processing Tracking Form</h1>
                         </div>
@@ -35,7 +36,7 @@
                                     >
                                         <option value="">Select processing stage</option>
                                         <template x-for="(label, value) in config.stage.values" :key="value">
-                                            <option :value="value" x-text="label"></option>
+                                            <option :value="value" x-text="label" :selected="formData.stage === value"></option>
                                         </template>
                                     </select>
                                 </div>
@@ -226,7 +227,7 @@
                                         </template>
 
                                         <!-- Conditional Sub-fields -->
-                                        <template x-for="conditionalField in getConditionalSubFields()" :key="conditionalField.fieldKey">
+                                        {{--<template x-for="conditionalField in getConditionalSubFields()" :key="conditionalField.fieldKey">
                                             <div x-show="shouldShowConditionalField(conditionalField)" x-transition>
                                                 <template x-for="(subFieldConfig, subFieldKey) in conditionalField.fields" :key="subFieldKey">
                                                     <div class="space-y-2">
@@ -248,7 +249,7 @@
                                                     </div>
                                                 </template>
                                             </div>
-                                        </template>
+                                        </template>--}}
                                     </div>
                                 </div>
 
@@ -267,14 +268,14 @@
                     </div>
 
                     <!-- Debug Panel -->
-                    <div x-show="Object.keys(formData).length > 1" x-transition class="bg-white rounded-lg shadow-lg mt-6">
+                    {{--<div x-show="Object.keys(formData).length > 1" x-transition class="bg-white rounded-lg shadow-lg mt-6">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h2 class="text-xl font-bold text-gray-900">Form Data (Debug)</h2>
                         </div>
                         <div class="p-6">
                             <pre x-text="JSON.stringify(formData, null, 2)" class="bg-gray-100 p-4 rounded text-sm "></pre>
                         </div>
-                    </div>
+                    </div>--}}
                 </div>
             </form>
         </div>
@@ -549,12 +550,12 @@
                 },
 
                 // Form data
-                formData: {"stage": 'washing_n_treatment'},
+                formData: ecoProcess,
 
                 // Initialize checkboxes as arrays
                 init() {
                     this.initializeCheckboxFields();
-                    console.log(ecoProcess);
+                    console.log(this.formData);
                 },
 
                 initializeCheckboxFields() {
