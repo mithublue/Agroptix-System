@@ -238,11 +238,20 @@
         }
     }" x-init="initializeVisibleFields()" class="w-full max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg">
             <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Processing Form</h1>
+            <!-- Display JSON Data -->
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Form Configuration JSON</h2>
+{{--                <pre class="bg-gray-100 p-4 rounded-lg shadow-sm text-sm text-gray-700 overflow-auto"><code x-text="JSON.stringify(config, null, 2)"></code></pre>--}}
+            </div>
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Form Data JSON</h2>
+                <pre class="bg-gray-100 p-4 rounded-lg shadow-sm text-sm text-gray-700 overflow-auto"><code x-text="JSON.stringify(formData, null, 2)"></code></pre>
+            </div>
 
             <!-- Stage Selection -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2" x-text="config.stage.label"></label>
-                <select x-model="formData.data.stage" @change="updateFormData('stage', $event.target.value)"
+                <select x-model="formData.stage" @change="updateFormData('stage', $event.target.value)"
                         class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                     <option value="">Select a stage</option>
                     <template x-for="[key, value] in Object.entries(config.stage.values)" :key="key">
@@ -342,15 +351,7 @@
                 </div>
             </template>
 
-            <!-- Display JSON Data -->
-            <div class="mt-8">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Form Data JSON</h2>
-                <pre class="bg-gray-100 p-4 rounded-lg shadow-sm text-sm text-gray-700 overflow-auto"><code x-text="JSON.stringify(formData, null, 2)"></code></pre>
-            </div>
-            <div class="mt-8">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Form Configuration JSON</h2>
-                <pre class="bg-gray-100 p-4 rounded-lg shadow-sm text-sm text-gray-700 overflow-auto"><code x-text="JSON.stringify(config, null, 2)"></code></pre>
-            </div>
+
         </div>
 
     </div>
