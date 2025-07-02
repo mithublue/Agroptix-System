@@ -16,14 +16,10 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form action="{{ route('products.store') }}" method="POST" class="space-y-6">
                         @csrf
-                        
                         <!-- Name -->
                         <div>
                             <x-label for="name" :value="__('Product Name')" />
-                            <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus />
-                            @error('name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" autofocus />
                         </div>
 
                         <!-- Description -->

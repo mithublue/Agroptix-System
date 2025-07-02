@@ -18,7 +18,7 @@
                     <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6">
                         @csrf
                         @method('PUT')
-                        
+
                         <!-- Name -->
                         <div>
                             <x-label for="name" :value="__('Product Name')" />
@@ -76,12 +76,6 @@
                                 </x-button>
                             </div>
                         </div>
-                    </form>
-
-                    <!-- Delete Form -->
-                    <form id="delete-form" action="{{ route('products.destroy', $product) }}" method="POST" class="hidden">
-                        @csrf
-                        @method('DELETE')
                     </form>
                 </div>
             </div>
