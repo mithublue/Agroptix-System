@@ -31,29 +31,66 @@ class EcoProcessController extends Controller
     /**
      * Store a newly created eco process in storage.
      */
-    public function store(Request $request, Batch $batch): RedirectResponse
+    public function store(Request $request, Batch $batch)
     {
-        // Get all form data except _token and _method
-        $formData = $request->except(['_token', '_method']);
-        $stage = $request->input('stage');
+        try {
+            // Get the raw JSON data if it was sent
+            $jsonData = $request->input('data');
+            $formData = $jsonData ? json_decode($jsonData, true) : $request->except(['_token', '_method']);
+            
+            // If we couldn't decode JSON, use the request data directly
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $formData = $request->except(['_token', '_method']);
+            }
 
-        // Prepare the data for storage
-        $ecoProcessData = [
-            'batch_id' => $batch->id,
-            'stage' => $stage,
-            'data' => $formData, // This will be automatically JSON-encoded by Laravel
-            'status' => 'in_progress', // Default status
-            'start_time' => now(), // Default start time
-        ];
+            // Get the stage from the form data or request
+            $stage = $formData['stage'] ?? $request->input('stage');
+            
+            if (!$stage) {
+                throw new \Exception('Stage is required');
+            }
 
-        // Create the eco process
-        $ecoProcess = EcoProcess::create($ecoProcessData);
+            // Prepare the data for storage
+            $ecoProcessData = [
+                'batch_id' => $batch->id,
+                'stage' => $stage,
+                'data' => $formData,
+                'status' => 'in_progress',
+                'start_time' => now(),
+            ];
 
-        return redirect()
-            ->route('batches.eco-processes.index', [$batch])
-            ->with('success', 'Eco process created successfully.');
-        ////
-//        $ecoProcess = $batch->ecoProcesses()->create($request->validated());
+            // Create the eco process
+            $ecoProcess = EcoProcess::create($ecoProcessData);
+
+            // If this is an AJAX request, return JSON response
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Eco process created successfully',
+                    'redirect' => route('batches.eco-processes.index', $batch)
+                ]);
+            }
+
+            return redirect()
+                ->route('batches.eco-processes.index', $batch)
+                ->with('success', 'Eco process created successfully.');
+                
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Error creating eco process: ' . $e->getMessage());
+            
+            // If this is an AJAX request, return JSON error
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error creating eco process: ' . $e->getMessage()
+                ], 422);
+            }
+            
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Error creating eco process: ' . $e->getMessage()]);
+        }
     }
 
     /**

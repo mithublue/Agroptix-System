@@ -5,10 +5,9 @@
         </h2>
     </x-slot>
 {{--    {{ json_encode(old() ?: $ecoProcess ?? []) }}--}}
-    <form method="POST" action="{{ route('batches.eco-processes.store', [$batch]) }}">
+    <form method="POST" action="{{ route('batches.eco-processes.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="formHandler()">
         @csrf
-        @method('PUT')
-        <div class="container mx-auto px-4 py-8" x-data="formHandler()" x-cloak>
+        <div class="container mx-auto px-4 py-8" x-cloak>
             <div class="max-w-6xl mx-auto">
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                     <!-- Header -->
@@ -200,8 +199,7 @@
                             <!-- Submit Button -->
                             <div x-show="formData.stage" class="pt-4">
                                 <button
-                                    type="button"
-                                    @click="submitForm()"
+                                    type="submit"
                                     class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium"
                                 >
                                     Submit Form
@@ -463,8 +461,50 @@
                 },
 
                 submitForm() {
-                    console.log('Form submitted:', this.formData);
-                    // alert('Form submitted successfully! Check the console for details.');
+                    // Convert form data to JSON and submit via fetch
+                    const form = this.$el;
+                    const formData = new FormData(form);
+
+                    // Add the form data from Alpine.js to the FormData
+                    Object.entries(this.formData).forEach(([key, value]) => {
+                        if (Array.isArray(value)) {
+                            value.forEach(val => formData.append(`${key}[]`, val));
+                        } else if (value !== null && value !== undefined) {
+                            formData.set(key, value);
+                        }
+                    });
+
+                    // Add the stage data
+                    formData.set('stage', this.formData.stage);
+                    formData.set('data', JSON.stringify(this.formData));
+
+                    // Submit the form
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Handle success
+                        alert('Form submitted successfully!');
+                        window.location.href = data.redirect || '/dashboard';
+                    })
+                    .catch(error => {
+                        // Handle error
+                        console.error('Error:', error);
+                        const errorMessage = error.message || 'An error occurred while submitting the form.';
+                        alert(`Error: ${errorMessage}`);
+                    });
                 }
             }
         }
