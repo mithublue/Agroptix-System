@@ -4,7 +4,10 @@
             {{ isset($ecoProcess) ? 'Edit' : 'Create' }} Eco Process
         </h2>
     </x-slot>
-{{--    {{ json_encode(old() ?: $ecoProcess ?? []) }}--}}
+    @php
+        $formData = json_encode(old() ?: $ecoProcess->data ?? []);
+    @endphp
+
     <form method="POST" action="{{ route('batches.eco-processes.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="formHandler()">
         @csrf
         <div class="container mx-auto px-4 py-8" x-cloak>
@@ -239,7 +242,7 @@
     <script>
         function formHandler() {
             return {
-                formData: {
+                formData: JSON.parse(<?php echo json_encode($formData); ?>) || {
                     stage: '',
                     processing_type: [],
                     preservative_used: [],
