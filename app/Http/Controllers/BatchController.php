@@ -42,7 +42,7 @@ class BatchController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-
+        // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new BatchStoreRequest();
 
@@ -64,19 +64,16 @@ class BatchController extends Controller
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
 
+        // 7. If validation passes, get the validated data.
+        $validatedData = $validator->validated();
+
+        // Create the Source record
         try {
-            Batch::create($request->validated());
+            Batch::create($validatedData);
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch created successfully.');
         } catch (\Exception $e) {
-            // Log the full error
-            \Log::error('Error creating batch:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->all()
-            ]);
-
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create batch. ' . $e->getMessage());
@@ -96,10 +93,34 @@ class BatchController extends Controller
         return view('batch.edit', compact('batch', 'sources', 'products'));
     }
 
-    public function update(BatchUpdateRequest $request, Batch $batch): RedirectResponse
+    public function update(Request $request, Batch $batch): RedirectResponse
     {
+        //    to get access to its rules and authorization logic.
+        $formRequest = new BatchUpdateRequest();
+
+        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        // 3. Get the validation rules from your Form Request class.
+        $rules = $formRequest->rules();
+
+        // 4. Create a new validator instance manually.
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate the request
+        if ($validator->fails()) {
+            // 6. Manually handle the failure.
+            //    To make it work with Hotwired Turbo, we must set the 422 status code.
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+
+        // 7. If validation passes, get the validated data.
+        $validatedData = $validator->validated();
+
         try {
-            $batch->update($request->validated());
+            $batch->update($validatedData);
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch updated successfully.');
