@@ -119,4 +119,39 @@ class EcoProcessController extends Controller
             ->route('batches.eco-processes.index', [$batch])
             ->with('success', 'Eco process updated successfully.');
     }
+
+    /**
+     * Remove the specified eco process from storage.
+     */
+    public function destroy(Batch $batch, EcoProcess $ecoProcess)
+    {
+        try {
+            $ecoProcess->delete();
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Eco process deleted successfully',
+                    'redirect' => route('batches.eco-processes.index', $batch)
+                ]);
+            }
+
+            return redirect()
+                ->route('batches.eco-processes.index', $batch)
+                ->with('success', 'Eco process deleted successfully.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error deleting eco process: ' . $e->getMessage());
+            
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting eco process: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()
+                ->with('error', 'Error deleting eco process: ' . $e->getMessage());
+        }
+    }
 }

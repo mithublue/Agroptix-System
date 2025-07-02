@@ -69,10 +69,38 @@
                                             {{ $ecoProcess->end_time?->format('Y-m-d H:i') ?? 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex justify-end space-x-2">
+                                            <div class="flex justify-end space-x-4">
                                                 <a href="{{ route('batches.eco-processes.edit', [$batch, $ecoProcess]) }}" class="text-indigo-600 hover:text-indigo-900">
                                                     {{ __('Edit') }}
                                                 </a>
+                                                <form action="{{ route('batches.eco-processes.destroy', [$batch, $ecoProcess]) }}" method="POST" class="inline" x-data="{ showConfirm: false }" @click.away="showConfirm = false">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button 
+                                                        type="button"
+                                                        @click="showConfirm = true"
+                                                        x-show="!showConfirm"
+                                                        class="text-red-600 hover:text-red-900 focus:outline-none"
+                                                    >
+                                                        {{ __('Delete') }}
+                                                    </button>
+                                                    <div x-show="showConfirm" class="inline-flex items-center space-x-2">
+                                                        <span class="text-sm text-gray-600">Are you sure?</span>
+                                                        <button 
+                                                            type="submit" 
+                                                            class="text-red-600 hover:text-red-900 font-medium focus:outline-none"
+                                                        >
+                                                            {{ __('Yes, delete') }}
+                                                        </button>
+                                                        <button 
+                                                            type="button" 
+                                                            @click="showConfirm = false"
+                                                            class="text-gray-600 hover:text-gray-900 focus:outline-none"
+                                                        >
+                                                            {{ __('No, cancel') }}
+                                                        </button>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

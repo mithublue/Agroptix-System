@@ -143,7 +143,7 @@ Route::middleware('auth')->group(function () {
         Route::get('batches/create', [App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
         Route::post('batches', [App\Http\Controllers\BatchController::class, 'store'])->name('batches.store');
     });
-    
+
     Route::middleware(['can:view_batch'])->group(function () {
         Route::get('batches', [App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
         Route::get('batches/{batch}', [App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
@@ -160,19 +160,22 @@ Route::middleware('auth')->group(function () {
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
             ->name('batches.eco-processes.index');
-            
+
         Route::middleware(['can:create_batch'])->group(function () {
             Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
                 ->name('batches.eco-processes.create');
-                
+
             Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
                 ->name('batches.eco-processes.store');
-                
+
             Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
                 ->name('batches.eco-processes.edit');
-                
+
             Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
                 ->name('batches.eco-processes.update');
+
+            Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
+                ->name('batches.eco-processes.destroy');
         });
     });
 });
@@ -182,7 +185,7 @@ require __DIR__.'/auth.php';
 // Debug route to check permissions
 Route::get('/debug-permissions', function () {
     $user = auth()->user();
-    
+
     if (!$user) {
         return response()->json([
             'authenticated' => false,
@@ -218,15 +221,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::middleware(['can:manage_users'])->group(function () {
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
     });
-    
+
     // Roles
     Route::middleware(['can:manage_roles'])->group(function () {
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
-        
+
         Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
     });
-    
+
     // Permissions
     Route::middleware(['can:manage_permissions'])->group(function () {
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
