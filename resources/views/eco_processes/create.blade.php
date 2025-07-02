@@ -83,11 +83,11 @@
                                 conditional_field_group: [
                                     {
                                         on: 'disinfection_steps:temperature',
-                                        fields: { temperature: { label: 'Temperature', type: 'number', values: { min: 0, max: 100 } } }
+                                        fields: { temperature_value: { label: 'Temperature', type: 'number', values: { min: 0, max: 100 } } }
                                     },
                                     {
                                         on: 'disinfection_steps:chlorine_solution_strength',
-                                        fields: { chlorine_solution_strength: { label: 'Chlorine Solution Strength', type: 'number', values: { min: 0, max: 100 } } }
+                                        fields: { chlorine_solution_strength_value: { label: 'Chlorine Solution Strength', type: 'number', values: { min: 10, max: 100 } } }
                                     }
                                 ]
                             },
@@ -242,7 +242,7 @@
             <!-- Stage Selection -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2" x-text="config.stage.label"></label>
-                <select x-model="formData.stage" @change="updateFormData('stage', $event.target.value)"
+                <select x-model="formData.data.stage" @change="updateFormData('stage', $event.target.value)"
                         class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                     <option value="">Select a stage</option>
                     <template x-for="[key, value] in Object.entries(config.stage.values)" :key="key">
@@ -324,6 +324,7 @@
                                                     <template x-for="[nestedKey, nestedField] in Object.entries(group.fields)" :key="nestedKey">
                                                         <div class="mb-4" x-show="isFieldVisible(`${key}.${nestedKey}`)">
                                                             <label class="block text-sm font-medium text-gray-700 mb-2" x-text="nestedField.label"></label>
+                                                            <span x-html="nestedKey"></span>
                                                             <input :type="nestedField.type" x-model="formData[nestedKey]"
                                                                    @input="updateFormData(nestedKey, $event.target.value)"
                                                                    :required="nestedField.required" :min="nestedField.min || nestedField.values?.min" :max="nestedField.max || nestedField.values?.max"
