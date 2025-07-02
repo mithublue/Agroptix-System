@@ -20,13 +20,15 @@ class BatchUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'batch_code' => ['nullable', 'string'],
-            'source_id' => ['nullable', 'integer', 'exists:sources,,id'],
-            'product_id' => ['nullable', 'integer', 'exists:products,,id'],
-            'harvest_time' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'max:20'],
-            'source_as_source_id' => ['required', 'integer', 'exists:source_as_sources,id'],
-            'product_as_product_id' => ['required', 'integer', 'exists:product_as_products,id'],
+            'batch_code' => ['required', 'string', 'max:255'],
+            'source_id' => ['required', 'integer', 'exists:sources,id'],
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'harvest_time' => ['required', 'date'],
+            'status' => ['required', 'string', 'max:20'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
+            'grade' => ['nullable', 'string', 'max:50'],
+            'has_defect' => ['boolean'],
+            'remark' => ['nullable', 'string'],
         ];
     }
 }

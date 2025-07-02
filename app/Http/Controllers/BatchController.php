@@ -88,7 +88,13 @@ class BatchController extends Controller
 
     public function edit(Batch $batch): View
     {
-        $sources = Source::pluck('name', 'id');
+        $sources = Source::all()->mapWithKeys(function ($source) {
+            $display = $source->type ?: "Source #{$source->id}";
+            if ($source->owner) {
+                $display .= " (Owner: {$source->owner->name})";
+            }
+            return [$source->id => $display];
+        });
         $products = Product::pluck('name', 'id');
         return view('batch.edit', compact('batch', 'sources', 'products'));
     }
