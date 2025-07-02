@@ -255,22 +255,35 @@
 
         <!-- Main Content -->
         <div class="flex flex-col flex-1 overflow-hidden">
-            <!-- Mobile header -->
-            <header class="flex items-center justify-between px-4 py-3 bg-white shadow-sm lg:hidden">
-                <button @click="mobileSidebarOpen = true" class="p-2 text-gray-500 rounded-md hover:text-gray-600 hover:bg-gray-100">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-                <div class="text-xl font-semibold text-gray-800">
-                    {{ config('app.name') }}
+            <!-- Header -->
+            <header class="bg-white shadow">
+                <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {{ $header ?? '' }}
                 </div>
-                <div class="w-6"></div> <!-- Spacer for alignment -->
+            </header>
+
+            <!-- Mobile header -->
+            <div class="lg:hidden">
+                <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center">
+                        <button @click="mobileSidebarOpen = true" class="p-2 -ml-2 text-gray-500 rounded-md hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                            <span class="sr-only">Open sidebar</span>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        <h1 class="ml-2 text-lg font-semibold text-gray-900">
+                            @yield('title', config('app.name'))
+                        </h1>
+                    </div>
+                </div>
+            </div> <!-- Spacer for alignment -->
             </header>
 
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto focus:outline-none">
                 <div class="py-6">
+
                     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         {{ $slot }}
                     </div>
