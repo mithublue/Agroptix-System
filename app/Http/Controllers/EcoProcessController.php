@@ -33,8 +33,14 @@ class EcoProcessController extends Controller
      */
     public function create(Batch $batch): View
     {
-        dd('qwerty');
-        return view('eco_processes.create', compact('batch'));
+        $formData = [
+            'stage' => '',
+            'processing_type' => [],
+            'preservative_used' => [],
+            // Add other default form fields here
+        ];
+        
+        return view('eco_processes.create', compact('batch', 'formData'));
     }
 
     /**

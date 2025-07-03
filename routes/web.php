@@ -1,8 +1,13 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\EcoProcessController;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
+
+// Test route for debugging
+Route::get('/test-eco-process-create/{batch}', [EcoProcessController::class, 'create'])
+    ->name('test.eco-process.create');
 
 // Test route - basic route test
 Route::get('/test-route', function () {
@@ -162,7 +167,8 @@ Route::middleware('auth')->group(function () {
             ->name('batches.eco-processes.index');
 
         Route::get('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'show'])
-            ->name('batches.eco-processes.show');
+            ->name('batches.eco-processes.show')
+            ->where('ecoProcess', '[0-9]+');
 
         Route::middleware(['can:create_batch'])->group(function () {
             Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
@@ -194,9 +200,23 @@ Route::get('/debug-permissions', function () {
             'authenticated' => false,
             'message' => 'No authenticated user',
             'session' => session()->all(),
-            'auth_check' => auth()->check()
+            'auth_check' => auth()->check(),
+            'can_create_batch' => false,
+            'permissions' => []
         ]);
     }
+
+    return response()->json([
+        'authenticated' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'can_create_batch' => $user->can('create_batch')
+        ]
+    ]);
 
     return response()->json([
         'authenticated' => true,
