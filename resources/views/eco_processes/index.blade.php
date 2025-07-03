@@ -50,6 +50,12 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
+                                                $statuses = [
+                                                    'pending' => 'Pending',
+                                                    'in_progress' => 'In Progress',
+                                                    'completed' => 'Completed',
+                                                    'failed' => 'Failed'
+                                                ];
                                                 $statusColors = [
                                                     'pending' => 'bg-yellow-100 text-yellow-800',
                                                     'in_progress' => 'bg-blue-100 text-blue-800',
@@ -58,14 +64,84 @@
                                                 ];
                                                 $statusColor = $statusColors[$ecoProcess->status] ?? 'bg-gray-100 text-gray-800';
                                             @endphp
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusColor }}">
-                                                {{ str_replace('_', ' ', ucfirst($ecoProcess->status)) }}
-                                            </span>
+                                            @can('create_batch')
+                                                <div x-data="{
+                                                    status: '{{ $ecoProcess->status }}',
+                                                    isUpdating: false,
+                                                    statuses: {{ json_encode($statuses) }},
+                                                    statusColors: {{ json_encode($statusColors) }},
+                                                    updateStatus() {
+                                                        this.isUpdating = true;
+                                                        fetch('{{ route('batches.eco-processes.status.update', [$batch, $ecoProcess]) }}', {
+                                                            method: 'PATCH',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                'Accept': 'application/json',
+                                                                'X-Requested-With': 'XMLHttpRequest'
+                                                            },
+                                                            body: JSON.stringify({ status: this.status })
+                                                        })
+                                                        .then(response => response.json())
+                                                        .then(data => {
+                                                            if (data.success) {
+                                                                // Update the status display
+                                                                this.status = data.data.status;
+                                                                // You can also update the timestamps if needed
+                                                                const startTimeElement = this.$el.closest('tr').querySelector('.start-time');
+                                                                const endTimeElement = this.$el.closest('tr').querySelector('.end-time');
+                                                                if (startTimeElement && data.data.start_time) {
+                                                                    startTimeElement.textContent = data.data.start_time;
+                                                                }
+                                                                if (endTimeElement && data.data.end_time) {
+                                                                    endTimeElement.textContent = data.data.end_time;
+                                                                }
+                                                            } else {
+                                                                alert('Error: ' + data.message);
+                                                            }
+                                                        })
+                                                        .catch(error => {
+                                                            console.error('Error:', error);
+                                                            alert('An error occurred while updating the status.');
+                                                        })
+                                                        .finally(() => {
+                                                            this.isUpdating = false;
+                                                        });
+                                                    }
+                                                }" class="relative">
+                                                    <div class="relative">
+                                                        <select x-model="status"
+                                                                @change="updateStatus"
+                                                                :disabled="isUpdating"
+                                                                class="appearance-none block w-full bg-white border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                                                :class="statusColors[status] + ' cursor-pointer pr-8'">
+                                                            @foreach($statuses as $value => $label)
+                                                                <option value="{{ $value }}" class="bg-white text-gray-900">{{ $label }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                    <div x-show="isUpdating" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                                                        <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusColor }}">
+                                                    {{ str_replace('_', ' ', ucfirst($ecoProcess->status)) }}
+                                                </span>
+                                            @endcan
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 start-time">
                                             {{ $ecoProcess->start_time?->format('Y-m-d H:i') ?? 'N/A' }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 end-time">
                                             {{ $ecoProcess->end_time?->format('Y-m-d H:i') ?? 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -76,7 +152,7 @@
                                                 <form action="{{ route('batches.eco-processes.destroy', [$batch, $ecoProcess]) }}" method="POST" class="inline" x-data="{ showConfirm: false }" @click.away="showConfirm = false">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         @click="showConfirm = true"
                                                         x-show="!showConfirm"
@@ -86,14 +162,14 @@
                                                     </button>
                                                     <div x-show="showConfirm" class="inline-flex items-center space-x-2">
                                                         <span class="text-sm text-gray-600">Are you sure?</span>
-                                                        <button 
-                                                            type="submit" 
+                                                        <button
+                                                            type="submit"
                                                             class="text-red-600 hover:text-red-900 font-medium focus:outline-none"
                                                         >
                                                             {{ __('Yes, delete') }}
                                                         </button>
-                                                        <button 
-                                                            type="button" 
+                                                        <button
+                                                            type="button"
                                                             @click="showConfirm = false"
                                                             class="text-gray-600 hover:text-gray-900 focus:outline-none"
                                                         >
@@ -108,7 +184,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     @if($ecoProcesses->hasPages())
                         <div class="px-6 py-4 bg-gray-50">
                             {{ $ecoProcesses->links() }}

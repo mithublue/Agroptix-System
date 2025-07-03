@@ -146,8 +146,7 @@ class EcoProcessController extends Controller
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Eco process deleted successfully',
-                    'redirect' => route('batches.eco-processes.index', $batch)
+                    'message' => 'Eco process deleted successfully.'
                 ]);
             }
 
@@ -167,6 +166,59 @@ class EcoProcessController extends Controller
 
             return back()
                 ->with('error', 'Error deleting eco process: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update the status of the specified eco process.
+     */
+    public function updateStatus(Request $request, Batch $batch, EcoProcess $ecoProcess)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,failed'
+        ]);
+
+        try {
+            $status = $request->input('status');
+            $now = now();
+            
+            $updateData = ['status' => $status];
+            
+            // Update timestamps based on status
+            if ($status === 'in_progress' && !$ecoProcess->start_time) {
+                $updateData['start_time'] = $now;
+            } elseif (in_array($status, ['completed', 'failed']) && !$ecoProcess->end_time) {
+                $updateData['end_time'] = $now;
+            }
+            
+            $ecoProcess->update($updateData);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Eco process status updated successfully.',
+                    'data' => [
+                        'status' => $status,
+                        'status_display' => str_replace('_', ' ', ucfirst($status)),
+                        'start_time' => $ecoProcess->fresh()->start_time?->format('Y-m-d H:i') ?? 'N/A',
+                        'end_time' => $ecoProcess->fresh()->end_time?->format('Y-m-d H:i') ?? 'N/A'
+                    ]
+                ]);
+            }
+
+            return back()->with('success', 'Eco process status updated successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error updating eco process status: ' . $e->getMessage());
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating eco process status: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Error updating eco process status: ' . $e->getMessage());
         }
     }
 }
