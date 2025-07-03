@@ -254,7 +254,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
 
         Route::resource('batches', \App\Http\Controllers\BatchController::class);
-
+    
     });
 
     // Permissions
@@ -263,3 +263,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
              ->name('permissions.index');
     });
 });
+
+// Batch status update route - outside admin prefix but still protected by auth and permission
+Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::class, 'updateStatus'])
+    ->name('batches.status.update')
+    ->middleware(['auth', 'can:create_batch']);

@@ -137,16 +137,50 @@ class BatchController extends Controller
         }
     }
 
-    public function destroy(Batch $batch): RedirectResponse
+    public function destroy(Batch $batch)
     {
+        $batch->delete();
+
+        return redirect()->route('batches.index')
+            ->with('success', 'Batch deleted successfully');
+    }
+
+    /**
+     * Update the status of the specified batch.
+     */
+    public function updateStatus(Request $request, Batch $batch)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,cancelled'
+        ]);
+
         try {
-            $batch->delete();
-            return redirect()
-                ->route('batches.index')
-                ->with('success', 'Batch deleted successfully.');
+            $batch->update(['status' => $request->status]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Batch status updated successfully.',
+                    'data' => [
+                        'status' => $batch->status,
+                        'status_display' => ucfirst($batch->status)
+                    ]
+                ]);
+            }
+
+            return back()->with('success', 'Batch status updated successfully.');
+            
         } catch (\Exception $e) {
-            return back()
-                ->with('error', 'Failed to delete batch. ' . $e->getMessage());
+            \Log::error('Error updating batch status: ' . $e->getMessage());
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating batch status: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Error updating batch status.');
         }
     }
 }
