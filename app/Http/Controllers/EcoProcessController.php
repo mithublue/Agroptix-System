@@ -20,11 +20,20 @@ class EcoProcessController extends Controller
 
         return view('eco_processes.index', compact('batch', 'ecoProcesses'));
     }
+
+    /**
+     * Display the specified eco process.
+     */
+    public function show(Batch $batch, EcoProcess $ecoProcess): View
+    {
+        return view('eco_processes.show', compact('batch', 'ecoProcess'));
+    }
     /**
      * Show the form for creating a new eco process.
      */
     public function create(Batch $batch): View
     {
+        dd('qwerty');
         return view('eco_processes.create', compact('batch'));
     }
 
@@ -37,7 +46,7 @@ class EcoProcessController extends Controller
             // Get the raw JSON data if it was sent
             $jsonData = $request->input('data');
             $formData = $jsonData ? json_decode($jsonData, true) : $request->except(['_token', '_method']);
-            
+
             // If we couldn't decode JSON, use the request data directly
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $formData = $request->except(['_token', '_method']);
@@ -45,7 +54,7 @@ class EcoProcessController extends Controller
 
             // Get the stage from the form data or request
             $stage = $formData['stage'] ?? $request->input('stage');
-            
+
             if (!$stage) {
                 throw new \Exception('Stage is required');
             }
@@ -74,11 +83,11 @@ class EcoProcessController extends Controller
             return redirect()
                 ->route('batches.eco-processes.index', $batch)
                 ->with('success', 'Eco process created successfully.');
-                
+
         } catch (\Exception $e) {
             // Log the error
             \Log::error('Error creating eco process: ' . $e->getMessage());
-            
+
             // If this is an AJAX request, return JSON error
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -86,7 +95,7 @@ class EcoProcessController extends Controller
                     'message' => 'Error creating eco process: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return back()
                 ->withInput()
                 ->withErrors(['error' => 'Error creating eco process: ' . $e->getMessage()]);
@@ -139,17 +148,17 @@ class EcoProcessController extends Controller
             return redirect()
                 ->route('batches.eco-processes.index', $batch)
                 ->with('success', 'Eco process deleted successfully.');
-                
+
         } catch (\Exception $e) {
             \Log::error('Error deleting eco process: ' . $e->getMessage());
-            
+
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error deleting eco process: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()
                 ->with('error', 'Error deleting eco process: ' . $e->getMessage());
         }

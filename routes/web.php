@@ -161,6 +161,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
             ->name('batches.eco-processes.index');
 
+        Route::get('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'show'])
+            ->name('batches.eco-processes.show');
+
         Route::middleware(['can:create_batch'])->group(function () {
             Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
                 ->name('batches.eco-processes.create');
