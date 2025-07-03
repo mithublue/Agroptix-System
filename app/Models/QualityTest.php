@@ -20,9 +20,7 @@ class QualityTest extends Model
         'user_id',
         'parameter_tested',
         'result',
-        'result_status',
-        'batch_as_batch_id',
-        'user_as_user_id',
+        'result_status'
     ];
 
     /**
@@ -35,29 +33,17 @@ class QualityTest extends Model
         return [
             'id' => 'integer',
             'batch_id' => 'integer',
-            'user_id' => 'integer',
-            'batch_as_batch_id' => 'integer',
-            'user_as_user_id' => 'integer',
+            'user_id' => 'integer'
         ];
-    }
-
-    public function batchAsBatch(): BelongsTo
-    {
-        return $this->belongsTo(BatchAsBatch::class);
-    }
-
-    public function userAsUser(): BelongsTo
-    {
-        return $this->belongsTo(UserAsUser::class);
     }
 
     public function batch(): BelongsTo
     {
-        return $this->belongsTo(Batches,::class);
+        return $this->belongsTo(Batch::class);
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Users,::class);
+        return $this->belongsTo(User::class);
     }
 }
