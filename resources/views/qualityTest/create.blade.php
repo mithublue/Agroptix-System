@@ -5,177 +5,510 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                
-                <form action="{{ route('quality-tests.store', ['batch' => $batch->id]) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    
+    <div class="container mx-auto px-4 py-8" x-data="labTestingForm()" >
+        <div class="max-w-6xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                    <h1 class="text-2xl font-bold text-white">Lab Testing Quality Control Form</h1>
+                    <p class="text-green-100 mt-1">Complete quality testing parameters and results</p>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-6 p-6">
+                    <!-- Form Section -->
                     <div class="space-y-6">
-                        <!-- Quality Validation Section -->
-                        <div class="bg-gray-50 p-6 rounded-lg mb-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Quality Validation</h3>
-                            
-                            <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                        <!-- Basic Information Section -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Basic Information
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
                                 <!-- Batch ID -->
-                                <div class="sm:col-span-3">
-                                    <label for="batch_id" class="block text-sm font-medium text-gray-700">Batch ID</label>
-                                    <input type="text" name="batch_id" id="batch_id" value="{{ $batch->batch_code }}" readonly
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-100">
-                                    <p class="mt-1 text-xs text-gray-500">Enter the unique batch identifier</p>
+                                <div>
+                                    <label for="batch_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Batch ID <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="batch_id"
+                                        type="text"
+                                        x-model="formData.batch_id"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="Enter batch ID"
+                                    />
                                 </div>
-                                
+
                                 <!-- Test Date -->
-                                <div class="sm:col-span-3">
-                                    <label for="test_date" class="block text-sm font-medium text-gray-700">Date of Test <span class="text-red-500">*</span></label>
-                                    <input type="date" name="test_date" id="test_date" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <div>
+                                    <label for="test_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Date of Test <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="test_date"
+                                        type="date"
+                                        x-model="formData.test_date"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    />
                                 </div>
-                                
-                                <!-- Parameter Tested -->
-                                <div class="sm:col-span-3">
-                                    <label for="test_parameter" class="block text-sm font-medium text-gray-700">Parameter Tested <span class="text-red-500">*</span></label>
-                                    <select id="test_parameter" name="test_parameter" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-                                        <option value="">Select a parameter</option>
-                                        <option value="microbes">Microbes</option>
-                                        <option value="ph">pH Level</option>
-                                        <option value="heavy_metals">Heavy Metals</option>
-                                        <option value="toxins">Toxins</option>
-                                        <option value="pesticides">Pesticides</option>
-                                        <option value="moisture">Moisture Content</option>
-                                        <option value="other">Other</option>
-                                    </select>
+
+                                <!-- Lab Name -->
+                                <div>
+                                    <label for="lab_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Testing Lab Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="lab_name"
+                                        type="text"
+                                        x-model="formData.lab_name"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="Enter lab name"
+                                    />
                                 </div>
-                                
-                                <!-- Test Result -->
-                                <div class="sm:col-span-3">
-                                    <label for="test_result" class="block text-sm font-medium text-gray-700">Test Result <span class="text-red-500">*</span></label>
-                                    <div class="mt-1 flex rounded-md shadow-sm">
-                                        <input type="number" step="0.01" name="test_result" id="test_result" required
-                                            class="block w-full rounded-none rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        <span class="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm" id="result_unit_display">
-                                            --
-                                        </span>
+
+                                <!-- Technician Name -->
+                                <div>
+                                    <label for="technician_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Technician Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id="technician_name"
+                                        type="text"
+                                        x-model="formData.technician_name"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="Enter technician name"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parameters Testing Section -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-yellow-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                </svg>
+                                Parameters Tested
+                            </h3>
+
+                            <div class="space-y-3 mb-4">
+                                <template x-for="[paramKey, paramLabel] in Object.entries(config.parameters_tested.values)" :key="paramKey">
+                                    <label class="flex items-center space-x-3 p-3 rounded-md hover:bg-yellow-100 cursor-pointer border border-yellow-200">
+                                        <input
+                                            type="checkbox"
+                                            :value="paramKey"
+                                            x-model="formData.parameters_tested"
+                                            @change="handleParameterChange(paramKey, $event.target.checked)"
+                                            class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                        />
+                                        <span class="text-sm font-medium text-gray-700" x-text="paramLabel"></span>
+                                    </label>
+                                </template>
+                            </div>
+
+                            <!-- Conditional Parameter Results -->
+                            <div x-show="formData.parameters_tested.length > 0" class="space-y-4">
+                                <h4 class="text-md font-semibold text-yellow-800 border-b border-yellow-300 pb-2">Test Results</h4>
+
+                                <template x-for="selectedParam in formData.parameters_tested" :key="selectedParam">
+                                    <div class="bg-white border border-yellow-300 rounded-lg p-4 shadow-sm">
+                                        <h5 class="font-medium text-gray-800 mb-3" x-text="config.parameters_tested.values[selectedParam]"></h5>
+
+                                        <template x-for="[fieldKey, fieldConfig] in Object.entries(getParameterFields(selectedParam))" :key="fieldKey">
+                                            <div class="mb-3">
+                                                <!-- Number Input -->
+                                                <template x-if="fieldConfig.type === 'number'">
+                                                    <div>
+                                                        <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-1" x-text="fieldConfig.label"></label>
+                                                        <input
+                                                            :id="fieldKey"
+                                                            type="number"
+                                                            x-model="formData[fieldKey]"
+                                                            :min="fieldConfig.min || 0"
+                                                            :step="fieldConfig.step || '1'"
+                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                        />
+                                                    </div>
+                                                </template>
+
+                                                <!-- Select Input -->
+                                                <template x-if="fieldConfig.type === 'select'">
+                                                    <div>
+                                                        <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-1" x-text="fieldConfig.label"></label>
+                                                        <select
+                                                            :id="fieldKey"
+                                                            x-model="formData[fieldKey]"
+                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+                                                        >
+                                                            <option value="">Select result...</option>
+                                                            <template x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)" :key="optKey">
+                                                                <option :value="optKey" x-text="optLabel"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
                                     </div>
-                                </div>
-                                
-                                <!-- Unit of Measurement -->
-                                <div class="sm:col-span-3">
-                                    <label for="result_unit" class="block text-sm font-medium text-gray-700">Unit of Measurement <span class="text-red-500">*</span></label>
-                                    <select id="result_unit" name="result_unit" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-                                        <option value="">Select a unit</option>
-                                        <option value="ppm">ppm</option>
-                                        <option value="percent">%</option>
-                                        <option value="cfu_g">CFU/g</option>
-                                        <option value="ph">pH</option>
-                                        <option value="mg_kg">mg/kg</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Threshold Value -->
-                                <div class="sm:col-span-3">
-                                    <label for="threshold_value" class="block text-sm font-medium text-gray-700">Threshold Value <span class="text-red-500">*</span></label>
-                                    <input type="number" step="0.01" name="threshold_value" id="threshold_value" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <p class="mt-1 text-xs text-gray-500">Maximum acceptable value for this parameter</p>
-                                </div>
-                                
-                                <!-- Pass/Fail Status -->
-                                <div class="sm:col-span-6">
-                                    <label class="block text-sm font-medium text-gray-700">Pass/Fail Status <span class="text-red-500">*</span></label>
-                                    <div class="mt-1 space-x-4">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="pass_fail" value="pass" required
-                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                            <span class="ml-2 text-sm text-gray-700">Pass</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="pass_fail" value="fail" required
-                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                            <span class="ml-2 text-sm text-gray-700">Fail</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <!-- Tester Name -->
-                                <div class="sm:col-span-6">
-                                    <label for="tester_name" class="block text-sm font-medium text-gray-700">Name of Testing Lab/Technician <span class="text-red-500">*</span></label>
-                                    <input type="text" name="tester_name" id="tester_name" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                
-                                <!-- Test Certificate -->
-                                <div class="sm:col-span-6">
-                                    <label for="test_certificate" class="block text-sm font-medium text-gray-700">Upload Test Certificate/Lab Scan</label>
-                                    <input type="file" name="test_certificate" id="test_certificate"
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                </svg>
+                                Additional Information
+                            </h3>
+
+                            <div class="space-y-4">
+                                <!-- File Upload -->
+                                <div>
+                                    <label for="test_certificate" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Test Certificate Upload
+                                    </label>
+                                    <input
+                                        id="test_certificate"
+                                        type="file"
+                                        @change="handleFileUpload($event)"
                                         accept=".pdf,.jpg,.jpeg,.png"
-                                        class="mt-1 block w-full text-sm text-gray-500
-                                            file:mr-4 file:py-2 file:px-4
-                                            file:rounded-md file:border-0
-                                            file:text-sm file:font-semibold
-                                            file:bg-indigo-50 file:text-indigo-700
-                                            hover:file:bg-indigo-100">
-                                    <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, JPG, JPEG, PNG</p>
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                    />
+                                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, JPEG, PNG</p>
+                                    <div x-show="formData.test_certificate" class="mt-2 text-sm text-green-600">
+                                        File selected: <span x-text="formData.test_certificate"></span>
+                                    </div>
                                 </div>
-                                
-                                <!-- Additional Notes -->
-                                <div class="sm:col-span-6">
-                                    <label for="additional_notes" class="block text-sm font-medium text-gray-700">Additional Notes</label>
-                                    <textarea id="additional_notes" name="additional_notes" rows="3"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                        placeholder="Enter any additional observations or comments"></textarea>
+
+                                <!-- Remarks -->
+                                <div>
+                                    <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Remarks
+                                    </label>
+                                    <textarea
+                                        id="remarks"
+                                        x-model="formData.remarks"
+                                        rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        placeholder="Enter any additional remarks or observations..."
+                                    ></textarea>
+                                </div>
+
+                                <!-- Final Verdict -->
+                                <div>
+                                    <label for="final_pass_fail" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Final Verdict
+                                    </label>
+                                    <select
+                                        id="final_pass_fail"
+                                        x-model="formData.final_pass_fail"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+                                        :class="{
+                                            'border-green-500 bg-green-50': formData.final_pass_fail === 'pass',
+                                            'border-red-500 bg-red-50': formData.final_pass_fail === 'fail',
+                                            'border-yellow-500 bg-yellow-50': formData.final_pass_fail === 'warning'
+                                        }"
+                                    >
+                                        <option value="">Select verdict...</option>
+                                        <option value="pass">✅ Pass</option>
+                                        <option value="fail">❌ Fail</option>
+                                        <option value="warning">⚠️ Near Fail (Trigger Review)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-4">
+                            <button
+                                type="button"
+                                @click="submitForm()"
+                                :disabled="!isFormValid()"
+                                class="w-full py-3 px-4 rounded-md font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                :class="isFormValid() ?
+                                    'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800' :
+                                    'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                            >
+                                <span x-show="!isFormValid()">Complete Required Fields</span>
+                                <span x-show="isFormValid()">Submit Lab Test Results</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- JSON Display Section -->
+                    <div class="space-y-4">
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Form Data (JSON)
+                            </h3>
+                            <pre class="text-green-400 text-sm overflow-auto max-h-96 bg-gray-800 p-3 rounded border" x-text="JSON.stringify(formData, null, 2)"></pre>
+                        </div>
+
+                        <!-- Test Summary -->
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 class="font-medium text-green-900 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Test Summary
+                            </h4>
+                            <div class="text-sm text-green-700 space-y-2">
+                                <div class="flex justify-between">
+                                    <span>Parameters Selected:</span>
+                                    <span class="font-medium" x-text="formData.parameters_tested.length"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Results Entered:</span>
+                                    <span class="font-medium" x-text="getResultsCount()"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Form Completion:</span>
+                                    <span class="font-medium" x-text="getCompletionPercentage() + '%'"></span>
+                                </div>
+                                <div x-show="formData.final_pass_fail" class="flex justify-between pt-2 border-t border-green-200">
+                                    <span>Final Verdict:</span>
+                                    <span class="font-bold"
+                                          :class="{
+                                              'text-green-600': formData.final_pass_fail === 'pass',
+                                              'text-red-600': formData.final_pass_fail === 'fail',
+                                              'text-yellow-600': formData.final_pass_fail === 'warning'
+                                          }"
+                                          x-text="config.final_pass_fail.values[formData.final_pass_fail] || ''">
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Form Actions -->
-                    <div class="pt-5">
-                        <div class="flex justify-end">
-                            <a href="{{ route('batches.show', $batch) }}"
-                                class="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                Cancel
-                            </a>
-                            <button type="submit"
-                                class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                Save Test
-                            </button>
-                        </div>
-                    </div>
-                </form>
                 </div>
             </div>
         </div>
     </div>
 
-    @push('scripts')
+
     <script>
-        // Update the unit display when the unit select changes
-        document.getElementById('result_unit').addEventListener('change', function() {
-            const unit = this.value;
-            const displayMap = {
-                'ppm': 'ppm',
-                'percent': '%',
-                'cfu_g': 'CFU/g',
-                'ph': 'pH',
-                'mg_kg': 'mg/kg',
-                'other': 'Unit'
-            };
-            document.getElementById('result_unit_display').textContent = displayMap[unit] || '--';
-        });
-        
-        // Trigger change event on page load if a unit is already selected
-        document.addEventListener('DOMContentLoaded', function() {
-            const unitSelect = document.getElementById('result_unit');
-            if (unitSelect.value) {
-                unitSelect.dispatchEvent(new Event('change'));
+        // Initialize Alpine.js component
+        function labTestingForm() {
+            return {
+                formData: {
+                    batch_id: '',
+                    test_date: '',
+                    lab_name: '',
+                    technician_name: '',
+                    parameters_tested: [],
+                    test_certificate: '',
+                    remarks: '',
+                    final_pass_fail: ''
+                },
+
+                config: {
+                    parameters_tested: {
+                        label: "Parameters Tested",
+                        type: "checkbox",
+                        values: {
+                            "e_coli": "E. coli",
+                            "salmonella": "Salmonella",
+                            "brix": "Brix (Sugar %)",
+                            "firmness": "Firmness",
+                            "pesticide_residues": "Pesticide Residues",
+                            "aspergillus": "Aspergillus (for Jackfruit)",
+                            "co2_level": "CO₂ Emission (Ambient Gas)",
+                            "ph": "pH Level",
+                            "heavy_metals": "Heavy Metals"
+                        },
+                        conditional_field_group: [
+                            {
+                                on: "parameters_tested:e_coli",
+                                fields: {
+                                    e_coli_result: {
+                                        label: "E. coli Result (cfu/g)",
+                                        type: "number",
+                                        min: 0
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:salmonella",
+                                fields: {
+                                    salmonella_result: {
+                                        label: "Salmonella (Detected/Not Detected)",
+                                        type: "select",
+                                        values: {
+                                            not_detected: "Not Detected",
+                                            detected: "Detected"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:brix",
+                                fields: {
+                                    brix_result: {
+                                        label: "Brix Value (%)",
+                                        type: "number",
+                                        min: 0,
+                                        step: "0.1"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:firmness",
+                                fields: {
+                                    firmness_result: {
+                                        label: "Firmness (kg/cm² or other)",
+                                        type: "number",
+                                        step: "0.1"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:pesticide_residues",
+                                fields: {
+                                    residue_result: {
+                                        label: "Pesticide Residue Level (ppm)",
+                                        type: "number",
+                                        min: 0,
+                                        step: "0.01"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:aspergillus",
+                                fields: {
+                                    aspergillus_result: {
+                                        label: "Aspergillus (cfu/g)",
+                                        type: "number"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:co2_level",
+                                fields: {
+                                    co2_reading: {
+                                        label: "CO₂ Concentration (%)",
+                                        type: "number",
+                                        step: "0.1"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:ph",
+                                fields: {
+                                    ph_result: {
+                                        label: "pH Level",
+                                        type: "number",
+                                        step: "0.1"
+                                    }
+                                }
+                            },
+                            {
+                                on: "parameters_tested:heavy_metals",
+                                fields: {
+                                    heavy_metal_result: {
+                                        label: "Heavy Metals (ppm)",
+                                        type: "number",
+                                        step: "0.01"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    final_pass_fail: {
+                        values: {
+                            pass: "Pass",
+                            fail: "Fail",
+                            warning: "Near Fail (Trigger Review)"
+                        }
+                    }
+                },
+
+                handleParameterChange(paramKey, checked) {
+                    if (checked) {
+                        if (!this.formData.parameters_tested.includes(paramKey)) {
+                            this.formData.parameters_tested.push(paramKey);
+                        }
+                        this.initializeParameterFields(paramKey);
+                    } else {
+                        this.formData.parameters_tested = this.formData.parameters_tested.filter(item => item !== paramKey);
+                        this.cleanupParameterFields(paramKey);
+                    }
+                },
+
+                getParameterFields(paramKey) {
+                    const group = this.config.parameters_tested.conditional_field_group.find(
+                        g => g.on === `parameters_tested:${paramKey}`
+                    );
+                    return group ? group.fields : {};
+                },
+
+                initializeParameterFields(paramKey) {
+                    const fields = this.getParameterFields(paramKey);
+                    Object.keys(fields).forEach(fieldKey => {
+                        const field = fields[fieldKey];
+                        if (!this.formData.hasOwnProperty(fieldKey)) {
+                            this.formData[fieldKey] = field.type === 'number' ? 0 : '';
+                        }
+                    });
+                },
+
+                cleanupParameterFields(paramKey) {
+                    const fields = this.getParameterFields(paramKey);
+                    Object.keys(fields).forEach(fieldKey => {
+                        delete this.formData[fieldKey];
+                    });
+                },
+
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.formData.test_certificate = file.name;
+                    } else {
+                        this.formData.test_certificate = '';
+                    }
+                },
+
+                isFormValid() {
+                    return this.formData.batch_id &&
+                        this.formData.test_date &&
+                        this.formData.lab_name &&
+                        this.formData.technician_name;
+                },
+
+                getResultsCount() {
+                    let count = 0;
+                    this.formData.parameters_tested.forEach(param => {
+                        const fields = this.getParameterFields(param);
+                        Object.keys(fields).forEach(fieldKey => {
+                            if (this.formData[fieldKey] && this.formData[fieldKey] !== '' && this.formData[fieldKey] !== 0) {
+                                count++;
+                            }
+                        });
+                    });
+                    return count;
+                },
+
+                getCompletionPercentage() {
+                    const totalFields = 8; // Basic fields + optional fields
+                    const filledFields = Object.values(this.formData).filter(v =>
+                        v !== '' && v !== 0 && (!Array.isArray(v) || v.length > 0)
+                    ).length;
+                    return Math.round((filledFields / totalFields) * 100);
+                },
+
+                submitForm() {
+                    if (this.isFormValid()) {
+                        console.log('Lab test form submitted:', this.formData);
+                        alert('Lab test results submitted successfully! Check the console for details.');
+                    } else {
+                        alert('Please complete all required fields before submitting.');
+                    }
+                }
             }
-        });
+        }
     </script>
-    @endpush
 </x-app-layout>
