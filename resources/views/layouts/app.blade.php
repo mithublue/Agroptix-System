@@ -129,11 +129,8 @@
                             </svg>
                         </button>
                         <div x-show="open" class="mt-1 space-y-1" x-collapse>
-                            <a href="{{ route('quality-tests.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('quality-tests.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <a href="{{ route('quality-tests.batchList') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('quality-tests.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
                                 View All
-                            </a>
-                            <a href="{{ route('quality-tests.create') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('quality-tests.create') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
-                                Add Quality Test
                             </a>
                         </div>
                     </div>

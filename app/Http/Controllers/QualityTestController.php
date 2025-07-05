@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\QualityTestStoreRequest;
 use App\Http\Requests\QualityTestUpdateRequest;
 use App\Models\QualityTest;
+use App\Models\Batch;
+use Illuminate\Http\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,9 +22,19 @@ class QualityTestController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function batchList(Request $request)
     {
-        return view('qualityTest.create');
+        $batches = Batch::where('status', 'Completed')
+                       ->with('product')
+                       ->orderBy('created_at', 'desc')
+                       ->paginate(10);
+                       
+        return view('qualityTest.batch-list', compact('batches'));
+    }
+
+    public function create(Batch $batch): View
+    {
+        return view('qualityTest.create', compact('batch'));
     }
 
     public function store(QualityTestStoreRequest $request): Response

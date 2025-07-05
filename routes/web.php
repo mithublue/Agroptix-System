@@ -110,21 +110,26 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
 
     // Quality Tests
-    Route::middleware(['can:create_quality_test'])->group(function () {
-        Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
-        Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
-    });
     Route::middleware(['can:view_quality_test'])->group(function () {
-        Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
-        Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
+        Route::get('quality-tests/batches', [App\Http\Controllers\QualityTestController::class, 'batchList'])->name('quality-tests.batchList');
     });
+    Route::prefix('batches/{batch}')->group(function () {
+        Route::middleware(['can:create_quality_test'])->group(function () {
+            Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
+            Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
+        });
+        Route::middleware(['can:view_quality_test'])->group(function () {
+            Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
+            Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
+        });
 
-    Route::middleware(['can:edit_quality_test'])->group(function () {
-        Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
-        Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
+        Route::middleware(['can:edit_quality_test'])->group(function () {
+            Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
+            Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
+        });
+
+        Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
     });
-
-    Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
 
     // Shipments
     Route::middleware(['can:create_shipment'])->group(function () {
@@ -254,7 +259,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
 
         Route::resource('batches', \App\Http\Controllers\BatchController::class);
-    
+
     });
 
     // Permissions

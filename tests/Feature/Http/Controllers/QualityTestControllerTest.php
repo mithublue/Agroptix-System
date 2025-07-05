@@ -23,7 +23,7 @@ final class QualityTestControllerTest extends TestCase
     {
         $qualityTests = QualityTest::factory()->count(3)->create();
 
-        $response = $this->get(route('quality-tests.index'));
+        $response = $this->get(route('quality-tests.index',['batch' => $qualityTests[0]->batch_id]));
 
         $response->assertOk();
         $response->assertViewIs('qualityTest.index');
