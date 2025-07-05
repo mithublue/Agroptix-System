@@ -13,7 +13,7 @@ use Illuminate\View\View;
 
 class QualityTestController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
         $qualityTests = QualityTest::all();
 
@@ -28,7 +28,7 @@ class QualityTestController extends Controller
                        ->with('product')
                        ->orderBy('created_at', 'desc')
                        ->paginate(10);
-                       
+
         return view('qualityTest.batch-list', compact('batches'));
     }
 

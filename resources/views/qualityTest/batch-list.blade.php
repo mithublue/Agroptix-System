@@ -40,7 +40,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}" 
+                                            <a href="{{ route('quality-tests.index', ['batch' => $batch->id]) }}"
                                                class="text-indigo-600 hover:text-indigo-900 mr-3">
                                                 Quality Test
                                             </a>
@@ -56,7 +56,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     @if($batches->hasPages())
                         <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                             {{ $batches->links() }}
