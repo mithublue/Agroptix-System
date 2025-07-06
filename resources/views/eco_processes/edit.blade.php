@@ -17,7 +17,7 @@
                     <form method="POST" action="{{ route('batches.eco-processes.update', [$batch, $ecoProcess]) }}">
                         @csrf
                         @method('PUT')
-                        
+
                         <div class="mb-4">
                             <x-input-label for="stage" :value="__('Stage')" />
                             <x-text-input id="stage" class="block mt-1 w-full" type="text" name="stage" :value="old('stage', $ecoProcess->stage)" required />
@@ -38,17 +38,17 @@
 
                         <div class="mb-4">
                             <x-input-label for="start_time" :value="__('Start Time')" />
-                            <x-text-input id="start_time" class="block mt-1 w-full" type="datetime-local" 
-                                        name="start_time" 
-                                        :value="old('start_time', optional($ecoProcess->start_time)->format('Y-m-d\TH:i'))" 
+                            <x-text-input id="start_time" class="block mt-1 w-full" type="datetime-local"
+                                        name="start_time"
+                                        :value="old('start_time', optional($ecoProcess->start_time)->format('Y-m-d\TH:i'))"
                                         required />
                             <x-input-error :messages="$errors->get('start_time')" class="mt-2" />
                         </div>
 
                         <div class="mb-4">
                             <x-input-label for="end_time" :value="__('End Time (Optional)')" />
-                            <x-text-input id="end_time" class="block mt-1 w-full" type="datetime-local" 
-                                        name="end_time" 
+                            <x-text-input id="end_time" class="block mt-1 w-full" type="datetime-local"
+                                        name="end_time"
                                         :value="old('end_time', optional($ecoProcess->end_time)->format('Y-m-d\TH:i'))" />
                             <x-input-error :messages="$errors->get('end_time')" class="mt-2" />
                         </div>

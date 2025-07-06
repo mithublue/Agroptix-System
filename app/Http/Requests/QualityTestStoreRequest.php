@@ -20,13 +20,13 @@ class QualityTestStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['nullable', 'integer', 'exists:batches,,id'],
-            'user_id' => ['nullable', 'integer', 'exists:users,,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'parameter_tested' => ['nullable', 'string', 'max:50'],
             'result' => ['nullable', 'string', 'max:100'],
             'result_status' => ['nullable', 'string', 'max:10'],
-            'batch_as_batch_id' => ['required', 'integer', 'exists:batch_as_batches,id'],
-            'user_as_user_id' => ['required', 'integer', 'exists:user_as_users,id'],
+//            'batch_id' => ['required', 'integer', 'exists:batches,id'],
+//            'user_id' => ['required', 'integer', 'exists:users,id'],
         ];
     }
 }

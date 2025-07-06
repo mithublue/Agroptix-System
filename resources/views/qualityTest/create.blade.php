@@ -4,6 +4,7 @@
             {{ __('Create Quality Test') }}
         </h2>
     </x-slot>
+    <form method="POST" action="{{ route('batches.eco-processes.update', [$batch, $ecoProcess]) }}">
 
     <div class="container mx-auto px-4 py-8" x-data="labTestingForm()" >
         <div class="max-w-6xl mx-auto">
@@ -289,7 +290,7 @@
             </div>
         </div>
     </div>
-
+    </form>
 
     <script>
         // Initialize Alpine.js component
@@ -467,8 +468,10 @@
                     const file = event.target.files[0];
                     if (file) {
                         this.formData.test_certificate = file.name;
+                        this.formData.test_certificate_file = file; // Store the actual file object
                     } else {
                         this.formData.test_certificate = '';
+                        this.formData.test_certificate_file = null;
                     }
                 },
 
@@ -501,12 +504,83 @@
                 },
 
                 submitForm() {
-                    if (this.isFormValid()) {
-                        console.log('Lab test form submitted:', this.formData);
-                        alert('Lab test results submitted successfully! Check the console for details.');
-                    } else {
-                        alert('Please complete all required fields before submitting.');
+                    // Show loading state
+                    this.isSubmitting = true;
+
+                    // Create form data
+                    const formData = new FormData();
+
+                    // Add basic fields
+                    formData.append('_token', '{{ csrf_token() }}');
+                    formData.append('batch_id', this.formData.batch_id || '{{ $batch->id }}');
+                    formData.append('result_status', this.formData.final_pass_fail || '');
+
+                    // Add parameters tested and their results
+                    (this.formData.parameters_tested || []).forEach(param => {
+                        formData.append('parameters_tested[]', param);
+
+                        // Add parameter results if they exist
+                        const resultKey = `${param}_result`;
+                        if (this.formData[resultKey] !== undefined) {
+                            formData.append(resultKey, this.formData[resultKey]);
+                        }
+                    });
+
+                    // Add file if exists
+                    if (this.formData.test_certificate_file) {
+                        formData.append('test_certificate', this.formData.test_certificate_file);
                     }
+
+                    // Add remarks
+                    if (this.formData.remarks) {
+                        formData.append('remarks', this.formData.remarks);
+                    }
+
+                    // Submit the form
+                    fetch('{{ route("quality-tests.store", $batch) }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data);
+                        if (data.success) {
+                            // Show success message and redirect
+                            alert('Quality test saved successfully!');
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                            } else {
+                                window.location.href = '{{ route("batches.show", $batch) }}';
+                            }
+                        } else {
+                            throw new Error(data.message || 'Failed to save quality test');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        let errorMessage = 'An error occurred while saving the test.';
+
+                        if (error.errors) {
+                            // Handle validation errors
+                            errorMessage = Object.values(error.errors).flat().join('\n');
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+
+                        alert(errorMessage);
+                    })
+                    .finally(() => {
+                        this.isSubmitting = false;
+                    });
                 }
             }
         }

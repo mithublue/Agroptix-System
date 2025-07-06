@@ -58,8 +58,8 @@ final class QualityTestControllerTest extends TestCase
         $user_as_user = UserAsUser::factory()->create();
 
         $response = $this->post(route('quality-tests.store'), [
-            'batch_as_batch_id' => $batch_as_batch->id,
-            'user_as_user_id' => $user_as_user->id,
+            'batch_id' => $batch_as_batch->id,
+            'user_id' => $user_as_user->id,
         ]);
 
         $qualityTests = QualityTest::query()

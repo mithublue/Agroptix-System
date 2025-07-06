@@ -20,7 +20,9 @@ class QualityTest extends Model
         'user_id',
         'parameter_tested',
         'result',
-        'result_status'
+        'result_status',
+        'test_certificate',
+        'remarks'
     ];
 
     /**
