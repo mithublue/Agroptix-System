@@ -4,7 +4,8 @@
             {{ __('Create Quality Test') }}
         </h2>
     </x-slot>
-    <form method="POST" action="{{ route('batches.eco-processes.update', [$batch, $ecoProcess]) }}">
+    <form method="POST" action="{{ route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="formHandler()">
+        @csrf
 
     <div class="container mx-auto px-4 py-8" x-data="labTestingForm()" >
         <div class="max-w-6xl mx-auto">
@@ -504,63 +505,77 @@
                 },
 
                 submitForm() {
-                    // Show loading state
-                    this.isSubmitting = true;
+                    // Get the form element
+                    const form = document.querySelector('form');
+                    if (!form) {
+                        console.error('Form element not found');
+                        return;
+                    }
 
-                    // Create form data
+                    // Create form data from the form
                     const formData = new FormData();
 
-                    // Add basic fields
-                    formData.append('_token', '{{ csrf_token() }}');
-                    formData.append('batch_id', this.formData.batch_id || '{{ $batch->id }}');
-                    formData.append('result_status', this.formData.final_pass_fail || '');
+                    // Add all form fields from the HTML form
+                    const formElements = form.elements;
+                    for (let i = 0; i < formElements.length; i++) {
+                        const element = formElements[i];
+                        if (element.name) {
+                            if (element.type === 'checkbox' || element.type === 'radio') {
+                                if (element.checked) {
+                                    formData.append(element.name, element.value);
+                                }
+                            } else if (element.type === 'file') {
+                                // Handle file inputs
+                                if (element.files.length > 0) {
+                                    formData.append(element.name, element.files[0]);
+                                }
+                            } else {
+                                formData.append(element.name, element.value);
+                            }
+                        }
+                    }
 
-                    // Add parameters tested and their results
-                    (this.formData.parameters_tested || []).forEach(param => {
-                        formData.append('parameters_tested[]', param);
-
-                        // Add parameter results if they exist
-                        const resultKey = `${param}_result`;
-                        if (this.formData[resultKey] !== undefined) {
-                            formData.append(resultKey, this.formData[resultKey]);
+                    // Add the form data from Alpine.js to the FormData
+                    Object.entries(this.formData).forEach(([key, value]) => {
+                        if (Array.isArray(value)) {
+                            // Remove any existing values for this key to avoid duplicates
+                            formData.delete(key);
+                            value.forEach(val => formData.append(`${key}[]`, val));
+                        } else if (value !== null && value !== undefined) {
+                            formData.set(key, value);
                         }
                     });
 
-                    // Add file if exists
-                    if (this.formData.test_certificate_file) {
-                        formData.append('test_certificate', this.formData.test_certificate_file);
-                    }
+                    // Add the final verdict as result_status for backend compatibility
+                    formData.set('result_status', this.formData.final_pass_fail || '');
 
-                    // Add remarks
-                    if (this.formData.remarks) {
-                        formData.append('remarks', this.formData.remarks);
+                    // Add the batch ID if not already set
+                    if (!formData.get('batch_id')) {
+                        formData.set('batch_id', '{{ $batch->id }}');
                     }
 
                     // Submit the form
-                    fetch('{{ route("quality-tests.store", $batch) }}', {
-                        method: 'POST',
+                    fetch(form.action, {
+                        method: form.method,
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
                     .then(response => {
+                        console.log(response);
                         if (!response.ok) {
                             return response.json().then(err => { throw err; });
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log(data);
                         if (data.success) {
                             // Show success message and redirect
                             alert('Quality test saved successfully!');
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
-                            } else {
-                                window.location.href = '{{ route("batches.show", $batch) }}';
-                            }
+                            window.location.href = data.redirect || '{{ route("quality-tests.index", $batch) }}';
                         } else {
                             throw new Error(data.message || 'Failed to save quality test');
                         }

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('batch_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->string('parameter_tested', 50, )->nullable();
+            $table->text('parameter_tested')->nullable();
             $table->string('result', 100, )->nullable();
-            $table->string('result_status', 10, )->nullable();
+            $table->text('result_status')->nullable();
 
             $table->foreign('batch_id')
                   ->references('id')

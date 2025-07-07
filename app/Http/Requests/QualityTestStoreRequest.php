@@ -22,9 +22,9 @@ class QualityTestStoreRequest extends FormRequest
         return [
             'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'parameter_tested' => ['nullable', 'string', 'max:50'],
+            'parameter_tested' => ['nullable', 'text', 'max:50'],
             'result' => ['nullable', 'string', 'max:100'],
-            'result_status' => ['nullable', 'string', 'max:10'],
+            'result_status' => ['nullable', 'text', 'max:10'],
 //            'batch_id' => ['required', 'integer', 'exists:batches,id'],
 //            'user_id' => ['required', 'integer', 'exists:users,id'],
         ];
