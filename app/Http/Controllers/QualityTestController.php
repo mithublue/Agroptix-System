@@ -80,6 +80,7 @@ class QualityTestController extends Controller
             //    To make it work with Hotwired Turbo, we must set the 422 status code.
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
+                    'errors' => $validator->errors(),
                 ], 500);
             }
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
@@ -99,7 +100,6 @@ class QualityTestController extends Controller
                 'redirect' => route('quality-tests.batchList')
             ]);
         }
-        ///////
     }
 
     public function show(Request $request, QualityTest $qualityTest): Response
