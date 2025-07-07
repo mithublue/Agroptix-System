@@ -4,10 +4,10 @@
             {{ __('Create Quality Test') }}
         </h2>
     </x-slot>
-    <form method="POST" action="{{ route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="formHandler()">
+    <form method="POST" action="{{ route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="labTestingForm()">
         @csrf
 
-    <div class="container mx-auto px-4 py-8" x-data="labTestingForm()" >
+    <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                 <!-- Header -->
