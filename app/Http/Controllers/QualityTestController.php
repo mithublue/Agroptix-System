@@ -32,6 +32,58 @@ class QualityTestController extends Controller
         return view('qualityTest.batch-list', compact('batches'));
     }
 
+    /**
+     * Get quality tests for a specific batch
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\Http\Response
+     */
+    public function getTestsForBatch(Batch $batch)
+    {
+        \Log::info('Fetching quality tests for batch:', [
+            'batch_id' => $batch->id,
+            'batch_code' => $batch->batch_code,
+            'exists' => $batch->exists,
+            'wasRecentlyCreated' => $batch->wasRecentlyCreated,
+        ]);
+
+        try {
+            $tests = $batch->qualityTests()
+                ->select([
+                    'id',
+                    'batch_id',
+                    'test_date',
+                    'test_parameter',
+                    'test_result',
+                    'result_unit',
+                    'pass_fail',
+                    'created_at',
+                    'updated_at'
+                ])
+                ->orderBy('test_date', 'desc')
+                ->get();
+
+            \Log::info('Found tests:', [
+                'batch_id' => $batch->id,
+                'test_count' => $tests->count(),
+                'tests' => $tests->toArray()
+            ]);
+
+            return response()->json($tests);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching quality tests:', [
+                'batch_id' => $batch->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to load quality tests',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function create(Batch $batch): View
     {
         return view('qualityTest.create', compact('batch'));

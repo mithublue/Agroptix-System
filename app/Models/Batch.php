@@ -79,11 +79,19 @@ class Batch extends Model
     }
 
     /**
-     * Get the product associated with the batch.
+     * Get the product that owns the batch.
      */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the quality tests for the batch.
+     */
+    public function qualityTests(): HasMany
+    {
+        return $this->hasMany(QualityTest::class);
     }
 
     /**
