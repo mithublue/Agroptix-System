@@ -4,8 +4,6 @@
             {{ __('Completed Batches for Quality Testing') }}
         </h2>
     </x-slot>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('qualityTests', () => ({
