@@ -8,6 +8,7 @@ use App\Models\QualityTest;
 use App\Models\Batch;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
@@ -40,49 +41,111 @@ class QualityTestController extends Controller
      */
     public function getTestsForBatch(Batch $batch)
     {
+        // Enable error reporting for debugging
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
         \Log::info('Fetching quality tests for batch:', [
             'batch_id' => $batch->id,
             'batch_code' => $batch->batch_code,
             'exists' => $batch->exists,
             'wasRecentlyCreated' => $batch->wasRecentlyCreated,
+            'class' => get_class($batch)
         ]);
-
         try {
-            $tests = $batch->qualityTests()
+            // First ensure the batch exists and is loaded
+            if (!$batch->exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Batch not found',
+                    'data' => []
+                ], 404);
+            }
+
+            // Log the relationship query
+            $query = $batch->qualityTests();
+            \Log::debug('Quality tests query:', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+
+            // Get the tests with error handling
+            $tests = $query
                 ->select([
                     'id',
                     'batch_id',
-                    'test_date',
-                    'test_parameter',
-                    'test_result',
-                    'result_unit',
-                    'pass_fail',
-                    'created_at',
-                    'updated_at'
+                    'user_id',
+                    'parameter_tested',
+                    'result',
+                    'result_status',
+                    'test_certificate'
                 ])
-                ->orderBy('test_date', 'desc')
+                ->orderBy('id', 'desc')
                 ->get();
 
-            \Log::info('Found tests:', [
-                'batch_id' => $batch->id,
-                'test_count' => $tests->count(),
-                'tests' => $tests->toArray()
-            ]);
+            \Log::debug('Raw tests from database:', $tests->toArray());
 
-            return response()->json($tests);
+            $formattedTests = $tests->map(function($test) {
+                return [
+                    'id' => $test->id,
+                    'batch_id' => $test->batch_id,
+                    'user_id' => $test->user_id,
+                    'parameter_tested' => $test->parameter_tested,
+                    'result' => $test->result,
+                    'result_status' => $test->result_status,
+                    'test_certificate' => $test->test_certificate,
+                    'remarks' => $test->remarks,
+                    'created_at' => $test->created_at,
+                    'updated_at' => $test->updated_at,
+                    'created_at_formatted' => optional($test->created_at)->format('Y-m-d H:i:s'),
+                    'updated_at_formatted' => optional($test->updated_at)->format('Y-m-d H:i:s'),
+                ];
+            });
+
+            $response = [
+                'success' => true,
+                'data' => $formattedTests,
+                'message' => $formattedTests->isEmpty() ? 'No tests found' : 'Tests retrieved successfully'
+            ];
+
+            \Log::info('Returning response:', $response);
+
+            // Return response with proper headers
+            return response()->json(
+                $response,
+                200,
+                [
+                    'Content-Type' => 'application/json; charset=UTF-8',
+                    'Charset' => 'utf-8'
+                ],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+            );
+
         } catch (\Exception $e) {
-            \Log::error('Error fetching quality tests:', [
-                'batch_id' => $batch->id,
+            $errorMessage = 'Error fetching quality tests: ' . $e->getMessage();
+            \Log::error($errorMessage, [
+                'batch_id' => $batch->id ?? null,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            return response()->json([
-                'error' => 'Failed to load quality tests',
-                'message' => $e->getMessage()
-            ], 500);
+
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'data' => []
+                ],
+                500,
+                [
+                    'Content-Type' => 'application/json; charset=UTF-8',
+                    'Charset' => 'utf-8'
+                ],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+            );
         }
-    }
+
+            // Error response is already handled above
+        }
 
     public function create(Batch $batch): View
     {
@@ -177,10 +240,21 @@ class QualityTestController extends Controller
         return redirect()->route('qualityTests.index');
     }
 
-    public function destroy(Request $request, QualityTest $qualityTest): Response
+    public function destroy(Request $request, Batch $batch, QualityTest $quality_test): JsonResponse
     {
-        $qualityTest->delete();
+        // Verify that the quality test belongs to the batch
+        if ($quality_test->batch_id !== $batch->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quality test does not belong to this batch'
+            ], 422);
+        }
 
-        return redirect()->route('qualityTests.index');
+        $quality_test->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quality test deleted successfully'
+        ]);
     }
 }

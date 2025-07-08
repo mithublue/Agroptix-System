@@ -5,79 +5,128 @@
         </h2>
     </x-slot>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('qualityTests', () => ({
                 openBatch: null,
                 loadingTests: false,
                 tests: {},
+                loadedBatches: new Set(),
+                error: null,
+
+                // Initialize Axios instance with default config
+                axiosInstance: axios.create({
+                    baseURL: '{{ url('/') }}',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                }),
+
                 async loadTests(batchId) {
-                    if (this.tests[batchId]) return; // Already loaded
-                    
+                    console.log('Loading tests for batch:', batchId);
+
+                    // Don't reload if already loaded
+                    if (this.loadedBatches.has(batchId)) {
+                        console.log('Tests already loaded for batch', batchId);
+                        return;
+                    }
+
                     this.loadingTests = true;
+                    this.error = null;
+
                     try {
-                        // First, check if the batch exists by making a HEAD request
-                        const batchUrl = `{{ url('batches/BATCH_ID') }}`.replace('BATCH_ID', batchId);
-                        const batchCheck = await fetch(batchUrl, {
-                            method: 'HEAD',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            credentials: 'same-origin'
-                        });
+                        const testsUrl = `{{ url('batches') }}/${batchId}/qualitytests`;
+                        console.log('Fetching tests from URL:', testsUrl);
 
-                        if (!batchCheck.ok) {
-                            throw new Error('Batch not found');
+                        const response = await this.axiosInstance.get(testsUrl);
+                        console.log('Axios response:', response);
+
+                        if (!response.data) {
+                            throw new Error('Empty response from server');
                         }
 
-                        // If batch exists, fetch the tests
-                        const url = `{{ url('batches/BATCH_ID/quality-tests') }}`.replace('BATCH_ID', batchId);
-                        console.log('Fetching tests from URL:', url);
-                        
-                        const response = await fetch(url, {
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            credentials: 'same-origin'
-                        });
-                        
-                        console.log('Response status:', response.status);
-                        
-                        if (!response.ok) {
-                            let errorMessage = 'Failed to load tests';
-                            try {
-                                const errorData = await response.json();
-                                console.error('Error response:', errorData);
-                                errorMessage = errorData.message || errorData.error || errorMessage;
-                            } catch (e) {
-                                const text = await response.text();
-                                console.error('Failed to parse error response:', text);
-                                errorMessage = `HTTP error! status: ${response.status}`;
-                            }
-                            throw new Error(errorMessage);
+                        if (response.data.success === false) {
+                            throw new Error(response.data.message || 'Failed to load tests');
                         }
-                        
-                        const data = await response.json();
-                        console.log('Tests loaded successfully:', data);
-                        this.$set(this.tests, batchId, data);
+
+                        if (!Array.isArray(response.data.data)) {
+                            console.warn('Expected data to be an array, got:', typeof response.data.data);
+                            this.tests = { ...this.tests, [batchId]: [] };
+                        } else {
+                            console.log(`Loaded ${response.data.data.length} tests for batch ${batchId}`);
+                            this.tests = { ...this.tests, [batchId]: response.data.data };
+                            this.loadedBatches = new Set([...this.loadedBatches, batchId]);
+                        }
                     } catch (error) {
-                        console.error('Error loading tests:', error);
-                        alert('Failed to load quality tests: ' + error.message);
+                        console.error('Error in loadTests:', {
+                            error: error.message,
+                            stack: error.stack,
+                            batchId: batchId
+                        });
+
+                        this.error = 'Failed to load quality tests. ' + (error.message || 'Please try again.');
+                        this.tests = { ...this.tests, [batchId]: [] };
+
+                        // Show error in UI
+                        const errorMessage = `Error loading tests: ${error.message}`;
+                        alert(errorMessage);
                     } finally {
+                        console.log('Finished loading tests for batch', batchId);
                         this.loadingTests = false;
                     }
                 },
-                toggleBatch(batchId) {
+
+                // Helper method to handle errors consistently
+                handleError(error, context = '') {
+                    let errorMessage = 'An error occurred';
+
+                    if (error.response) {
+                        // The request was made and the server responded with a status code
+                        // that falls out of the range of 2xx
+                        console.error('Response error:', {
+                            status: error.response.status,
+                            statusText: error.response.statusText,
+                            data: error.response.data,
+                            headers: error.response.headers,
+                            context
+                        });
+
+                        errorMessage = error.response.data?.message ||
+                                     error.response.statusText ||
+                                     `HTTP error ${error.response.status}`;
+                    } else if (error.request) {
+                        // The request was made but no response was received
+                        console.error('No response received:', error.request, context);
+                        errorMessage = 'No response from server. Please check your connection.';
+                    } else {
+                        // Something happened in setting up the request that triggered an Error
+                        console.error('Request setup error:', error.message, context);
+                        errorMessage = error.message || 'Failed to send request';
+                    }
+
+                    this.error = errorMessage;
+                    throw new Error(errorMessage);
+                },
+                async toggleBatch(batchId) {
                     if (this.openBatch === batchId) {
+                        // Collapse if clicking the same batch
                         this.openBatch = null;
                     } else {
+                        // Expand and load tests
                         this.openBatch = batchId;
-                        this.loadTests(batchId);
+                        await this.loadTests(batchId);
                     }
-                }
+                },
+
+                // Format date for display
+                formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                },
             }));
         });
     </script>
@@ -152,35 +201,53 @@
                                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                                                     <p class="mt-2 text-sm text-gray-500">Loading tests...</p>
                                                 </div>
-                                                
+
                                                 <div x-show="!loadingTests && tests[{{ $batch->id }}] && tests[{{ $batch->id }}].length > 0" class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
                                                     <table class="min-w-full divide-y divide-gray-300">
                                                         <thead class="bg-gray-100">
                                                             <tr>
-                                                                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Test Date</th>
-                                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Parameter</th>
-                                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result</th>
-                                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                                                                <th class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                                                    <span class="sr-only">Actions</span>
-                                                                </th>
+                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Parameter Tested</th>
+                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result</th>
+                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody class="divide-y divide-gray-200 bg-white">
                                                             <template x-for="test in tests[{{ $batch->id }}]" :key="test.id">
                                                                 <tr>
-                                                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900" x-text="new Date(test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></td>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.test_parameter"></td>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.test_result + ' ' + (test.result_unit || '')"></td>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                                        <span :class="{
-                                                                            'bg-green-100 text-green-800': test.pass_fail === 'pass',
-                                                                            'bg-red-100 text-red-800': test.pass_fail !== 'pass'
-                                                                        }" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" x-text="test.pass_fail.charAt(0).toUpperCase() + test.pass_fail.slice(1)">
+                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.parameter_tested || 'N/A'"></td>
+                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.result || 'N/A'"></td>
+                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                        <span x-bind:class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-green-100 text-green-800': test.result_status === 'pass', 'bg-red-100 text-red-800': test.result_status !== 'pass'}" x-text="test.result_status === 'pass' ? 'Passed' : test.result_status === 'fail' ? 'Failed' : test.result_status || 'N/A'">
                                                                         </span>
                                                                     </td>
                                                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                                        <a :href="`/batches/${test.batch_id}/quality-tests/${test.id}/edit`" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                                                        <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                                                        <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                                                        @can('delete_quality_test')
+                                                                        <button type="button"
+                                                                                @click="if(confirm('Are you sure you want to delete this test?')) {
+                                                                                    axiosInstance.delete(`/batches/${test.batch_id}/quality-tests/${test.id}`)
+                                                                                        .then(response => {
+                                                                                            if (response.data.success) {
+                                                                                                // Remove the test from the UI
+                                                                                                const index = tests[{{ $batch->id }}].findIndex(t => t.id === test.id);
+                                                                                                if (index > -1) {
+                                                                                                    tests[{{ $batch->id }}].splice(index, 1);
+                                                                                                }
+                                                                                            } else {
+                                                                                                alert(response.data.message || 'Failed to delete test');
+                                                                                            }
+                                                                                        })
+                                                                                        .catch(error => {
+                                                                                            console.error('Error deleting test:', error);
+                                                                                            alert(error.response?.data?.message || 'An error occurred while deleting the test');
+                                                                                        });
+                                                                                }"
+                                                                                class="text-red-600 hover:text-red-900">
+                                                                            Delete
+                                                                        </button>
+                                                                        @endcan
                                                                     </td>
                                                                 </tr>
                                                             </template>
