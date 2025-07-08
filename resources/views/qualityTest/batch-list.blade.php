@@ -7,11 +7,34 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('qualityTests', () => ({
+                // Modal state
+                showModal: false,
+                isSubmitting: false,
+                errors: {},
+                formData: {
+                    batch_id: '',
+                    parameters_tested: [''],
+                    final_pass_fail: '',
+                    test_certificate: '',
+                    remarks: ''
+                },
+
+                // Existing state
                 openBatch: null,
                 loadingTests: false,
                 tests: {},
                 loadedBatches: new Set(),
                 error: null,
+                currentBatch: null,
+                batches: {!! json_encode(collect($batches->items())->map(function($batch) {
+                    return [
+                        'id' => $batch->id,
+                        'batch_code' => $batch->batch_code ?? 'N/A',
+                        'product_name' => $batch->relationLoaded('product') && $batch->product ? $batch->product->name : 'No Product',
+                        'created_at' => $batch->created_at ? $batch->created_at->toDateTimeString() : now()->toDateTimeString(),
+                        'updated_at' => $batch->updated_at ? $batch->updated_at->toDateTimeString() : now()->toDateTimeString()
+                    ];
+                })) !!},
 
                 // Initialize Axios instance with default config
                 axiosInstance: axios.create({
@@ -77,6 +100,41 @@
                     }
                 },
 
+                // Open the new test modal for a specific batch
+                openNewTestModal(batchId) {
+                    try {
+                        // Find the batch data from the batches array
+                        const batch = this.batches.find(b => b.id == batchId);
+                        if (batch) {
+                            this.currentBatch = batch;
+
+                            // Ensure the store is initialized
+                            if (!window.Alpine.store('modal')) {
+                                window.Alpine.store('modal', { batch: null });
+                            }
+
+                            // Update the Alpine store with a fresh copy of the batch data
+                            const batchCopy = JSON.parse(JSON.stringify(batch));
+                            window.Alpine.store('modal').batch = batchCopy;
+
+                            // Show the modal
+                            this.showModal = true;
+
+                            // Ensure the form has time to initialize with the batch data
+                            this.$nextTick(() => {
+                                // Dispatch an event with the batch data
+                                this.$dispatch('batch-selected', { batch: batchCopy });
+                            });
+                        } else {
+                            console.error('Batch not found:', batchId);
+                            this.error = 'Batch not found. Please try again.';
+                        }
+                    } catch (error) {
+                        console.error('Error in openNewTestModal:', error);
+                        this.error = 'Failed to open test form. Please try again.';
+                    }
+                },
+
                 // Helper method to handle errors consistently
                 handleError(error, context = '') {
                     let errorMessage = 'An error occurred';
@@ -125,11 +183,40 @@
                     const date = new Date(dateString);
                     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                 },
+
+                // Modal methods
+                addParameter() {
+                    this.formData.parameters_tested.push('');
+                },
+
+                removeParameter(index) {
+                    this.formData.parameters_tested.splice(index, 1);
+                },
+
+                // Handle opening the new test modal
+                openNewTestModal(batchId) {
+                    // Dispatch an event to set the batch in the modal
+                    this.$dispatch('set-batch', { batch: { id: batchId } });
+                    this.showModal = true;
+                },
+
+                // Handle test creation from the modal
+                handleTestCreated(data) {
+                    if (this.openBatch) {
+                        this.loadTests(this.openBatch);
+                    }
+                    // Show success message
+                    alert('Quality test created successfully!');
+                },
             }));
         });
     </script>
 
     <div class="py-12" x-data="qualityTests">
+        <!-- New Test Button - Removed since we'll use the one in the batch row -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+            <p class="text-sm text-gray-500">Click on a batch row to view tests and create new ones.</p>
+        </div>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -189,10 +276,10 @@
                                                 <div class="flex justify-between items-center mb-2">
                                                     <h3 class="text-sm font-medium text-gray-900">Quality Tests</h3>
                                                     @can('create_quality_test')
-                                                        <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}"
-                                                           class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            + New Test
-                                                        </a>
+                                                        <button @click="openNewTestModal({{ $batch->id }})"
+                                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                        New Test
+                                                    </button>
                                                     @endcan
                                                 </div>
                                                 <div x-show="loadingTests && openBatch === {{ $batch->id }}" class="text-center py-4">
@@ -274,6 +361,98 @@
                             {{ $batches->links() }}
                         </div>
                     @endif
+                </div>
+            </div>
+        </div>
+        <!-- Initialize Alpine.js store for modal state -->
+        <div x-data="{
+            modal: {
+                batch: null
+            }
+        }" x-init="
+            // Initialize the store if it doesn't exist
+            if (!window.Alpine.store('modal')) {
+                window.Alpine.store('modal', { batch: null });
+            }
+
+            // Listen for batch selection
+            $watch('$store.modal.batch', (batch) => {
+                if (batch) {
+                    this.modal.batch = batch;
+                }
+            });
+
+            // Listen for the modal to open
+            $watch('showModal', (isOpen) => {
+                if (isOpen && this.currentBatch) {
+                    window.Alpine.store('modal').batch = this.currentBatch;
+                }
+            });
+        ">
+            <!-- Modal -->
+            <div x-show="showModal"
+                 x-cloak
+                 class="fixed inset-0 z-50 overflow-y-auto"
+                 aria-labelledby="modal-title"
+                 role="dialog"
+                 aria-modal="true"
+                 x-data="{}">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <!-- Background overlay -->
+                    <div x-show="showModal"
+                         @click="showModal = false"
+                         class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-from="opacity-0"
+                         x-transition:enter-to="opacity-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-from="opacity-100"
+                         x-transition:leave-to="opacity-0"
+                         aria-hidden="true"></div>
+
+                    <!-- Modal panel -->
+                    <div x-show="showModal"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         x-transition:enter-to="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-from="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+
+                        <!-- Modal header -->
+                        <div class="flex justify-between items-center pb-3">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Create New Quality Test
+                                <template x-if="$store.modal.batch">
+                                    <span class="text-sm text-gray-500">for Batch #<span x-text="$store.modal.batch.batch_code || $store.modal.batch.id"></span></span>
+                    <!-- Modal content -->
+                    <div class="mt-5">
+                        <template x-if="currentBatch">
+                            <div>
+                                <div class="mb-4">
+                                    <h4 class="text-lg font-medium text-gray-900">Create Quality Test for Batch <span x-text="currentBatch.batch_code"></span></h4>
+                                    <p class="text-sm text-gray-500">Product: <span x-text="currentBatch.product_name"></span></p>
+                                </div>
+                                <template x-if="currentBatch">
+                                    <div>
+                                        <x-quality-test-form
+                                            x-on:test-created="() => {
+                                                showModal = false;
+                                                batch = currentBatch;
+                                                if (openBatch) {
+                                                    loadTests(openBatch);
+                                                }
+                                            }"
+                                            x-on:close-modal="showModal = false" />
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <div x-show="!currentBatch" class="text-center py-4">
+                            <p class="text-gray-500">Loading batch information...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

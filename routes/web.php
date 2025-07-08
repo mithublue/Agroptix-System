@@ -109,27 +109,56 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['can:delete_batch'])->delete('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'destroy'])->name('batches.destroy');
 
-    // Quality Tests
+    // Quality Tests - Main Routes
     Route::middleware(['can:view_quality_test'])->group(function () {
-        Route::get('quality-tests/batches', [App\Http\Controllers\QualityTestController::class, 'batchList'])->name('quality-tests.batchList');
-        Route::get('batches/{batch}/qualitytests', [App\Http\Controllers\QualityTestController::class, 'getTestsForBatch'])->name('batches.quality-tests.index');
+        // Main batch list for quality tests
+        Route::get('quality-tests/batches', [App\Http\Controllers\QualityTestController::class, 'batchList'])
+            ->name('quality-tests.batchList');
+            
+        // Get tests for a specific batch (AJAX endpoint)
+        Route::get('batches/{batch}/qualitytests', [App\Http\Controllers\QualityTestController::class, 'getTestsForBatch'])
+            ->name('batches.quality-tests.index');
+            
+        // Main index route (list all quality tests)
+        Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])
+            ->name('quality-tests.index');
     });
+    
+    // Quality Test Creation Routes
+    Route::middleware(['can:create_quality_test'])->group(function () {
+        // Create form for a specific batch
+        Route::get('batches/{batch}/quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])
+            ->name('quality-tests.create');
+            
+        // Store a new quality test
+        Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])
+            ->name('quality-tests.store');
+    });
+    
+    // Batch-specific Quality Test Routes
     Route::prefix('batches/{batch}')->group(function () {
-        Route::middleware(['can:create_quality_test'])->group(function () {
-            Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
-            Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
-        });
+        // View tests for a specific batch
         Route::middleware(['can:view_quality_test'])->group(function () {
-            Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
-            Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
+            Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'batchTests'])
+                ->name('batches.quality-tests.list');
+                
+            Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])
+                ->name('quality-tests.show');
         });
 
+        // Edit/Update quality tests
         Route::middleware(['can:edit_quality_test'])->group(function () {
-            Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
-            Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
+            Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])
+                ->name('quality-tests.edit');
+                
+            Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])
+                ->name('quality-tests.update');
         });
 
-        Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
+        // Delete quality tests
+        Route::middleware(['can:delete_quality_test'])
+            ->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])
+            ->name('quality-tests.destroy');
     });
 
     // Shipments

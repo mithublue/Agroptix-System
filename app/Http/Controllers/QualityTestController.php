@@ -14,23 +14,157 @@ use Illuminate\View\View;
 
 class QualityTestController extends Controller
 {
+    /**
+     * Display a listing of all quality tests.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request): View
     {
-        $qualityTests = QualityTest::all();
+        $qualityTests = QualityTest::with(['batch', 'user'])
+            ->latest()
+            ->paginate(20);
 
         return view('qualityTest.index', [
             'qualityTests' => $qualityTests,
         ]);
     }
 
+    /**
+     * Display quality tests for a specific batch.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View
+     */
+    public function batchTests(Batch $batch)
+    {
+        $qualityTests = $batch->qualityTests()
+            ->with('user')
+            ->latest()
+            ->paginate(20);
+
+        return view('qualityTest.batch-tests', [
+            'batch' => $batch,
+            'qualityTests' => $qualityTests,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new quality test.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
+    public function create(Batch $batch)
+    {
+        // If it's an AJAX request, return the form HTML
+        if (request()->ajax() || request()->wantsJson()) {
+            return view('qualityTest.partials.form', [
+                'batch' => $batch
+            ]);
+        }
+
+        // For regular requests, return the full view
+        return view('qualityTest.create', [
+            'batch' => $batch
+        ]);
+    }
+
     public function batchList(Request $request)
     {
-        $batches = Batch::where('status', 'Completed')
-                       ->with('product')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+        try {
+            $batches = Batch::where('status', 'Completed')
+                ->with(['product' => function($query) {
+                    $query->select('id', 'name');
+                }])
+                ->orderBy('created_at', 'desc')
+                ->select('id', 'batch_code', 'product_id', 'harvest_time', 'status', 'created_at')
+                ->paginate(10);
 
-        return view('qualityTest.batch-list', compact('batches'));
+            return view('qualityTest.batch-list', compact('batches'));
+
+        } catch (\Exception $e) {
+            \Log::error('Error in batchList: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+
+            // Return a more helpful error response
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to load batches. ' . $e->getMessage(),
+                    'data' => []
+                ], 500);
+            }
+
+            // For regular requests, redirect back with error
+            return back()->with('error', 'Failed to load batches. Please try again.');
+        }
+    }
+
+    /**
+     * Store a newly created quality test in storage.
+     *
+     * @param  \App\Http\Requests\QualityTestStoreRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    /**
+     * Store a newly created quality test in storage.
+     *
+     * @param  \App\Http\Requests\QualityTestStoreRequest  $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function store(QualityTestStoreRequest $request)
+    {
+        try {
+            // Prepare result status for different parameters
+            $resultStatus = [];
+            foreach (($request->parameters_tested ?? []) as $param) {
+                $resultKey = $param . '_result';
+                if ($request->has($resultKey)) {
+                    $resultStatus[$param] = $request->$resultKey;
+                } else {
+                    $resultStatus[$param] = $request->final_pass_fail;
+                }
+            }
+
+            // Create the quality test
+            $qualityTest = QualityTest::create([
+                'batch_id' => $request->batch_id,
+                'user_id' => auth()->id(),
+                'parameter_tested' => json_encode($request->parameters_tested),
+                'result' => $request->final_pass_fail,
+                'result_status' => json_encode($resultStatus),
+                'test_certificate' => $request->test_certificate,
+                'remarks' => $request->remarks,
+            ]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Quality test created successfully',
+                    'data' => $qualityTest
+                ]);
+            }
+
+            return redirect()->route('quality-tests.index')
+                ->with('success', 'Quality test created successfully');
+
+        } catch (\Exception $e) {
+            \Log::error('Error creating quality test: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create quality test',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+            return back()->withInput()
+                ->with('error', 'Failed to create quality test. Please try again.');
+        }
     }
 
     /**
@@ -142,78 +276,6 @@ class QualityTestController extends Controller
                 ],
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
             );
-        }
-
-            // Error response is already handled above
-        }
-
-    public function create(Batch $batch): View
-    {
-        return view('qualityTest.create', compact('batch'));
-    }
-
-    public function store(Request $request)
-    {
-        // Define validation rules
-        //    to get access to its rules and authorization logic.
-        $formRequest = new QualityTestStoreRequest();
-
-        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
-        if (!$formRequest->authorize()) {
-            abort(403, 'This action is unauthorized.');
-        }
-
-        // 3. Get the validation rules from your Form Request class.
-        $rules = $formRequest->rules();
-
-        //add new value to request
-        $insertData = [
-            'batch_id' => $request['batch_id'] ?? null,
-            'parameters_tested' => json_encode($request['parameters_tested'] ?? [] ),
-            'result' => $request['final_pass_fail'] ?? null,
-            'test_certificate' => $request['test_certificate'] ?? null,
-            'remarks' => $request['remarks'] ?? null,
-        ];
-
-        //result_status for different parameters
-        $result_status = [];
-        foreach (($request['parameters_tested'] ?? []) as $param) {
-            $resultKey = $param . '_result';
-            if (isset($request[$resultKey])) {
-                $result_status[$resultKey] = $request[$resultKey];
-            }
-        }
-        $insertData['result_status'] = json_encode($result_status);
-
-        // 4. Create a new validator instance manually.
-        $validator = Validator::make( $insertData, $rules);
-
-        // Validate the request
-        if ($validator->fails()) {
-
-            // 6. Manually handle the failure.
-            //    To make it work with Hotwired Turbo, we must set the 422 status code.
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'errors' => $validator->errors(),
-                ], 500);
-            }
-            return back()->withErrors($validator)->withInput()->setStatusCode(422);
-        }
-
-        // 7. If validation passes, get the validated data.
-        $validatedData = $validator->validated();
-
-        QualityTest::create($validatedData);
-
-
-        // If this is an AJAX request, return JSON response
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Test created successfully',
-                'redirect' => route('quality-tests.batchList')
-            ]);
         }
     }
 
