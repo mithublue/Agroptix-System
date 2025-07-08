@@ -240,21 +240,28 @@ class QualityTestController extends Controller
         return redirect()->route('qualityTests.index');
     }
 
-    public function destroy(Request $request, Batch $batch, QualityTest $quality_test): JsonResponse
+    public function destroy(Request $request, Batch $batch, QualityTest $quality_test)
     {
         // Verify that the quality test belongs to the batch
         if ($quality_test->batch_id !== $batch->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Quality test does not belong to this batch'
-            ], 422);
+            $message = 'Quality test does not belong to this batch';
+            
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => $message], 422)
+                : back()->with('error', $message);
         }
 
         $quality_test->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Quality test deleted successfully'
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Quality test deleted successfully'
+            ]);
+        }
+
+        return redirect()
+            ->route('batches.quality-tests.index', $batch)
+            ->with('success', 'Quality test deleted successfully');
     }
 }
