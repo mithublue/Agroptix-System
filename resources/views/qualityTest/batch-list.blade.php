@@ -213,7 +213,50 @@
                                                         <tbody class="divide-y divide-gray-200 bg-white">
                                                             <template x-for="test in tests[{{ $batch->id }}]" :key="test.id">
                                                                 <tr>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.parameter_tested || 'N/A'"></td>
+                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+    <template x-if="test.parameter_tested">
+        <span x-text="(() => {
+            try {
+                // Convert to array if it's a string
+                let params = test.parameter_tested;
+                if (typeof params === 'string') {
+                    try {
+                        params = JSON.parse(params);
+                    } catch (e) {
+                        // If it's not valid JSON, treat as a single value
+                        params = [params];
+                    }
+                }
+                
+                // Ensure it's an array
+                if (!Array.isArray(params)) {
+                    params = [params];
+                }
+                
+                // Process each parameter
+                return params.map(param => {
+                    if (!param) return '';
+                    // Convert to string in case it's a number or other type
+                    let str = String(param);
+                    // Replace underscores and special characters with spaces
+                    str = str.replace(/[^\w\s]/g, ' ').replace(/_/g, ' ');
+                    // Capitalize first letter of each word
+                    return str.toLowerCase()
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .filter(word => word) // Remove empty strings from multiple spaces
+                        .join(' ');
+                }).filter(Boolean).join(', '); // Remove any empty strings and join with comma
+            } catch (e) {
+                console.error('Error processing parameters:', e);
+                return 'Error';
+            }
+        })()"></span>
+    </template>
+    <template x-if="!test.parameter_tested">
+        <span>N/A</span>
+    </template>
+</td>
                                                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.result || 'N/A'"></td>
                                                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                                         <span x-bind:class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-green-100 text-green-800': test.result_status === 'pass', 'bg-red-100 text-red-800': test.result_status !== 'pass'}" x-text="test.result_status === 'pass' ? 'Passed' : test.result_status === 'fail' ? 'Failed' : test.result_status || 'N/A'">
