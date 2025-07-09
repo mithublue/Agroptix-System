@@ -573,9 +573,32 @@
                     })
                     .then(data => {
                         if (data.success) {
-                            // Show success message and redirect
-                            alert('Quality test saved successfully!');
-                            window.location.href = data.redirect || '{{ route("quality-tests.index", $batch) }}';
+                            // Get the redirect URL
+                            const redirectUrl = data.redirect || '{{ route("quality-tests.index", $batch) }}';
+                            
+                            // Use Turbo to navigate without a full page reload
+                            if (window.Turbo) {
+                                Turbo.visit(redirectUrl, { action: 'replace' });
+                            } else {
+                                // Fallback to regular navigation if Turbo is not available
+                                window.location.href = redirectUrl;
+                            }
+
+                            // Uncomment this if you've set up SweetAlert
+                            /*
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Quality test saved successfully!',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                timer: 2000,
+                                timerProgressBar: true,
+                                willClose: () => {
+                                    history.pushState(null, '', redirectUrl);
+                                    window.dispatchEvent(new Event('popstate'));
+                                }
+                            });
+                            */
                         } else {
                             throw new Error(data.message || 'Failed to save quality test');
                         }
