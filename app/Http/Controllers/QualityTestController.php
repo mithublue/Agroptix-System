@@ -212,33 +212,89 @@ class QualityTestController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Test created successfully',
-                'redirect' => route('quality-tests.batchList')
             ]);
         }
+        return back()->withErrors($validator)->withInput()->setStatusCode(422);
     }
 
-    public function show(Request $request, QualityTest $qualityTest): Response
-    {
-        return view('qualityTest.show', [
-            'qualityTest' => $qualityTest,
-        ]);
-    }
-
-    public function edit(Request $request, $batch, QualityTest $qualityTest): View
+    public function edit(Request $request, Batch $batch, QualityTest $qualityTest): View
     {
         // If $qualityTest is not a model instance, try to find it
-        return view('qualityTest.edit', [
+        if (!($qualityTest instanceof \App\Models\QualityTest)) {
+            $qualityTest = \App\Models\QualityTest::findOrFail($qualityTest);
+        }
+
+        // Parse the JSON fields
+        $parametersTested = json_decode($qualityTest->parameter_tested, true) ?? [];
+        $resultStatus = json_decode($qualityTest->result_status, true) ?? [];
+
+        // Structure the form data
+        $formData = [
+            'batch_id' => $qualityTest->batch_id,
+            'test_date' => $qualityTest->test_date,
+            'lab_name' => $qualityTest->lab_name,
+            'technician_name' => $qualityTest->user?->name ?? '',
+            'parameters_tested' => $parametersTested,
+            'test_certificate' => $qualityTest->test_certificate,
+            'remarks' => $qualityTest->remarks,
+            'final_pass_fail' => $qualityTest->result,
+        ];
+
+        // Add result_status fields to form data
+        if (is_array($resultStatus)) {
+            foreach ($resultStatus as $key => $value) {
+                $formData[$key] = $value;
+            }
+        }
+
+        // Convert to JSON for JavaScript
+        $formDataJson = json_encode($formData, JSON_HEX_APOS | JSON_HEX_QUOT);
+
+        return view('qualityTest.create', [
+            'isEdit' => true,
             'qualityTest' => $qualityTest,
+            'formData' => $formData,
+            'formDataJson' => $formDataJson,
+            'batch' => $batch
         ]);
     }
 
-    public function update(QualityTestUpdateRequest $request, QualityTest $qualityTest): Response
+    public function update(Request $request, $batch, QualityTest $qualityTest)
     {
-        $qualityTest->update($request->validated());
+        try {
+            // Parse the parameters_tested array from the request
+            $parametersTested = $request->input('parameters_tested', []);
 
-        $request->session()->flash('qualityTest.id', $qualityTest->id);
+            // Prepare the data for update
+            $updateData = [
+                'test_date' => $request->input('test_date'),
+                'lab_name' => $request->input('lab_name'),
+                'parameter_tested' => json_encode($parametersTested),
+                'result' => $request->input('final_pass_fail'),
+                'remarks' => $request->input('remarks'),
+            ];
 
-        return redirect()->route('qualityTests.index');
+            // Handle file upload if present
+            if ($request->hasFile('test_certificate')) {
+                $path = $request->file('test_certificate')->store('test-certificates', 'public');
+                $updateData['test_certificate'] = $path;
+            }
+
+            // Update the quality test
+            $qualityTest->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test updated successfully',
+                'redirect' => route('quality-tests.batchList', $batch)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating test: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Request $request, Batch $batch, QualityTest $quality_test): JsonResponse

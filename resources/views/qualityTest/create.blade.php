@@ -1,11 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Create Quality Test') }}
+            {{ isset($isEdit) ? __('Edit Quality Test') : __('Create Quality Test') }}
         </h2>
     </x-slot>
-    <form method="POST" action="{{ route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="labTestingForm()">
+    <form method="POST" action="{{ isset($isEdit) ? route('quality-tests.update', ['batch' => $batch, 'qualityTest' => $qualityTest->id]) : route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="labTestingForm()">
         @csrf
+        @if(isset($isEdit))
+            @method('PUT')
+        @endif
 
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
@@ -296,17 +299,42 @@
     <script>
         // Initialize Alpine.js component
         function labTestingForm() {
+            // Get the form data from PHP if in edit mode
+            const serverFormData = @json($formDataJson ?? '{}');
+            const isEditMode = @json(isset($isEdit) ? 'true' : 'false');
+
+            // Parse the server data if it exists
+            let initialFormData = {
+                batch_id: '',
+                test_date: '',
+                lab_name: '',
+                technician_name: '',
+                parameters_tested: [],
+                test_certificate: '',
+                remarks: '',
+                final_pass_fail: ''
+            };
+
+            // If we have server data, merge it with the initial data
+            if (serverFormData && isEditMode) {
+                try {
+                    const parsedData = JSON.parse(serverFormData);
+                    initialFormData = { ...initialFormData, ...parsedData };
+
+                    // Ensure parameters_tested is an array
+                    if (typeof initialFormData.parameters_tested === 'string') {
+                        initialFormData.parameters_tested = JSON.parse(initialFormData.parameters_tested);
+                    } else if (!Array.isArray(initialFormData.parameters_tested)) {
+                        initialFormData.parameters_tested = [];
+                    }
+                } catch (e) {
+                    console.error('Error parsing form data:', e);
+                }
+            }
+
             return {
-                formData: {
-                    batch_id: '',
-                    test_date: '',
-                    lab_name: '',
-                    technician_name: '',
-                    parameters_tested: [],
-                    test_certificate: '',
-                    remarks: '',
-                    final_pass_fail: ''
-                },
+                isEdit: isEditMode,
+                formData: initialFormData,
 
                 config: {
                     parameters_tested: {
@@ -512,36 +540,37 @@
                         return;
                     }
 
-                    // Create form data from the form
-                    const formData = new FormData();
+                    // Create FormData object
+                    const formData = new FormData(form);
 
-                    // Add all form fields from the HTML form
-                    const formElements = form.elements;
-                    for (let i = 0; i < formElements.length; i++) {
-                        const element = formElements[i];
-                        if (element.name) {
-                            if (element.type === 'checkbox' || element.type === 'radio') {
-                                if (element.checked) {
-                                    formData.append(element.name, element.value);
-                                }
-                            } else if (element.type === 'file') {
-                                // Handle file inputs
-                                if (element.files.length > 0) {
-                                    formData.append(element.name, element.files[0]);
-                                }
-                            } else {
-                                formData.append(element.name, element.value);
-                            }
-                        }
+                    // Manually append the parameters_tested array
+                    if (this.formData.parameters_tested && this.formData.parameters_tested.length > 0) {
+                        // Clear any existing parameters_tested values
+                        formData.delete('parameters_tested[]');
+
+                        // Add each parameter
+                        this.formData.parameters_tested.forEach(param => {
+                            formData.append('parameters_tested[]', param);
+                        });
                     }
 
                     // Add the form data from Alpine.js to the FormData
                     Object.entries(this.formData).forEach(([key, value]) => {
+                        if (value === null || value === undefined) return;
+
                         if (Array.isArray(value)) {
                             // Remove any existing values for this key to avoid duplicates
                             formData.delete(key);
                             value.forEach(val => formData.append(`${key}[]`, val));
-                        } else if (value !== null && value !== undefined) {
+                        } else if (value instanceof File) {
+                            // Handle file uploads
+                            if (value.size > 0) {
+                                formData.set(key, value);
+                            }
+                        } else if (typeof value === 'object') {
+                            // Stringify objects
+                            formData.set(key, JSON.stringify(value));
+                        } else {
                             formData.set(key, value);
                         }
                     });
@@ -552,6 +581,15 @@
                     // Add the batch ID if not already set
                     if (!formData.get('batch_id')) {
                         formData.set('batch_id', '{{ $batch->id }}');
+                    }
+
+                    // Set the correct HTTP method for the request
+                    const method = this.isEdit ? 'post' : 'post';
+                    const url = form.action;
+
+                    // Add _method for Laravel to handle PUT/PATCH/DELETE
+                    if (this.isEdit) {
+                        formData.append('_method', 'PUT');
                     }
 
                     // Submit the form
