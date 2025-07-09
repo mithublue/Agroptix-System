@@ -1,9 +1,26 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import { Turbo } from '@hotwired/turbo-rails';
+import Swal from 'sweetalert2';
+
+// Make Swal available globally
+window.Swal = Swal;
 
 // Initialize Alpine.js
 window.Alpine = Alpine;
+
+// Configure Toast
+window.Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
 
 // Start Alpine.js when Turbo has loaded the page
 document.addEventListener('turbo:load', () => {

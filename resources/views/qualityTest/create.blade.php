@@ -575,30 +575,34 @@
                         if (data.success) {
                             // Get the redirect URL
                             const redirectUrl = data.redirect || '{{ route("quality-tests.index", $batch) }}';
-                            
-                            // Use Turbo to navigate without a full page reload
-                            if (window.Turbo) {
-                                Turbo.visit(redirectUrl, { action: 'replace' });
-                            } else {
-                                // Fallback to regular navigation if Turbo is not available
-                                window.location.href = redirectUrl;
-                            }
 
-                            // Uncomment this if you've set up SweetAlert
-                            /*
-                            Swal.fire({
-                                title: 'Success!',
-                                text: 'Quality test saved successfully!',
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                                timer: 2000,
+                            // Show success toast with progress bar
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
                                 timerProgressBar: true,
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                },
                                 willClose: () => {
-                                    history.pushState(null, '', redirectUrl);
-                                    window.dispatchEvent(new Event('popstate'));
+                                    // Navigate after toast closes
+                                    if (window.Turbo) {
+                                        Turbo.visit(redirectUrl, { action: 'replace' });
+                                    } else {
+                                        window.location.href = redirectUrl;
+                                    }
                                 }
                             });
-                            */
+
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Quality test saved successfully!',
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
                         } else {
                             throw new Error(data.message || 'Failed to save quality test');
                         }
