@@ -18,6 +18,8 @@ class QualityTest extends Model
     protected $fillable = [
         'batch_id',
         'user_id',
+        'test_date',
+        'lab_name',
         'parameter_tested',
         'result',
         'result_status',

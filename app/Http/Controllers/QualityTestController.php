@@ -169,7 +169,9 @@ class QualityTestController extends Controller
         //add new value to request
         $insertData = [
             'batch_id' => $request['batch_id'] ?? null,
-            'parameters_tested' => json_encode($request['parameters_tested'] ?? [] ),
+            'test_date' => $request['test_date'] ?? null,
+            'lab_name' => $request['lab_name'] ?? null,
+            'parameter_tested' => json_encode($request['parameters_tested'] ?? [] ),
             'result' => $request['final_pass_fail'] ?? null,
             'test_certificate' => $request['test_certificate'] ?? null,
             'remarks' => $request['remarks'] ?? null,
@@ -187,7 +189,6 @@ class QualityTestController extends Controller
 
         // 4. Create a new validator instance manually.
         $validator = Validator::make( $insertData, $rules);
-
         // Validate the request
         if ($validator->fails()) {
 
@@ -203,7 +204,6 @@ class QualityTestController extends Controller
 
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
-
         QualityTest::create($validatedData);
 
 
@@ -224,8 +224,9 @@ class QualityTestController extends Controller
         ]);
     }
 
-    public function edit(Request $request, QualityTest $qualityTest): Response
+    public function edit(Request $request, $batch, QualityTest $qualityTest): View
     {
+        // If $qualityTest is not a model instance, try to find it
         return view('qualityTest.edit', [
             'qualityTest' => $qualityTest,
         ]);

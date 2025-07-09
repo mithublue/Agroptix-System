@@ -115,18 +115,22 @@ Route::middleware('auth')->group(function () {
         Route::get('batches/{batch}/qualitytests', [App\Http\Controllers\QualityTestController::class, 'getTestsForBatch'])->name('batches.quality-tests.index');
     });
     Route::prefix('batches/{batch}')->group(function () {
+        // Create routes
         Route::middleware(['can:create_quality_test'])->group(function () {
             Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
             Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
         });
+        
+        // View routes
         Route::middleware(['can:view_quality_test'])->group(function () {
             Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
-            Route::get('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
+            Route::get('quality-tests/{qualityTest}', [App\Http\Controllers\QualityTestController::class, 'show'])->name('quality-tests.show');
         });
 
+        // Edit/Update routes
         Route::middleware(['can:edit_quality_test'])->group(function () {
-            Route::get('quality-tests/{quality_test}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
-            Route::put('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
+            Route::get('quality-tests/{qualityTest}/edit', [App\Http\Controllers\QualityTestController::class, 'edit'])->name('quality-tests.edit');
+            Route::put('quality-tests/{qualityTest}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
         });
 
         Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');

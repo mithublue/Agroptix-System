@@ -555,26 +555,23 @@
                     }
 
                     // Submit the form
-                    fetch(form.action, {
+                    axios({
                         method: form.method,
-                        body: formData,
+                        url: form.action,
+                        data: formData,
                         headers: {
+                            'Content-Type': 'multipart/form-data',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
                     .then(response => {
+                        console.log('qwe');
                         console.log(response);
-                        if (!response.ok) {
-                            return response.json().then(err => { throw err; });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
+                        if (response.data.success) {
                             // Get the redirect URL
-                            const redirectUrl = data.redirect || '{{ route("quality-tests.index", $batch) }}';
+                            const redirectUrl = response.data.redirect || '{{ route("quality-tests.index", $batch) }}';
 
                             // Show success toast with progress bar
                             const Toast = Swal.mixin({
@@ -604,16 +601,19 @@
                                 timerProgressBar: true
                             });
                         } else {
-                            throw new Error(data.message || 'Failed to save quality test');
+                            throw new Error(response.data.message || 'Failed to save quality test');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         let errorMessage = 'An error occurred while saving the test.';
 
-                        if (error.errors) {
+                        if (error.response?.data?.errors) {
                             // Handle validation errors
-                            errorMessage = Object.values(error.errors).flat().join('\n');
+                            const errors = error.response.data.errors;
+                            errorMessage = Object.values(errors).flat().join('\n');
+                        } else if (error.response?.data?.message) {
+                            errorMessage = error.response.data.message;
                         } else if (error.message) {
                             errorMessage = error.message;
                         }

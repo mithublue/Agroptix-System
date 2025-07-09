@@ -19,8 +19,5 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Route::bind('quality_test', function ($value) {
-            return \App\Models\QualityTest::findOrFail($value);
-        });
     }
 }
