@@ -148,7 +148,7 @@
                                                         >
                                                             <option value="">Select result...</option>
                                                             <template x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)" :key="optKey">
-                                                                <option :value="optKey" x-text="optLabel"></option>
+                                                                <option :value="optKey" x-text="optLabel" :selected="formData[fieldKey] === optKey"></option>
                                                             </template>
                                                         </select>
                                                     </div>
