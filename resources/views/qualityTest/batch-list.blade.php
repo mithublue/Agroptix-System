@@ -12,6 +12,7 @@
                 tests: {},
                 loadedBatches: new Set(),
                 error: null,
+                showModal: false,
 
                 // Initialize Axios instance with default config
                 axiosInstance: axios.create({
@@ -125,11 +126,59 @@
                     const date = new Date(dateString);
                     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                 },
+
+                // Open the modal
+                openModal() {
+                    this.showModal = true;
+                },
             }));
         });
     </script>
 
     <div class="py-12" x-data="qualityTests">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="mb-6">
+                <button @click="showModal = true"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    New Test
+                </button>
+            </div>
+
+            <div x-show="showModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4"
+                 style="display: none;">
+
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full"
+                     @click.away="showModal = false">
+
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            Create New Test
+                        </h3>
+                    </div>
+
+                    <div class="p-6">
+                        <p class="text-gray-600">
+                            This is a simple modal. You can add your form content here.
+                        </p>
+                    </div>
+
+                    <div class="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
+                        <button type="button"
+                                @click="showModal = false"
+                                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -189,10 +238,10 @@
                                                 <div class="flex justify-between items-center mb-2">
                                                     <h3 class="text-sm font-medium text-gray-900">Quality Tests</h3>
                                                     @can('create_quality_test')
-                                                        <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}"
-                                                           class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            + New Test
-                                                        </a>
+                                                        <button @click.prevent="showModal = true"
+                                                            class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        + New Test
+                                                    </button>
                                                     @endcan
                                                 </div>
                                                 <div x-show="loadingTests && openBatch === {{ $batch->id }}" class="text-center py-4">
