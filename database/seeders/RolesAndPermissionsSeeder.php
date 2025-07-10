@@ -25,6 +25,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_permissions',
         ];
         
+        // Add manage_{module} permissions for each module
+        foreach ($modules as $module) {
+            $adminPermissions[] = 'manage_' . $module;
+        }
+        
         // Create admin permissions
         foreach ($adminPermissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);

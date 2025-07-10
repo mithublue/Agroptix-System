@@ -28,17 +28,26 @@ class DatabaseSeeder extends Seeder
         // Create admin role if it doesn't exist
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         
-        // Assign all permissions to admin role
+        // Define modules and their permissions
+        $modules = ['source', 'product', 'batch', 'quality_test', 'shipment'];
+        $actions = ['create', 'view', 'edit', 'delete'];
+        
+        // Initialize permissions array with admin specific permissions
         $permissions = [
             'manage_users',
             'manage_roles',
             'manage_permissions',
-            'view_product', 'create_product', 'edit_product', 'delete_product',
-            'view_batch', 'create_batch', 'edit_batch', 'delete_batch',
-            'view_quality_test', 'create_quality_test', 'edit_quality_test', 'delete_quality_test',
-            'view_shipment', 'create_shipment', 'edit_shipment', 'delete_shipment',
-            'view_source', 'create_source', 'edit_source', 'delete_source'
         ];
+        
+        // Add manage_{module} permissions for each module
+        foreach ($modules as $module) {
+            $permissions[] = 'manage_' . $module;
+            
+            // Add CRUD permissions for each module
+            foreach ($actions as $action) {
+                $permissions[] = $action . '_' . $module;
+            }
+        }
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
