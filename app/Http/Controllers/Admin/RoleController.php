@@ -39,8 +39,11 @@ class RoleController extends Controller
             'permissions.*' => ['exists:permissions,id']
         ]);
 
+        // Get the permission names based on the provided IDs
+        $permissions = Permission::whereIn('id', $validated['permissions'])->pluck('name');
+        
         $role = SpatieRole::create(['name' => $validated['name']]);
-        $role->syncPermissions($validated['permissions']);
+        $role->syncPermissions($permissions);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role created successfully');
@@ -65,8 +68,11 @@ class RoleController extends Controller
             'permissions.*' => ['exists:permissions,id']
         ]);
 
+        // Get the permission names based on the provided IDs
+        $permissions = Permission::whereIn('id', $validated['permissions'])->pluck('name');
+
         $role->update(['name' => $validated['name']]);
-        $role->syncPermissions($validated['permissions']);
+        $role->syncPermissions($permissions);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role updated successfully');
