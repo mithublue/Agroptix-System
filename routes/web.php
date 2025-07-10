@@ -46,7 +46,7 @@ Route::get('/debug-permissions', function () {
 })->middleware('auth');
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dashboard');
 });
 
 Route::get('/dashboard', function () {

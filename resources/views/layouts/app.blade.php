@@ -33,7 +33,7 @@
             <div class="flex flex-col h-full">
                 <!-- Logo -->
                 <div class="flex items-center justify-center h-16 px-4 bg-indigo-600">
-                    <span class="text-xl font-semibold text-white">Agroptix</span>
+                    <a href="{{ route('dashboard') }}"><span class="text-xl font-semibold text-white">Agroptix</span></a>
                 </div>
 
                 <!-- Navigation -->
