@@ -17,7 +17,16 @@ class SourceController extends Controller
 
     public function index(): View
     {
-        $sources = Source::latest()->paginate(10);
+        $this->authorize('viewAny', Source::class);
+
+        // Get the sources based on user's permissions
+        $sources = Source::when(!auth()->user()->can('manage_source'), function($query) {
+                // For non-admin users, only show sources they own
+                return $query->where('owner_id', auth()->id());
+            })
+            ->latest()
+            ->paginate(10);
+
         return view('source.index', compact('sources'));
     }
 
@@ -35,17 +44,23 @@ class SourceController extends Controller
         return view('source.create', compact('users', 'userOwners'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SourceStoreRequest $request): RedirectResponse
     {
+        $this->authorize('create', Source::class);
+
+        // If user doesn't have manage_source permission, set owner_id to current user
+        if (!auth()->user()->can('manage_source')) {
+            $request->merge(['owner_id' => auth()->id()]);
+        }
+
         // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new SourceStoreRequest();
 
         // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
         if (!$formRequest->authorize()) {
-            abort(403, 'This action is unauthorized.');
+            abort( 403, 'This action is unauthorized.' );
         }
-
         // 3. Get the validation rules from your Form Request class.
         $rules = $formRequest->rules();
 
@@ -83,38 +98,45 @@ class SourceController extends Controller
 
     public function show(Source $source): View
     {
+        $this->authorize('view', $source);
         return view('source.show', compact('source'));
     }
 
     public function edit(Source $source): View
     {
+        $this->authorize('edit', $source);
         return view('source.edit', compact('source'));
     }
 
-    public function update(Request $request, Source $source): RedirectResponse
+    public function update(SourceUpdateRequest $request, Source $source): RedirectResponse
     {
+        $this->authorize('edit', $source);
+
+        // If user doesn't have manage_source permission, ensure they can't change the owner
+        if (!auth()->user()->can('manage_source')) {
+            $request->merge(['owner_id' => $source->owner_id]);
+        }
+
+        // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new SourceUpdateRequest();
 
         // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
         if (!$formRequest->authorize()) {
-            abort(403, 'This action is unauthorized.');
+            abort( 403, 'This action is unauthorized.' );
         }
-
         // 3. Get the validation rules from your Form Request class.
         $rules = $formRequest->rules();
 
-        // 4. Create a new validator instance manually.
+        // Create a new validator instance manually
         $validator = Validator::make($request->all(), $rules);
 
         // Validate the request
         if ($validator->fails()) {
-            // 6. Manually handle the failure.
-            //    To make it work with Hotwired Turbo, we must set the 422 status code.
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
 
-        // 7. If validation passes, get the validated data.
+        // Get the validated data
         $validatedData = $validator->validated();
 
         try {
@@ -131,14 +153,11 @@ class SourceController extends Controller
 
     public function destroy(Source $source): RedirectResponse
     {
-        try {
-            $source->delete();
-            return redirect()
-                ->route('sources.index')
-                ->with('success', 'Source deleted successfully.');
-        } catch (\Exception $e) {
-            return back()
-                ->with('error', 'Failed to delete source. ' . $e->getMessage());
-        }
+        $this->authorize('delete', $source);
+
+        $source->delete();
+
+        return redirect()->route('sources.index')
+            ->withSuccess('Source is deleted successfully.');
     }
 }

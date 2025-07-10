@@ -11,7 +11,7 @@ class SourceStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->user()->can('create', \App\Models\Source::class);
     }
 
     /**
@@ -27,11 +27,16 @@ class SourceStoreRequest extends FormRequest
             'area' => ['nullable', 'string'],
         ];
 
-        // Check if the authenticated user has the required permission
-        if (Auth()->user()->can('manage_source')) {
-            // If they do, add the validation rules for the admin fields
+        // If user has manage_source permission, make status and owner_id required
+        if (auth()->user()->can('manage_source')) {
             $rules['status'] = ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))];
             $rules['owner_id'] = ['required', 'integer', 'exists:users,id'];
+        } else {
+            // For regular users, set default status and owner_id
+            $this->merge([
+                'status' => 'active',
+                'owner_id' => auth()->user()->id
+            ]);
         }
 
         return $rules;

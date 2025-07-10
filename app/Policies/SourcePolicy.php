@@ -13,7 +13,7 @@ class SourcePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_source');
+        return $user->can('view_source');
     }
 
     /**
@@ -21,7 +21,12 @@ class SourcePolicy
      */
     public function view(User $user, Source $source): bool
     {
-        return $user->hasPermissionTo('view_source');
+        // User can view if they have view_source permission and either:
+        // 1. They are an admin (has manage_source permission), or
+        // 2. They are the owner of the source
+        return $user->can('view_source') && 
+               ($user->can('manage_source') || 
+                $user->id === $source->owner_id);
     }
 
     /**
@@ -29,7 +34,7 @@ class SourcePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_source');
+        return $user->can('create_source');
     }
 
     /**
@@ -37,7 +42,20 @@ class SourcePolicy
      */
     public function edit(User $user, Source $source): bool
     {
-        return $user->hasPermissionTo('edit_source');
+        // User can update if they have edit_source permission and either:
+        // 1. They are an admin (has manage_source permission), or
+        // 2. They are the owner of the source
+        return $user->can('edit_source') && 
+               ($user->can('manage_source') || 
+                $user->id === $source->owner_id);
+    }
+    
+    /**
+     * Alias for edit to maintain Laravel's naming convention
+     */
+    public function update(User $user, Source $source): bool
+    {
+        return $this->edit($user, $source);
     }
 
     /**
@@ -45,7 +63,20 @@ class SourcePolicy
      */
     public function delete(User $user, Source $source): bool
     {
-        return $user->hasPermissionTo('delete_source');
+        // User can delete if they have delete_source permission and either:
+        // 1. They are an admin (has manage_source permission), or
+        // 2. They are the owner of the source
+        return $user->can('delete_source') && 
+               ($user->can('manage_source') || 
+                $user->id === $source->owner_id);
+    }
+    
+    /**
+     * Determine whether the user can manage the source (admin only).
+     */
+    public function manage(User $user): bool
+    {
+        return $user->can('manage_source');
     }
 
     /**
