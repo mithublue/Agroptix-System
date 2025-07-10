@@ -53,6 +53,11 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Source status update route
+Route::patch('/sources/{source}/status', [\App\Http\Controllers\SourceController::class, 'updateStatus'])
+    ->name('sources.update.status')
+    ->middleware('can:manage_source');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

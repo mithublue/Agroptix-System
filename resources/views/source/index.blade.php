@@ -62,6 +62,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
+                                                $statuses = config('at.source_status', []);
                                                 $statusColors = [
                                                     'pending' => 'bg-yellow-100 text-yellow-800',
                                                     'approved' => 'bg-green-100 text-green-800',
@@ -71,9 +72,78 @@
                                                 ];
                                                 $color = $statusColors[$source->status] ?? 'bg-gray-100 text-gray-800';
                                             @endphp
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }}">
-                                                {{ ucfirst($source->status) }}
-                                            </span>
+                                            @can('manage_source')
+                                                <div x-data="{
+                                                    status: '{{ $source->status }}',
+                                                    isUpdating: false,
+                                                    statuses: {{ json_encode($statuses) }},
+                                                    statusColors: {{ json_encode($statusColors) }},
+                                                    updateStatus() {
+                                                        this.isUpdating = true;
+                                                        fetch('{{ route('sources.update.status', $source) }}', {
+                                                            method: 'PATCH',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                'Accept': 'application/json',
+                                                                'X-Requested-With': 'XMLHttpRequest'
+                                                            },
+                                                            body: JSON.stringify({ status: this.status })
+                                                        })
+                                                        .then(response => response.json())
+                                                        .then(data => {
+                                                            if (data.success) {
+                                                                this.status = data.status;
+                                                                this.$dispatch('notify', {
+                                                                    type: 'success',
+                                                                    message: data.message || 'Status updated successfully'
+                                                                });
+                                                            } else {
+                                                                this.$dispatch('notify', {
+                                                                    type: 'error',
+                                                                    message: data.message || 'Failed to update status.'
+                                                                });
+                                                            }
+                                                        })
+                                                        .catch(error => {
+                                                            console.error('Error:', error);
+                                                            this.$dispatch('notify', {
+                                                                type: 'error',
+                                                                message: 'An error occurred while updating status.'
+                                                            });
+                                                        })
+                                                        .finally(() => {
+                                                            this.isUpdating = false;
+                                                        });
+                                                    }
+                                                }" class="relative">
+                                                    <div class="relative">
+                                                        <select x-model="status" 
+                                                                @change="updateStatus"
+                                                                :disabled="isUpdating"
+                                                                class="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm cursor-pointer">
+                                                            <template x-for="(label, key) in statuses" :key="key">
+                                                                <option :value="key" x-text="label" :selected="status === key"></option>
+                                                            </template>
+                                                        </select>
+                                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                    <div x-show="isUpdating" class="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+                                                        <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }}">
+                                                    {{ $statuses[$source->status] ?? ucfirst($source->status) }}
+                                                </span>
+                                            @endcan
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">

@@ -158,6 +158,31 @@ class SourceController extends Controller
         $source->delete();
 
         return redirect()->route('sources.index')
-            ->withSuccess('Source is deleted successfully.');
+            ->with('success', 'Source deleted successfully.');
+    }
+
+    /**
+     * Update the status of a source via AJAX.
+     *
+     * @param  \App\Models\Source  $source
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Source $source, \Illuminate\Http\Request $request)
+    {
+        $this->authorize('edit', $source);
+        
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))]
+        ]);
+        
+        $source->update(['status' => $validated['status']]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully',
+            'status' => $source->status,
+            'status_label' => config('at.source_status')[$source->status] ?? $source->status
+        ]);
     }
 }
