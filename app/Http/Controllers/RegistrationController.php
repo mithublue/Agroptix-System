@@ -19,7 +19,7 @@ class RegistrationController extends Controller
     /**
      * Handle a registration request.
      */
-    public function store(Request $request)
+    public function store_farmer(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -34,6 +34,11 @@ class RegistrationController extends Controller
             'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
         ]);
+
+        // Assign 'Farmer' role if it exists
+        if (\Spatie\Permission\Models\Role::where('name', 'Farmer')->exists()) {
+            $user->assignRole('Farmer');
+        }
 
         return redirect()->route('farmers.create')
             ->with('status', 'Registration successful! Please wait for admin approval.');

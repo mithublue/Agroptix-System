@@ -202,7 +202,7 @@ require __DIR__.'/auth.php';
 
 // Farmers Registration
 Route::get('/farmers/register', [\App\Http\Controllers\RegistrationController::class, 'create_farmer'])->name('farmers.create');
-Route::post('/farmers', [\App\Http\Controllers\RegistrationController::class, 'store'])->name('farmers.store');
+Route::post('/farmers', [\App\Http\Controllers\RegistrationController::class, 'store_farmer'])->name('farmers.store');
 
 // Debug route to check permissions
 Route::get('/debug-permissions', function () {
