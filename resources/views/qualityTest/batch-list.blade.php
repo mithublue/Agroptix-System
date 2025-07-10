@@ -206,7 +206,7 @@
                                                             <tr>
                                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Parameter Tested</th>
                                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result</th>
-                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result Status</th>
                                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                                                             </tr>
                                                         </thead>
@@ -258,10 +258,59 @@
     </template>
 </td>
                                                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.result || 'N/A'"></td>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                                        <span x-bind:class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-green-100 text-green-800': test.result_status === 'pass', 'bg-red-100 text-red-800': test.result_status !== 'pass'}" x-text="test.result_status === 'pass' ? 'Passed' : test.result_status === 'fail' ? 'Failed' : test.result_status || 'N/A'">
-                                                                        </span>
-                                                                    </td>
+                                                                    <td class="px-3 py-4 text-sm text-gray-500">
+    <template x-if="test.result_status">
+        <div class="space-y-1">
+            <template x-for="[key, value] in (() => {
+                try {
+                    let status = test.result_status;
+                    if (typeof status === 'string') {
+                        try {
+                            status = JSON.parse(status);
+                        } catch (e) {
+                            // If it's not valid JSON, return as is
+                            return [['Status', status]];
+                        }
+                    }
+                    return Object.entries(status || {});
+                } catch (e) {
+                    console.error('Error processing status:', e);
+                    return [];
+                }
+            })()" :key="key">
+                <div class="whitespace-normal">
+                    <span x-text="key
+                        .replace(/_/g, ' ') // Replace underscores with spaces
+                        .replace(/\b\w/g, l => l.toUpperCase()) // Capitalize first letter of each word
+                        .replace(/\b(\d+)\b/g, ' $1 ') // Add space around numbers
+                        .replace(/\s+/g, ' ') // Collapse multiple spaces
+                        .trim()
+                    "></span>: 
+                    <span x-text="String(value)
+                        .replace(/_/g, ' ') // Replace underscores with spaces
+                        .replace(/\b\w/g, l => l.toUpperCase()) // Capitalize first letter of each word
+                        .replace(/\b(\d+)\b/g, ' $1 ')" // Add space around numbers
+                        class="font-medium"
+                    ></span>
+                </div>
+            </template>
+            <template x-if="!test.result_status || (() => {
+                try {
+                    let status = test.result_status;
+                    if (typeof status === 'string') {
+                        try { status = JSON.parse(status); } catch {}
+                    }
+                    return !status || Object.keys(status).length === 0;
+                } catch { return true; }
+            })()">
+                <span class="text-gray-400">N/A</span>
+            </template>
+        </div>
+    </template>
+    <template x-if="!test.result_status">
+        <span class="text-gray-400">N/A</span>
+    </template>
+</td>
                                                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                                                         <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                                                                         <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>

@@ -4,9 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use App\Models\OnDelete('cascade')>onUpdate('cascade');
 use App\Models\Source;
-use App\Models\UserAsOwner;
+use App\Models\User;
 
 class SourceFactory extends Factory
 {
@@ -29,8 +28,8 @@ class SourceFactory extends Factory
             'production_method' => fake()->regexify('[A-Za-z0-9]{20}'),
             'area' => fake()->word(),
             'status' => fake()->regexify('[A-Za-z0-9]{50}'),
-            'owner_id' => OnDelete('cascade')>onUpdate('cascade')::factory(),
-            'user_as_owner_id' => UserAsOwner::factory(),
+            'owner_id' => User::factory(),
+            'user_as_owner_id' => null,
         ];
     }
 }

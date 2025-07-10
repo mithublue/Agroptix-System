@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use App\Models\Batch;
 use App\Models\ProductAsProduct;
-use App\Models\Products,;
+use App\Models\Product;
 use App\Models\SourceAsSource;
-use App\Models\Sources,;
+use App\Models\Source;
 
 class BatchFactory extends Factory
 {
@@ -26,8 +26,8 @@ class BatchFactory extends Factory
     {
         return [
             'batch_code' => fake()->word(),
-            'source_id' => Sources,::factory(),
-            'product_id' => Products,::factory(),
+            'source_id' => Source::factory(),
+            'product_id' => Product::factory(),
             'harvest_time' => fake()->word(),
             'status' => fake()->regexify('[A-Za-z0-9]{20}'),
             'source_as_source_id' => SourceAsSource::factory(),
