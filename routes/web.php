@@ -120,7 +120,7 @@ Route::middleware('auth')->group(function () {
             Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
             Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
         });
-        
+
         // View routes
         Route::middleware(['can:view_quality_test'])->group(function () {
             Route::get('quality-tests', [App\Http\Controllers\QualityTestController::class, 'index'])->name('quality-tests.index');
@@ -199,6 +199,10 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Farmers Registration
+Route::get('/farmers/register', [\App\Http\Controllers\RegistrationController::class, 'create_farmer'])->name('farmers.create');
+Route::post('/farmers', [\App\Http\Controllers\RegistrationController::class, 'store'])->name('farmers.store');
 
 // Debug route to check permissions
 Route::get('/debug-permissions', function () {
