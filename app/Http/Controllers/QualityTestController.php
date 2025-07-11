@@ -262,17 +262,27 @@ class QualityTestController extends Controller
     public function update(Request $request, $batch, QualityTest $qualityTest)
     {
         try {
-            // Parse the parameters_tested array from the request
-            $parametersTested = $request->input('parameters_tested', []);
-
+            // Get and deduplicate parameters_tested array from the request
+            $parametersTested = array_unique($request->input('parameters_tested', []));
+            
             // Prepare the data for update
             $updateData = [
                 'test_date' => $request->input('test_date'),
                 'lab_name' => $request->input('lab_name'),
-                'parameter_tested' => json_encode($parametersTested),
+                'parameter_tested' => json_encode(array_values($parametersTested)), // Ensure sequential array
                 'result' => $request->input('final_pass_fail'),
                 'remarks' => $request->input('remarks'),
             ];
+
+            // Process result_status for different parameters
+            $result_status = [];
+            foreach ($parametersTested as $param) {
+                $resultKey = $param . '_result';
+                if ($request->has($resultKey)) {
+                    $result_status[$resultKey] = $request->input($resultKey);
+                }
+            }
+            $updateData['result_status'] = json_encode($result_status);
 
             // Handle file upload if present
             if ($request->hasFile('test_certificate')) {

@@ -75,7 +75,7 @@
                                     </label>--}}
                                     <input
                                         id="technician_name"
-                                        type="hidden"
+                                        type="text"
                                         x-model="formData.technician_name"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                         placeholder="Enter technician name"
@@ -541,11 +541,15 @@
 
                     // Manually append the parameters_tested array
                     if (this.formData.parameters_tested && this.formData.parameters_tested.length > 0) {
-                        // Clear any existing parameters_tested values
+                        // First, remove all existing parameters_tested entries
+                        formData.delete('parameters_tested');
                         formData.delete('parameters_tested[]');
 
-                        // Add each parameter
-                        this.formData.parameters_tested.forEach(param => {
+                        // Create a Set to ensure unique values
+                        const uniqueParams = [...new Set(this.formData.parameters_tested)];
+                        
+                        // Add each unique parameter only once
+                        uniqueParams.forEach(param => {
                             formData.append('parameters_tested[]', param);
                         });
                     }
