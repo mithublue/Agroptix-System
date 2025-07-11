@@ -116,4 +116,37 @@ class ProductController extends Controller
 
         return redirect()->route('products.index');
     }
+
+    /**
+     * Update the product status via AJAX request
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Request $request, Product $product)
+    {
+        $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        try {
+            $product->update([
+                'is_active' => $request->is_active
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully.',
+                'is_active' => $product->is_active,
+                'status_label' => $product->is_active ? 'Active' : 'Inactive',
+                'status_class' => $product->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product status.'
+            ], 500);
+        }
+    }
 }

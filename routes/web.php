@@ -97,6 +97,11 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['can:delete_product'])->delete('products/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
 
+    // Product status update route
+    Route::patch('/products/{product}/status', [\App\Http\Controllers\ProductController::class, 'updateStatus'])
+        ->name('products.update.status')
+        ->middleware('can:edit_product');
+
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
         Route::get('batches/create', [\App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');

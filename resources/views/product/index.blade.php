@@ -61,20 +61,88 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
+                            @can('manage_product')
+                            <div x-data="{
+                                isActive: {{ $product->is_active ? 'true' : 'false' }},
+                                isLoading: false,
+                                toggleStatus() {
+                                    if (this.isLoading) return;
+
+                                    this.isLoading = true;
+
+                                    axios.patch('{{ route('products.update.status', $product) }}', {
+                                        is_active: !this.isActive
+                                    })
+                                    .then(response => {
+                                        if (response.data.success) {
+                                            this.isActive = response.data.is_active;
+                                            this.$dispatch('notify', {
+                                                type: 'success',
+                                                message: response.data.message
+                                            });
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        this.$dispatch('notify', {
+                                            type: 'error',
+                                            message: 'Failed to update status. Please try again.'
+                                        });
+                                    })
+                                    .finally(() => {
+                                        this.isLoading = false;
+                                    });
+                                }
+                            }" class="flex items-center">
+                                <button type="button"
+                                    @click="toggleStatus"
+                                    :disabled="isLoading"
+                                    :class="{
+                                        'bg-green-500': isActive,
+                                        'bg-gray-200': !isActive,
+                                        'cursor-not-allowed': isLoading
+                                    }"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    role="switch"
+                                    :aria-checked="isActive">
+                                    <span class="sr-only">Toggle status</span>
+                                    <span
+                                        :class="{
+                                            'translate-x-5': isActive,
+                                            'translate-x-0': !isActive
+                                        }"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    ></span>
+                                </button>
+                                <span class="ml-3 text-sm" :class="{
+                                    'text-gray-600': isLoading,
+                                    'text-green-600': !isLoading && isActive,
+                                    'text-red-600': !isLoading && !isActive
+                                }">
+                                    <template x-if="isLoading">
+                                        <span>Updating...</span>
+                                    </template>
+                                    <template x-if="!isLoading">
+                                        <span x-text="isActive ? 'Active' : 'Inactive'"></span>
+                                    </template>
+                                </span>
+                            </div>
+                            @else
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $product->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                 {{ $product->is_active ? 'Active' : 'Inactive' }}
                             </span>
+                            @endcan
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex space-x-2">
                                 @can('view_product')
                                 <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:text-blue-900">View</a>
                                 @endcan
-                                
+
                                 @can('edit_product')
                                 <a href="{{ route('products.edit', $product) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                 @endcan
-                                
+
                                 @can('delete_product')
                                 <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
                                     @csrf
@@ -88,7 +156,7 @@
                     @endforeach
                 </tbody>
             </table>
-            
+
             <div class="px-6 py-4">
                 {{ $products->links() }}
             </div>
