@@ -15,19 +15,56 @@ use App\Models\User;
 class SourceController extends Controller
 {
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Source::class);
 
-        // Get the sources based on user's permissions
+        // Get filter values from request
+        $filters = $request->only(['type', 'production_method', 'status', 'owner_id']);
+
+        // Get the sources based on user's permissions and filters
         $sources = Source::when(!auth()->user()->can('manage_source'), function($query) {
                 // For non-admin users, only show sources they own
                 return $query->where('owner_id', auth()->id());
             })
+            ->when($request->filled('type'), function($query) use ($request) {
+                return $query->where('type', $request->type);
+            })
+            ->when($request->filled('production_method'), function($query) use ($request) {
+                return $query->where('production_method', $request->production_method);
+            })
+            ->when($request->filled('status'), function($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->when($request->filled('owner_id'), function($query) use ($request) {
+                return $query->where('owner_id', $request->owner_id);
+            })
+            ->with('owner')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('source.index', compact('sources'));
+        // Get filter options
+        $types = array_merge(['' => 'All Types'], config('at.type', []));
+        $productionMethods = array_merge(['' => 'All Methods'], config('at.production_methods', []));
+        $statuses = array_merge(['' => 'All Statuses'], config('at.source_status', []));
+
+        // Get unique owners who have sources using a direct join
+        $owners = ['' => 'All Owners'] +
+            User::join('sources', 'users.id', '=', 'sources.owner_id')
+                ->select('users.id', 'users.name')
+                ->distinct()
+                ->pluck('users.name', 'users.id')
+                ->toArray();
+
+        return view('source.index', compact(
+            'sources',
+            'filters',
+            'types',
+            'productionMethods',
+            'statuses',
+            'owners'
+        ));
     }
 
     public function create(): View
@@ -171,13 +208,13 @@ class SourceController extends Controller
     public function updateStatus(Source $source, \Illuminate\Http\Request $request)
     {
         $this->authorize('edit', $source);
-        
+
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))]
         ]);
-        
+
         $source->update(['status' => $validated['status']]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Status updated successfully',
