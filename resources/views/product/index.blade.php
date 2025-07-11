@@ -4,23 +4,69 @@
             {{ __('Products') }}
         </h2>
     </x-slot>
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Products</h1>
-        @can('create_products')
-            <a href="{{ route('products.create') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
-            Add New Product
-        </a>
-        @endcan
-    </div>
+    <div class="container mx-auto px-4 py-8">
+        @if (session('success'))
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                <p>{{ session('success') }}</p>
+            </div>
+        @endif
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-            <p>{{ session('success') }}</p>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Products</h1>
+            @can('create_products')
+                <a href="{{ route('products.create') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                    Add New Product
+                </a>
+            @endcan
         </div>
-    @endif
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <!-- Filters -->
+        <div class="mb-6 bg-white p-4 rounded-lg shadow">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+            <form method="GET" action="{{ route('products.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Min Price -->
+                <div>
+                    <label for="min_price" class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
+                    <input type="number" id="min_price" name="min_price" 
+                           value="{{ request('min_price') }}" step="0.01" min="0"
+                           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                           placeholder="Min price">
+                </div>
+
+                <!-- Max Price -->
+                <div>
+                    <label for="max_price" class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
+                    <input type="number" id="max_price" name="max_price" 
+                           value="{{ request('max_price') }}" step="0.01" min="0"
+                           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                           placeholder="Max price">
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="">All Statuses</option>
+                        <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Active</option>
+                        <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex flex-col justify-end">
+                    <div class="flex space-x-2">
+                        <button type="submit" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                            Apply
+                        </button>
+                        <a href="{{ route('products.index') }}" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                            Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
         @if($products->count() > 0)
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">

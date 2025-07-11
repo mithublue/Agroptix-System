@@ -15,10 +15,31 @@ class ProductController extends Controller
 {
     public function index(Request $request): View
     {
-        $products = Product::latest()->paginate(10);
+        // Get filter values from request
+        $filters = $request->only(['min_price', 'max_price', 'status']);
+
+        // Build the query
+        $query = Product::query();
+
+        // Apply price filters if provided
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Apply status filter if provided
+        if ($request->filled('status') && in_array($request->status, ['0', '1'])) {
+            $query->where('is_active', (bool)$request->status);
+        }
+
+        // Get paginated results
+        $products = $query->latest()->paginate(10)->withQueryString();
 
         return view('product.index', [
             'products' => $products,
+            'filters' => $filters,
         ]);
     }
 
