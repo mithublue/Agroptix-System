@@ -297,7 +297,7 @@
         function labTestingForm() {
             // Get the form data from PHP if in edit mode
             const serverFormData = @json($formDataJson ?? '{}');
-            const isEditMode = @json(isset($isEdit) ? 'true' : 'false');
+            const isEditMode = @json(isset($isEdit) ? true : false);
 
             // Parse the server data if it exists
             let initialFormData = {
@@ -579,19 +579,20 @@
                         formData.set('batch_id', '{{ $batch->id }}');
                     }
 
-                    // Set the correct HTTP method for the request
-                    const method = this.isEdit ? 'post' : 'post';
+                    // Set the correct HTTP method based on edit mode
+                    const method = this.isEdit ? 'POST' : 'POST';
                     const url = form.action;
 
-                    // Add _method for Laravel to handle PUT/PATCH/DELETE
+                    // Add _method for Laravel to handle PUT for updates
                     if (this.isEdit) {
                         formData.append('_method', 'PUT');
                     }
+                    console.log('formData', this.formData);
 
                     // Submit the form
                     axios({
-                        method: form.method,
-                        url: form.action,
+                        method: method,
+                        url: url,
                         data: formData,
                         headers: {
                             'Content-Type': 'multipart/form-data',
@@ -601,11 +602,10 @@
                         }
                     })
                     .then(response => {
-                        console.log('qwe');
-                        console.log(response);
+                        console.log('Response:', response);
                         if (response.data.success) {
                             // Get the redirect URL
-                            const redirectUrl = response.data.redirect || '{{ route("quality-tests.index", $batch) }}';
+                            const redirectUrl = response.data.redirect || '{{ route("quality-tests.batchList") }}';
 
                             // Show success toast with progress bar
                             const Toast = Swal.mixin({
