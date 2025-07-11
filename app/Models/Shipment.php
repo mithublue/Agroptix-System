@@ -41,13 +41,8 @@ class Shipment extends Model
         ];
     }
 
-    public function batchAsBatch(): BelongsTo
-    {
-        return $this->belongsTo(BatchAsBatch::class);
-    }
-
     public function batch(): BelongsTo
     {
-        return $this->belongsTo(Batches,::class);
+        return $this->belongsTo(Batch::class);
     }
 }

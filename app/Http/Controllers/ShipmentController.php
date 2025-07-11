@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 class ShipmentController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
         $shipments = Shipment::all();
 
