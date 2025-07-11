@@ -52,12 +52,12 @@
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-4">
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Perishable</p>
-                                <p class="text-lg font-semibold text-green-600">{{ $perishableProducts }}</p>
+                                <p class="text-sm text-gray-500">Active</p>
+                                <p class="text-lg font-semibold text-green-600">{{ $activeProducts }}</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Non-Perishable</p>
-                                <p class="text-lg font-semibold text-blue-600">{{ $nonPerishableProducts }}</p>
+                                <p class="text-sm text-gray-500">Inactive</p>
+                                <p class="text-lg font-semibold text-gray-400">{{ $inactiveProducts }}</p>
                             </div>
                         </div>
                     </div>

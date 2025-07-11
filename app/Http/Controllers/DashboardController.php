@@ -19,13 +19,13 @@ class DashboardController extends Controller
 
         // Product statistics
         $totalProducts = Product::count();
-        // Handle both string and boolean values for is_perishable
-        $perishableProducts = Product::where(function($query) {
+        // Consider products with is_perishable = 1/true/yes as Active, others as Inactive
+        $activeProducts = Product::where(function($query) {
             $query->where('is_perishable', '1')
                   ->orWhere('is_perishable', 'true')
                   ->orWhere('is_perishable', 'yes');
         })->count();
-        $nonPerishableProducts = $totalProducts - $perishableProducts;
+        $inactiveProducts = $totalProducts - $activeProducts;
 
         // Batch statistics
         $totalBatches = Batch::count();
@@ -38,8 +38,8 @@ class DashboardController extends Controller
             'perishableSources' => $perishableSources,
             'nonPerishableSources' => $nonPerishableSources,
             'totalProducts' => $totalProducts,
-            'perishableProducts' => $perishableProducts,
-            'nonPerishableProducts' => $nonPerishableProducts,
+            'activeProducts' => $activeProducts,
+            'inactiveProducts' => $inactiveProducts,
             'totalBatches' => $totalBatches,
             'processingBatches' => $processingBatches,
             'completedBatches' => $completedBatches,
