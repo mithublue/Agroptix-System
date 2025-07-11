@@ -27,7 +27,7 @@
                     <!-- Filters -->
                     <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-                        <form method="GET" action="{{ route('sources.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <form method="GET" action="{{ route('sources.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <!-- Type Filter -->
                             <div>
                                 <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
@@ -69,13 +69,15 @@
                             </div>
 
                             <!-- Filter Buttons -->
-                            <div class="flex items-end space-x-2 col-span-full">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Apply Filters
-                                </button>
-                                <a href="{{ route('sources.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Reset
-                                </a>
+                            <div class="flex flex-col justify-end">
+                                <div class="flex space-x-2">
+                                    <button type="submit" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                                        Apply
+                                    </button>
+                                    <a href="{{ route('sources.index') }}" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                                        Reset
+                                    </a>
+                                </div>
                             </div>
                         </form>
                     </div>
