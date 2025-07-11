@@ -70,12 +70,12 @@
 
                                 <!-- Technician Name -->
                                 <div>
-                                    <label for="technician_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{--<label for="technician_name" class="block text-sm font-medium text-gray-700 mb-2">
                                         Technician Name <span class="text-red-500">*</span>
-                                    </label>
+                                    </label>--}}
                                     <input
                                         id="technician_name"
-                                        type="text"
+                                        type="hidden"
                                         x-model="formData.technician_name"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                         placeholder="Enter technician name"
@@ -304,7 +304,7 @@
                 batch_id: '',
                 test_date: '',
                 lab_name: '',
-                technician_name: '',
+                technician_name: 'qwe',
                 parameters_tested: [],
                 test_certificate: '',
                 remarks: '',

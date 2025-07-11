@@ -155,11 +155,6 @@
                                 View Batches
                             </a>
                             @endcan
-                            @can('create_quality_test')
-                            <a href="{{ route('quality-tests.batchList') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('quality-tests.batchList') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
-                                Create New Test
-                            </a>
-                            @endcan
                         </div>
                     </div>
                     @endcanany
