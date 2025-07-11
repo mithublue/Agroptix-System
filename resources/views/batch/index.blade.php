@@ -23,6 +23,57 @@
                 </div>
             @endif
 
+            <!-- Filters -->
+            <div class="mb-6 bg-white p-4 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+                <form method="GET" action="{{ route('batches.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <!-- Status Filter -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status" name="status" class="select2-status mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">All Statuses</option>
+                            @foreach($statuses as $value => $label)
+                                <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Source Filter -->
+                    <div>
+                        <label for="source_id" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                        <select id="source_id" name="source_id" class="select2-source mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">All Sources</option>
+                            @foreach($sources as $id => $name)
+                                <option value="{{ $id }}" {{ request('source_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Product Filter -->
+                    <div>
+                        <label for="product_id" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                        <select id="product_id" name="product_id" class="select2-product mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">All Products</option>
+                            @foreach($products as $id => $name)
+                                <option value="{{ $id }}" {{ request('product_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Filter Buttons -->
+                    <div class="flex flex-col justify-end">
+                        <div class="flex space-x-2">
+                            <button type="submit" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                                Apply
+                            </button>
+                            <a href="{{ route('batches.index') }}" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 h-10">
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 @if($batches->count() > 0)
                     <div class="overflow-x-auto">
@@ -195,4 +246,40 @@
             </div>
         </div>
     </div>
+@push('scripts')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Select2 for status dropdown
+            $('.select2-status').select2({
+                placeholder: 'Select a status',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#status').parent()
+            });
+
+            // Initialize Select2 for source dropdown
+            $('.select2-source').select2({
+                placeholder: 'Select a source',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#source_id').parent()
+            });
+
+            // Initialize Select2 for product dropdown
+            $('.select2-product').select2({
+                placeholder: 'Select a product',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#product_id').parent()
+            });
+
+            // Handle form submission to maintain Select2 state
+            $('form').on('submit', function() {
+                $('.select2-hidden-accessible').remove();
+            });
+        });
+    </script>
+@endpush
 </x-app-layout>

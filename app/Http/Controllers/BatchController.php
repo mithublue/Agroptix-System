@@ -18,10 +18,57 @@ use Illuminate\View\View;
 class BatchController extends Controller
 {
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $batches = Batch::with(['source', 'product'])->latest()->paginate(10);
-        return view('batch.index', compact('batches'));
+        $query = Batch::with(['source', 'product']);
+
+        // Apply status filter if provided
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Apply source filter if provided
+        if ($request->filled('source_id')) {
+            $query->where('source_id', $request->source_id);
+        }
+
+        // Apply product filter if provided
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        $batches = $query->latest()->paginate(10)->withQueryString();
+
+        // Get distinct statuses for filter dropdown
+        $statuses = [
+            'pending' => 'Pending',
+            'processing' => 'Processing',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
+
+        // Get sources for filter dropdown
+        $sources = Source::select('id', 'type')
+            ->get()
+            ->mapWithKeys(function ($source) {
+                $display = $source->type
+                    ? "{$source->type} (ID: {$source->id})"
+                    : ($source->name ?: "Source #{$source->id}");
+                return [$source->id => $display];
+            });
+
+        // Get products for filter dropdown
+        $products = Product::pluck('name', 'id');
+
+        $filters = $request->only(['status', 'source_id', 'product_id']);
+
+        return view('batch.index', compact(
+            'batches',
+            'statuses',
+            'sources',
+            'products',
+            'filters'
+        ));
     }
 
     public function create(): View
@@ -169,17 +216,17 @@ class BatchController extends Controller
             }
 
             return back()->with('success', 'Batch status updated successfully.');
-            
+
         } catch (\Exception $e) {
             \Log::error('Error updating batch status: ' . $e->getMessage());
-            
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error updating batch status: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Error updating batch status.');
         }
     }
