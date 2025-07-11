@@ -15,6 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create roles and basic permissions
+        $this->call([
+            RolePermissionSeeder::class,
+        ]);
+
         // Create admin user
         $adminUser = User::firstOrCreate(
             ['email' => 'cemithu06@gmail.com'],
@@ -25,8 +30,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Create admin role if it doesn't exist
+        // Get or create admin role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        
+        // Assign admin role to admin user
+        $adminUser->assignRole($adminRole);
         
         // Define modules and their permissions
         $modules = ['source', 'product', 'batch', 'quality_test', 'shipment'];
@@ -56,8 +64,16 @@ class DatabaseSeeder extends Seeder
         $adminRole->syncPermissions(Permission::all());
         $adminUser->assignRole($adminRole);
 
+        // Seed test data in non-production environments
+        if (!app()->environment('production')) {
+            $this->call([
+                TestDataSeeder::class,
+            ]);
+        }
+
         $this->command->info('Admin user created successfully!');
         $this->command->info('Email: cemi...@gmail.com');
         $this->command->info('Password: 11111111');
+        $this->command->info('Test data has been seeded.');
     }
 }
