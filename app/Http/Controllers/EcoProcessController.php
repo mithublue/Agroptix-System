@@ -39,7 +39,7 @@ class EcoProcessController extends Controller
             'preservative_used' => [],
             // Add other default form fields here
         ];
-        
+
         return view('eco_processes.create', compact('batch', 'formData'));
     }
 
@@ -181,16 +181,16 @@ class EcoProcessController extends Controller
         try {
             $status = $request->input('status');
             $now = now();
-            
+
             $updateData = ['status' => $status];
-            
+
             // Update timestamps based on status
             if ($status === 'in_progress' && !$ecoProcess->start_time) {
                 $updateData['start_time'] = $now;
             } elseif (in_array($status, ['completed', 'failed']) && !$ecoProcess->end_time) {
                 $updateData['end_time'] = $now;
             }
-            
+
             $ecoProcess->update($updateData);
 
             if ($request->wantsJson() || $request->ajax()) {
@@ -207,17 +207,17 @@ class EcoProcessController extends Controller
             }
 
             return back()->with('success', 'Eco process status updated successfully.');
-            
+
         } catch (\Exception $e) {
             \Log::error('Error updating eco process status: ' . $e->getMessage());
-            
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error updating eco process status: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Error updating eco process status: ' . $e->getMessage());
         }
     }
