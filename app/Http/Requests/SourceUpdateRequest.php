@@ -37,7 +37,8 @@ class SourceUpdateRequest extends FormRequest
         } else {
             // For regular users, ensure they can't change the owner
             $this->merge([
-                'owner_id' => $this->route('source')->owner_id
+                'status' => 'pending',
+                'owner_id' => auth()->user()->id
             ]);
         }
 
