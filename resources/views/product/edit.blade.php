@@ -64,9 +64,6 @@
 
                         <!-- Submit Button -->
                         <div class="flex items-center justify-between mt-6">
-                            <button type="button" onclick="confirm('Are you sure you want to delete this product?') ? document.getElementById('delete-form').submit() : ''" class="text-red-600 hover:text-red-900">
-                                {{ __('Delete Product') }}
-                            </button>
                             <div class="flex items-center">
                                 <a href="{{ route('products.index') }}" class="text-gray-600 hover:text-gray-900 mr-4">
                                     {{ __('Cancel') }}

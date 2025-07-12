@@ -115,8 +115,8 @@
                                                 ];
                                                 $statusColor = $statusColors[$batch->status] ?? 'bg-gray-100 text-gray-800';
                                             @endphp
-                                            @can('create_batch')
-                                                <div x-data="{ 
+                                            @can('manage_batch')
+                                                <div x-data="{
                                                     status: '{{ $batch->status }}',
                                                     isUpdating: false,
                                                     statuses: {{ json_encode($statuses) }},
@@ -161,7 +161,7 @@
                                                     }
                                                 }" class="relative">
                                                     <div class="relative">
-                                                        <select x-model="status" 
+                                                        <select x-model="status"
                                                                 @change="updateStatus"
                                                                 :disabled="isUpdating"
                                                                 class="appearance-none block w-full bg-white border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
