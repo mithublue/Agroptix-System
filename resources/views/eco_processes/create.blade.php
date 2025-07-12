@@ -13,8 +13,14 @@
         $formData = json_encode(old() ?: $ecoProcess->data ?? []);
     @endphp
 
-    <form method="POST" action="{{ route('batches.eco-processes.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="formHandler()">
+    <form method="POST" 
+          action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess]) : route('batches.eco-processes.store', $batch) }}" 
+          x-on:submit.prevent="submitForm()" 
+          x-data="formHandler()">
         @csrf
+        @if(isset($ecoProcess))
+            @method('PUT')
+        @endif
         <div class="container mx-auto px-4 py-8" x-cloak>
             <div class="max-w-6xl mx-auto">
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">

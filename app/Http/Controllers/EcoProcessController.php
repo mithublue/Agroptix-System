@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Batch;
 use App\Models\EcoProcess;
 use App\Http\Requests\EcoProcessRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
@@ -119,20 +120,65 @@ class EcoProcessController extends Controller
     /**
      * Update the specified eco process in storage.
      */
-    public function update(Request $request, Batch $batch, EcoProcess $ecoProcess): RedirectResponse
+    public function update(Request $request, Batch $batch, EcoProcess $ecoProcess): JsonResponse
     {
-        // Get all form data except _token and _method
-        $formData = $request->except(['_token', '_method']);
+        try {
+            // Get the raw JSON data if it was sent
+            $jsonData = $request->input('data');
+            $formData = $jsonData ? json_decode($jsonData, true) : $request->except(['_token', '_method']);
 
-        // Update the eco process
-        $ecoProcess->update([
-            'stage' => $request->input('stage'),
-            'data' => $formData, // This will be automatically JSON-encoded by Laravel
-        ]);
+            // If we couldn't decode JSON, use the request data directly
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $formData = $request->except(['_token', '_method']);
+            }
 
-        return redirect()
-            ->route('batches.eco-processes.index', [$batch])
-            ->with('success', 'Eco process updated successfully.');
+            // Get the stage from the form data or request
+            $stage = $formData['stage'] ?? $request->input('stage');
+
+            if (!$stage) {
+                throw new \Exception('Stage is required');
+            }
+
+            // Prepare the data for storage
+            $ecoProcessData = [
+                'batch_id' => $batch->id,
+                'stage' => $stage,
+                'data' => $formData,
+                'status' => 'in_progress',
+                'start_time' => now(),
+            ];
+            $ecoProcess->update($ecoProcessData);
+
+
+            // If this is an AJAX request, return JSON response
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Eco process updated successfully',
+                    'redirect' => route('batches.eco-processes.index', $batch)
+                ]);
+            }
+
+            return redirect()
+                ->route('batches.eco-processes.index', $batch)
+                ->with('success', 'Eco process updated successfully.');
+
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Error creating eco process: ' . $e->getMessage());
+
+            // If this is an AJAX request, return JSON error
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating eco process: ' . $e->getMessage()
+                ], 422);
+            }
+
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Error updating eco process: ' . $e->getMessage()]);
+        }
     }
 
     /**
