@@ -2,18 +2,8 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Eco Process Details
+                Eco Process Details for Batch: {{ $batch->id }}
             </h2>
-            <div class="flex space-x-3">
-                <a href="{{ route('batches.eco-processes.edit', [$batch, $ecoProcess]) }}"
-                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Edit
-                </a>
-                <a href="{{ route('batches.eco-processes.index', $batch) }}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Back to List
-                </a>
-            </div>
         </div>
     </x-slot>
 
@@ -25,14 +15,16 @@
                 Eco Process Details
             </h2>
             <div class="flex space-x-3">
+                @can('edit_batch')
                 <a href="{{ route('batches.eco-processes.edit', [$batch, $ecoProcess]) }}"
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Edit
                 </a>
-                <a href="{{ route('batches.eco-processes.index', $batch) }}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Back to List
-                </a>
+                @endcan
+                    <a href="{{ route('batches.eco-processes.index', $batch) }}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Back to processList
+                    </a>
             </div>
         </div>
 
@@ -50,7 +42,7 @@
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Batch</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            {{ $batch->name }} ({{ $batch->code }})
+                            {{ $batch->name }} {{ $batch->batch_code }}
                         </dd>
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
