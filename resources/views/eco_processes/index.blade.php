@@ -64,7 +64,7 @@
                                                 ];
                                                 $statusColor = $statusColors[$ecoProcess->status] ?? 'bg-gray-100 text-gray-800';
                                             @endphp
-                                            @can('manage_batch')
+                                            @can('delete_batch')
                                                 <div x-data="{
                                                     status: '{{ $ecoProcess->status }}',
                                                     isUpdating: false,
