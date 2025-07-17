@@ -201,11 +201,12 @@ Route::middleware('auth')->group(function () {
 
             Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
                 ->name('batches.eco-processes.destroy');
-
-            // Update status route
-            Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
-                ->name('batches.eco-processes.status.update');
         });
+         // Update status route
+         Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
+         ->name('batches.eco-processes.status.update')
+         ->middleware(['auth', 'can:manage_batch']);
+         ;
     });
 });
 
