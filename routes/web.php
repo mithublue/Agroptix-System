@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
 
     // Eco Processes
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
+
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
             ->name('batches.eco-processes.index');
 
@@ -193,20 +194,23 @@ Route::middleware('auth')->group(function () {
             Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
                 ->name('batches.eco-processes.store');
 
-            Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
-                ->name('batches.eco-processes.edit');
-
-            Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
-                ->name('batches.eco-processes.update');
-
-            Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
-                ->name('batches.eco-processes.destroy');
         });
          // Update status route
          Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
          ->name('batches.eco-processes.status.update')
          ->middleware(['auth', 'can:manage_batch']);
-         ;
+
+         Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
+                ->name('batches.eco-processes.destroy')
+                ->middleware(['auth', 'can:delete_batch']);
+
+                Route::middleware(['can:edit_batch'])->group(function () {
+                    Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
+                    ->name('batches.eco-processes.edit');
+            Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
+                    ->name('batches.eco-processes.update');
+                });
+
     });
 });
 
