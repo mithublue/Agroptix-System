@@ -8,7 +8,7 @@ use App\Models\User;
 
 // Test route for debugging
 Route::get('/test-eco-process-create/{batch}', [EcoProcessController::class, 'create'])
-    ->name('test.eco-process.create');
+     ->name('test.eco-process.create');
 
 // Test route - basic route test
 Route::get('/test-route', function () {
@@ -51,13 +51,13 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+     ->middleware(['auth', 'verified'])
+     ->name('dashboard');
 
 // Source status update route
 Route::patch('/sources/{source}/status', [\App\Http\Controllers\SourceController::class, 'updateStatus'])
-    ->name('sources.update.status')
-    ->middleware('can:manage_source');
+     ->name('sources.update.status')
+     ->middleware('can:manage_source');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -100,8 +100,8 @@ Route::middleware('auth')->group(function () {
 
     // Product status update route
     Route::patch('/products/{product}/status', [\App\Http\Controllers\ProductController::class, 'updateStatus'])
-        ->name('products.update.status')
-        ->middleware('can:edit_product');
+         ->name('products.update.status')
+         ->middleware('can:edit_product');
 
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
@@ -181,35 +181,35 @@ Route::middleware('auth')->group(function () {
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
 
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
-            ->name('batches.eco-processes.index');
+             ->name('batches.eco-processes.index');
 
         Route::get('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'show'])
-            ->name('batches.eco-processes.show')
-            ->where('ecoProcess', '[0-9]+');
+             ->name('batches.eco-processes.show')
+             ->where('ecoProcess', '[0-9]+');
 
         Route::middleware(['can:create_batch'])->group(function () {
             Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
-                ->name('batches.eco-processes.create');
+                 ->name('batches.eco-processes.create');
 
             Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
-                ->name('batches.eco-processes.store');
+                 ->name('batches.eco-processes.store');
 
         });
-         // Update status route
-         Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
-         ->name('batches.eco-processes.status.update')
-         ->middleware(['auth', 'can:manage_batch']);
+        // Update status route
+        Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
+             ->name('batches.eco-processes.status.update')
+             ->middleware(['auth', 'can:manage_batch']);
 
-         Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
-                ->name('batches.eco-processes.destroy')
-                ->middleware(['auth', 'can:delete_batch']);
+        Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
+             ->name('batches.eco-processes.destroy')
+             ->middleware(['auth', 'can:delete_batch']);
 
-                Route::middleware(['can:edit_batch'])->group(function () {
-                    Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
-                    ->name('batches.eco-processes.edit');
+        Route::middleware(['can:edit_batch'])->group(function () {
+            Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
+                 ->name('batches.eco-processes.edit');
             Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
-                    ->name('batches.eco-processes.update');
-                });
+                 ->name('batches.eco-processes.update');
+        });
 
     });
 });
@@ -291,5 +291,5 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
 // Batch status update route - outside admin prefix but still protected by auth and permission
 Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::class, 'updateStatus'])
-    ->name('batches.status.update')
-    ->middleware(['auth', 'can:manage_batch']);
+     ->name('batches.status.update')
+     ->middleware(['auth', 'can:manage_batch']);

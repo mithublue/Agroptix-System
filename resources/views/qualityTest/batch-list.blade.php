@@ -93,8 +93,8 @@
                         });
 
                         errorMessage = error.response.data?.message ||
-                                     error.response.statusText ||
-                                     `HTTP error ${error.response.status}`;
+                            error.response.statusText ||
+                            `HTTP error ${error.response.status}`;
                     } else if (error.request) {
                         // The request was made but no response was received
                         console.error('No response received:', error.request, context);
@@ -137,84 +137,84 @@
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Code</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($batches as $batch)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $batch->id }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                            {{ $batch->batch_code }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $batch->product->name ?? 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            @if($batch->source)
-                                                Source#{{ is_object($batch->source) ? $batch->source->id : $batch->source }}
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button @click="toggleBatch({{ $batch->id }})"
-                                                    class="text-indigo-600 hover:text-indigo-900 mr-3 focus:outline-none"
-                                                    :disabled="loadingTests">
-                                                <span x-text="openBatch === {{ $batch->id }} ? 'Hide Tests' : 'Quality Test'"></span>
-                                                <svg x-show="!loadingTests" class="w-4 h-4 inline ml-1 transition-transform duration-200 transform"
-                                                     :class="{ 'rotate-180': openBatch === {{ $batch->id }} }"
-                                                     fill="none"
-                                                     stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                                <svg x-show="loadingTests && openBatch === {{ $batch->id }}" class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr x-show="openBatch === {{ $batch->id }}" x-collapse class="bg-gray-50">
-                                        <td colspan="5" class="px-6 py-4">
-                                            <div class="ml-8">
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <h3 class="text-sm font-medium text-gray-900">Quality Tests</h3>
-                                                    @can('create_quality_test')
-                                                        <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}"
-                                                           class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            + New Test
-                                                        </a>
-                                                    @endcan
-                                                </div>
-                                                <div x-show="loadingTests && openBatch === {{ $batch->id }}" class="text-center py-4">
-                                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                                                    <p class="mt-2 text-sm text-gray-500">Loading tests...</p>
-                                                </div>
+                            @forelse($batches as $batch)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ $batch->id }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                        {{ $batch->batch_code }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $batch->product->name ?? 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if($batch->source)
+                                            Source#{{ is_object($batch->source) ? $batch->source->id : $batch->source }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button @click="toggleBatch({{ $batch->id }})"
+                                                class="text-indigo-600 hover:text-indigo-900 mr-3 focus:outline-none"
+                                                :disabled="loadingTests">
+                                            <span x-text="openBatch === {{ $batch->id }} ? 'Hide Tests' : 'Quality Test'"></span>
+                                            <svg x-show="!loadingTests" class="w-4 h-4 inline ml-1 transition-transform duration-200 transform"
+                                                 :class="{ 'rotate-180': openBatch === {{ $batch->id }} }"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                            <svg x-show="loadingTests && openBatch === {{ $batch->id }}" class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr x-show="openBatch === {{ $batch->id }}" x-collapse class="bg-gray-50">
+                                    <td colspan="5" class="px-6 py-4">
+                                        <div class="ml-8">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <h3 class="text-sm font-medium text-gray-900">Quality Tests</h3>
+                                                @can('create_quality_test')
+                                                    <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}"
+                                                       class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        + New Test
+                                                    </a>
+                                                @endcan
+                                            </div>
+                                            <div x-show="loadingTests && openBatch === {{ $batch->id }}" class="text-center py-4">
+                                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                                <p class="mt-2 text-sm text-gray-500">Loading tests...</p>
+                                            </div>
 
-                                                <div x-show="!loadingTests && tests[{{ $batch->id }}] && tests[{{ $batch->id }}].length > 0" class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-                                                    <table class="min-w-full divide-y divide-gray-300">
-                                                        <thead class="bg-gray-100">
-                                                            <tr>
-                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Parameter Tested</th>
-                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result</th>
-                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result Status</th>
-                                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="divide-y divide-gray-200 bg-white">
-                                                            <template x-for="test in tests[{{ $batch->id }}]" :key="test.id">
-                                                                <tr>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-    <template x-if="test.parameter_tested">
+                                            <div x-show="!loadingTests && tests[{{ $batch->id }}] && tests[{{ $batch->id }}].length > 0" class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+                                                <table class="min-w-full divide-y divide-gray-300">
+                                                    <thead class="bg-gray-100">
+                                                    <tr>
+                                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Parameter Tested</th>
+                                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result</th>
+                                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Result Status</th>
+                                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                                    <template x-for="test in tests[{{ $batch->id }}]" :key="test.id">
+                                                        <tr>
+                                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                                <template x-if="test.parameter_tested">
         <span x-text="(() => {
             try {
                 // Convert to array if it's a string
@@ -227,12 +227,12 @@
                         params = [params];
                     }
                 }
-                
+
                 // Ensure it's an array
                 if (!Array.isArray(params)) {
                     params = [params];
                 }
-                
+
                 // Process each parameter
                 return params.map(param => {
                     if (!param) return '';
@@ -252,16 +252,16 @@
                 return 'Error';
             }
         })()"></span>
-    </template>
-    <template x-if="!test.parameter_tested">
-        <span>N/A</span>
-    </template>
-</td>
-                                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.result || 'N/A'"></td>
-                                                                    <td class="px-3 py-4 text-sm text-gray-500">
-    <template x-if="test.result_status">
-        <div class="space-y-1">
-            <template x-for="[key, value] in (() => {
+                                                                </template>
+                                                                <template x-if="!test.parameter_tested">
+                                                                    <span>N/A</span>
+                                                                </template>
+                                                            </td>
+                                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="test.result || 'N/A'"></td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">
+                                                                <template x-if="test.result_status">
+                                                                    <div class="space-y-1">
+                                                                        <template x-for="[key, value] in (() => {
                 try {
                     let status = test.result_status;
                     if (typeof status === 'string') {
@@ -278,23 +278,23 @@
                     return [];
                 }
             })()" :key="key">
-                <div class="whitespace-normal">
+                                                                            <div class="whitespace-normal">
                     <span x-text="key
                         .replace(/_/g, ' ') // Replace underscores with spaces
                         .replace(/\b\w/g, l => l.toUpperCase()) // Capitalize first letter of each word
                         .replace(/\b(\d+)\b/g, ' $1 ') // Add space around numbers
                         .replace(/\s+/g, ' ') // Collapse multiple spaces
                         .trim()
-                    "></span>: 
-                    <span x-text="String(value)
+                    "></span>:
+                                                                                <span x-text="String(value)
                         .replace(/_/g, ' ') // Replace underscores with spaces
                         .replace(/\b\w/g, l => l.toUpperCase()) // Capitalize first letter of each word
                         .replace(/\b(\d+)\b/g, ' $1 ')" // Add space around numbers
-                        class="font-medium"
-                    ></span>
-                </div>
-            </template>
-            <template x-if="!test.result_status || (() => {
+                                                                                class="font-medium"
+                                                                                ></span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <template x-if="!test.result_status || (() => {
                 try {
                     let status = test.result_status;
                     if (typeof status === 'string') {
@@ -303,20 +303,20 @@
                     return !status || Object.keys(status).length === 0;
                 } catch { return true; }
             })()">
-                <span class="text-gray-400">N/A</span>
-            </template>
-        </div>
-    </template>
-    <template x-if="!test.result_status">
-        <span class="text-gray-400">N/A</span>
-    </template>
-</td>
-                                                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                                        <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                                                        <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                                                        @can('delete_quality_test')
-                                                                        <button type="button"
-                                                                                @click="if(confirm('Are you sure you want to delete this test?')) {
+                                                                            <span class="text-gray-400">N/A</span>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                                <template x-if="!test.result_status">
+                                                                    <span class="text-gray-400">N/A</span>
+                                                                </template>
+                                                            </td>
+                                                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                                                <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                                                <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                                                @can('delete_quality_test')
+                                                                    <button type="button"
+                                                                            @click="if(confirm('Are you sure you want to delete this test?')) {
                                                                                     axiosInstance.delete(`/batches/${test.batch_id}/quality-tests/${test.id}`)
                                                                                         .then(response => {
                                                                                             if (response.data.success) {
@@ -334,29 +334,29 @@
                                                                                             alert(error.response?.data?.message || 'An error occurred while deleting the test');
                                                                                         });
                                                                                 }"
-                                                                                class="text-red-600 hover:text-red-900">
-                                                                            Delete
-                                                                        </button>
-                                                                        @endcan
-                                                                    </td>
-                                                                </tr>
-                                                            </template>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div x-show="!loadingTests && (!tests[{{ $batch->id }}] || tests[{{ $batch->id }}].length === 0)" class="text-sm text-gray-500">
-                                                    No quality tests found for this batch.
-                                                </div>
+                                                                            class="text-red-600 hover:text-red-900">
+                                                                        Delete
+                                                                    </button>
+                                                                @endcan
+                                                            </td>
+                                                        </tr>
+                                                    </template>
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            No completed batches found for quality testing.
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                            <div x-show="!loadingTests && (!tests[{{ $batch->id }}] || tests[{{ $batch->id }}].length === 0)" class="text-sm text-gray-500">
+                                                No quality tests found for this batch.
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No completed batches found for quality testing.
+                                    </td>
+                                </tr>
+                            @endforelse
                             </tbody>
                         </table>
                     </div>
