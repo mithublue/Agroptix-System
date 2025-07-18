@@ -154,6 +154,10 @@ class QualityTestController extends Controller
 
     public function store(Request $request)
     {
+        return response()->json([
+            'success' => true,
+            'message' => 'Test created successfully Fake',
+        ]);
         // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new QualityTestStoreRequest();
@@ -264,7 +268,7 @@ class QualityTestController extends Controller
         try {
             // Get and deduplicate parameters_tested array from the request
             $parametersTested = array_unique($request->input('parameters_tested', []));
-            
+
             // Prepare the data for update
             $updateData = [
                 'test_date' => $request->input('test_date'),

@@ -312,8 +312,12 @@
                                                                 </template>
                                                             </td>
                                                             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                                <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                                                <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                                                @can('edit_quality_test')
+                                                                    <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                                                @endcan
+                                                                {{--@can('view_quality_test')
+                                                                    <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                                                @endcan--}}
                                                                 @can('delete_quality_test')
                                                                     <button type="button"
                                                                             @click="if(confirm('Are you sure you want to delete this test?')) {
