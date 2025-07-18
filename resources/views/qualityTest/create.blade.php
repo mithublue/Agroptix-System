@@ -536,44 +536,49 @@
                         return;
                     }
 
-                    // Create FormData object
-                    const formData = new FormData(form);
-
-                    // Manually append the parameters_tested array
-                    if (this.formData.parameters_tested && this.formData.parameters_tested.length > 0) {
-                        // First, remove all existing parameters_tested entries
-                        formData.delete('parameters_tested');
-                        formData.delete('parameters_tested[]');
-
-                        // Create a Set to ensure unique values
-                        const uniqueParams = [...new Set(this.formData.parameters_tested)];
-
-                        // Add each unique parameter only once
-                        uniqueParams.forEach(param => {
-                            formData.append('parameters_tested[]', param);
-                        });
-                    }
-
-                    // Add the form data from Alpine.js to the FormData
+                    // Create a new FormData object (don't initialize with form to prevent duplicates)
+                    const formData = new FormData();
+                    
+                    // Add all form data from this.formData manually
                     Object.entries(this.formData).forEach(([key, value]) => {
                         if (value === null || value === undefined) return;
 
+                        // Handle arrays (like parameters_tested)
                         if (Array.isArray(value)) {
-                            // Remove any existing values for this key to avoid duplicates
-                            formData.delete(key);
-                            value.forEach(val => formData.append(`${key}[]`, val));
-                        } else if (value instanceof File) {
-                            // Handle file uploads
+                            // For parameters_tested, ensure unique values
+                            if (key === 'parameters_tested') {
+                                const uniqueParams = [...new Set(value)];
+                                uniqueParams.forEach(param => {
+                                    formData.append('parameters_tested[]', param);
+                                });
+                            } else {
+                                // For other arrays, add each value individually
+                                value.forEach(val => {
+                                    formData.append(`${key}[]`, val);
+                                });
+                            }
+                        } 
+                        // Handle file uploads
+                        else if (value instanceof File) {
                             if (value.size > 0) {
                                 formData.set(key, value);
                             }
-                        } else if (typeof value === 'object') {
-                            // Stringify objects
+                        } 
+                        // Handle objects (stringify them)
+                        else if (typeof value === 'object' && value !== null) {
                             formData.set(key, JSON.stringify(value));
-                        } else {
+                        } 
+                        // Handle all other values (strings, numbers, etc.)
+                        else {
                             formData.set(key, value);
                         }
                     });
+                    
+                    // Add the final verdict as result_status for backend compatibility
+                    formData.set('result_status', this.formData.final_pass_fail || '');
+                    
+                    // Always ensure batch_id is set
+                    formData.set('batch_id', this.formData.batch_id || '{{ $batch->id }}');
 
                     // Add the final verdict as result_status for backend compatibility
                     formData.set('result_status', this.formData.final_pass_fail || '');
