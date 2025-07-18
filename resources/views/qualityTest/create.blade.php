@@ -4,7 +4,7 @@
             {{ isset($isEdit) ? __('Edit Quality Test') : __('Create Quality Test') }}
         </h2>
     </x-slot>
-    <form method="POST" action="{{ isset($isEdit) ? route('quality-tests.update', ['batch' => $batch, 'qualityTest' => $qualityTest->id]) : route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="labTestingForm()">
+    <form method="POST" id="itemForm" action="{{ isset($isEdit) ? route('quality-tests.update', ['batch' => $batch, 'qualityTest' => $qualityTest->id]) : route('quality-tests.store', $batch) }}" x-on:submit.prevent="submitForm()" x-data="labTestingForm()">
         @csrf
         @if(isset($isEdit))
             @method('PUT')
@@ -530,7 +530,7 @@
 
                 submitForm() {
                     // Get the form element
-                    const form = document.querySelector('form');
+                    const form = document.getElementById('itemForm');
                     if (!form) {
                         console.error('Form element not found');
                         return;
@@ -547,7 +547,7 @@
 
                         // Create a Set to ensure unique values
                         const uniqueParams = [...new Set(this.formData.parameters_tested)];
-                        
+
                         // Add each unique parameter only once
                         uniqueParams.forEach(param => {
                             formData.append('parameters_tested[]', param);
@@ -592,6 +592,8 @@
                         formData.append('_method', 'PUT');
                     }
                     console.log('formData', this.formData);
+                    console.log('method', method);
+                    console.log('url', url);
 
                     // Submit the form
                     axios({

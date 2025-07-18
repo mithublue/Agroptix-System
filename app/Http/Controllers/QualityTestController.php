@@ -154,10 +154,6 @@ class QualityTestController extends Controller
 
     public function store(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Test created successfully Fake',
-        ]);
         // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new QualityTestStoreRequest();
