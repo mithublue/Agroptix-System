@@ -176,7 +176,7 @@
                                                     }
                                                 }" class="relative">
                                                     <div class="relative">
-                                                        <select x-model="status" 
+                                                        <select x-model="status"
                                                                 @change="updateStatus"
                                                                 :disabled="isUpdating"
                                                                 class="appearance-none block w-full bg-white border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
@@ -215,14 +215,28 @@
                                                 <a href="{{ route('sources.edit', $source) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                                             @endcan
                                             @can('delete', $source)
-                                                <form action="{{ route('sources.destroy', $source) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900"
-                                                            onclick="return confirm('Are you sure you want to delete this source?')">
-                                                        Delete
-                                                    </button>
-                                                </form>
+                                                <span x-data="{ confirming: false }">
+                                                    <template x-if="!confirming">
+                                                        <button @click="confirming = true" class="text-red-600 hover:text-red-900">
+                                                            Delete
+                                                        </button>
+                                                    </template>
+                                                    <template x-if="confirming">
+                                                        <div class="inline-flex items-center space-x-2">
+                                                            <span class="text-sm text-gray-600">Are you sure?</span>
+                                                            <form action="{{ route('sources.destroy', $source) }}" method="POST" class="inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="text-red-600 hover:text-red-900 font-medium">
+                                                                    Yes
+                                                                </button>
+                                                            </form>
+                                                            <button @click="confirming = false" class="text-gray-600 hover:text-gray-900 text-sm">
+                                                                No
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                </span>
                                             @endcan
                                         </td>
                                     </tr>
