@@ -98,8 +98,9 @@ class SourceController extends Controller
 
         // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
         if (!$formRequest->authorize()) {
-            abort( 403, 'This action is unauthorized.' );
+            abort(403, 'This action is unauthorized.');
         }
+        
         // 3. Get the validation rules from your Form Request class.
         $rules = $formRequest->rules();
 
@@ -121,6 +122,10 @@ class SourceController extends Controller
             $validatedData['owner_id'] = auth()->id();
             $validatedData['status'] = 'pending';
         }
+
+        // Map country and state fields
+        $validatedData['country_code'] = $validatedData['country'] ?? null;
+        unset($validatedData['country']);
 
         // Create the Source record
         try {
@@ -177,6 +182,10 @@ class SourceController extends Controller
 
         // Get the validated data
         $validatedData = $validator->validated();
+
+        // Map country and state fields
+        $validatedData['country_code'] = $validatedData['country'] ?? null;
+        unset($validatedData['country']);
 
         try {
             $source->update($validatedData);

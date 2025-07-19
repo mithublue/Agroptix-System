@@ -2,6 +2,7 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 import { Turbo } from '@hotwired/turbo-rails';
 import Swal from 'sweetalert2';
+import './country-state';
 
 // Make Swal available globally
 window.Swal = Swal;

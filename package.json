@@ -19,6 +19,7 @@
         "@google/gemini-cli": "^0.1.4",
         "@hotwired/turbo": "^8.0.13",
         "@hotwired/turbo-rails": "^8.0.16",
+        "country-state-city": "^3.2.1",
         "sweetalert2": "^11.22.2"
     }
 }

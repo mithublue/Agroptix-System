@@ -15,6 +15,82 @@
                         @csrf
                         @method('PUT')
 
+                        <!-- Address Section -->
+                        <div class="space-y-4" x-data="countryState" x-init="
+                            selectedCountry = '{{ old('country', $source->country_code) }}';
+                            loadStates();
+                            if ('{{ old('state', $source->state) }}') {
+                                // Small delay to ensure states are loaded
+                                setTimeout(() => {
+                                    selectedState = '{{ old('state', $source->state) }}';
+                                }, 100);
+                            }
+                        ">
+                            <h3 class="text-lg font-medium text-gray-900">Address Information</h3>
+                            
+                            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <!-- Address Line 1 -->
+                                <div class="sm:col-span-2">
+                                    <label for="address_line1" class="block text-sm font-medium text-gray-700">Address Line 1</label>
+                                    <input type="text" name="address_line1" id="address_line1" required
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                        value="{{ old('address_line1', $source->address_line1) }}">
+                                    @error('address_line1')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Address Line 2 -->
+                                <div class="sm:col-span-2">
+                                    <label for="address_line2" class="block text-sm font-medium text-gray-700">Address Line 2 (Optional)</label>
+                                    <input type="text" name="address_line2" id="address_line2"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                        value="{{ old('address_line2', $source->address_line2) }}">
+                                    @error('address_line2')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Country -->
+                                <div>
+                                    <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+                                    <select name="country" id="country" required
+                                        x-model="selectedCountry"
+                                        @change="loadStates()"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        <option value="">Select country</option>
+                                        <template x-for="country in countries" :key="country.code">
+                                            <option :value="country.code" :selected="'{{ old('country', $source->country_code) }}' === country.code">
+                                                <span x-text="formatOption(country)"></span>
+                                            </option>
+                                        </template>
+                                    </select>
+                                    @error('country')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- State/Region -->
+                                <div>
+                                    <label for="state" class="block text-sm font-medium text-gray-700">State/Region</label>
+                                    <select name="state" id="state" required
+                                        x-model="selectedState"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        <option value="">Select state/region</option>
+                                        <template x-for="state in states" :key="state.code">
+                                            <option :value="state.name" :selected="'{{ old('state', $source->state) }}' === state.name">
+                                                <span x-text="formatOption(state)"></span>
+                                            </option>
+                                        </template>
+                                    </select>
+                                    @error('state')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Other Fields -->
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <!-- Type -->
                             <div>

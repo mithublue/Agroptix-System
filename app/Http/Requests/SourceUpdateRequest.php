@@ -28,6 +28,10 @@ class SourceUpdateRequest extends FormRequest
             'gps_long' => ['nullable', 'string'],
             'production_method' => ['required', 'in:Natural,Organic,Mixed'],
             'area' => ['nullable', 'string'],
+            'address_line1' => ['required', 'string', 'max:255'],
+            'address_line2' => ['nullable', 'string', 'max:255'],
+            'country' => ['required', 'string', 'size:2'],
+            'state' => ['required', 'string', 'max:100'],
         ];
 
         // If user has manage_source permission, make status and owner_id required

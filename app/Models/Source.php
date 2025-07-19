@@ -21,6 +21,10 @@ class Source extends Model
         'gps_long',
         'production_method',
         'area',
+        'address_line1',
+        'address_line2',
+        'country_code',
+        'state',
         'status',
         'owner_id'
     ];
