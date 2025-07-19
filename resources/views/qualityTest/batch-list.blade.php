@@ -319,28 +319,81 @@
                                                                     <a x-bind:href="'{{ url('batches') }}/' + test.batch_id + '/quality-tests/' + test.id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
                                                                 @endcan--}}
                                                                 @can('delete_quality_test')
-                                                                    <button type="button"
-                                                                            @click="if(confirm('Are you sure you want to delete this test?')) {
-                                                                                    axiosInstance.delete(`/batches/${test.batch_id}/quality-tests/${test.id}`)
-                                                                                        .then(response => {
-                                                                                            if (response.data.success) {
-                                                                                                // Remove the test from the UI
-                                                                                                const index = tests[{{ $batch->id }}].findIndex(t => t.id === test.id);
-                                                                                                if (index > -1) {
-                                                                                                    tests[{{ $batch->id }}].splice(index, 1);
+                                                                    <span x-data="{ confirming: false, deleting: false }">
+                                                                        <button type="button"
+                                                                                x-show="!confirming"
+                                                                                @click="confirming = true"
+                                                                                class="text-red-600 hover:text-red-900"
+                                                                                :disabled="deleting">
+                                                                            Delete
+                                                                        </button>
+
+                                                                        <span x-show="confirming" class="inline-flex space-x-2 items-center">
+                                                                            <span class="text-sm text-gray-600">Are you sure?</span>
+                                                                            <button type="button"
+                                                                                    @click="
+                                                                                        deleting = true;
+                                                                                        axiosInstance.delete(`/batches/${test.batch_id}/quality-tests/${test.id}`)
+                                                                                            .then(response => {
+                                                                                                if (response.data.success) {
+                                                                                                    // Remove the test from the UI
+                                                                                                    const index = tests[{{ $batch->id }}].findIndex(t => t.id === test.id);
+                                                                                                    if (index > -1) {
+                                                                                                        tests[{{ $batch->id }}].splice(index, 1);
+                                                                                                    }
+                                                                                                    // Show success message
+                                                                                                    const Toast = Swal.mixin({
+                                                                                                        toast: true,
+                                                                                                        position: 'top-end',
+                                                                                                        showConfirmButton: false,
+                                                                                                        timer: 1000,
+                                                                                                        timerProgressBar: true,
+                                                                                                        didOpen: (toast) => {
+                                                                                                            toast.addEventListener('mouseenter', Swal.stopTimer);
+                                                                                                            toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                                                                                        }
+                                                                                                    });
+                                                                                                    Toast.fire({
+                                                                                                        icon: 'success',
+                                                                                                        title: 'Test deleted successfully!'
+                                                                                                    });
+                                                                                                } else {
+                                                                                                    throw new Error(response.data.message || 'Failed to delete test');
                                                                                                 }
-                                                                                            } else {
-                                                                                                alert(response.data.message || 'Failed to delete test');
-                                                                                            }
-                                                                                        })
-                                                                                        .catch(error => {
-                                                                                            console.error('Error deleting test:', error);
-                                                                                            alert(error.response?.data?.message || 'An error occurred while deleting the test');
-                                                                                        });
-                                                                                }"
-                                                                            class="text-red-600 hover:text-red-900">
-                                                                        Delete
-                                                                    </button>
+                                                                                            })
+                                                                                            .catch(error => {
+                                                                                                console.error('Error deleting test:', error);
+                                                                                                Swal.fire({
+                                                                                                    icon: 'error',
+                                                                                                    title: 'Error',
+                                                                                                    text: error.response?.data?.message || 'An error occurred while deleting the test',
+                                                                                                    confirmButtonText: 'OK',
+                                                                                                    confirmButtonColor: '#3b82f6'
+                                                                                                });
+                                                                                            })
+                                                                                            .finally(() => {
+                                                                                                confirming = false;
+                                                                                                deleting = false;
+                                                                                            });"
+                                                                                    class="text-sm text-red-600 hover:text-red-900 font-medium"
+                                                                                    :disabled="deleting">
+                                                                                <span x-show="!deleting">Yes, delete</span>
+                                                                                <span x-show="deleting" class="inline-flex items-center">
+                                                                                    <svg class="animate-spin -ml-1 mr-1 h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                    </svg>
+                                                                                    Deleting...
+                                                                                </span>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                    @click="confirming = false"
+                                                                                    class="text-sm text-gray-600 hover:text-gray-900"
+                                                                                    :disabled="deleting">
+                                                                                No, cancel
+                                                                            </button>
+                                                                        </span>
+                                                                    </span>
                                                                 @endcan
                                                             </td>
                                                         </tr>
