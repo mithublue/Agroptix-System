@@ -333,13 +333,11 @@
     <!-- Alpine.js for sidebar functionality -->
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('sidebar', () => ({
-                open: false,
-                toggle() {
-                    this.open = !this.open;
-                }
-            }));
+            // You can add Alpine.js components here if needed
         });
     </script>
+    
+    <!-- Scripts Stack -->
+    @stack('scripts')
 </body>
 </html>

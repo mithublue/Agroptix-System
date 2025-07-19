@@ -49,21 +49,273 @@
                                 <x-input-error :messages="$errors->get('product_id')" class="mt-2" />
                             </div>
 
-                            <!-- Harvest Time -->
-                            <div>
+                            <!-- Harvest Time with Custom Datepicker -->
+                            <div class="datepicker-container">
                                 <x-label for="harvest_time" :value="__('Harvest Time')" required />
-                                <x-input
-                                    id="harvest_time"
-                                    name="harvest_time"
-                                    type="date"
-                                    class="mt-1 block w-full"
-                                    :value="old('harvest_time')"
-                                    required
-                                    pattern="\d{4}-\d{2}-\d{2}"
-                                    oninvalid="this.setCustomValidity('Please select a valid date in YYYY-MM-DD format')"
-                                    oninput="this.setCustomValidity('')" />
+                                <div class="datepicker-input relative mt-1">
+                                    <input type="text" 
+                                           id="harvest_time_display" 
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white cursor-pointer"
+                                           readonly
+                                           placeholder="Select harvest date"
+                                           value="{{ old('harvest_time') ? \Carbon\Carbon::parse(old('harvest_time'))->format('d/m/Y') : '' }}">
+                                    <input type="hidden" 
+                                           id="harvest_time" 
+                                           name="harvest_time" 
+                                           value="{{ old('harvest_time') }}"
+                                           required>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div id="harvest_time_calendar" class="datepicker-calendar hidden absolute z-10 mt-1 w-64 bg-white rounded-md shadow-lg p-4 border border-gray-200">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <button type="button" class="prev-month p-1 rounded-full hover:bg-gray-100">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <h3 class="month-year text-lg font-medium"></h3>
+                                        <button type="button" class="next-month p-1 rounded-full hover:bg-gray-100">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center text-sm">
+                                        <div class="font-medium py-1">Su</div>
+                                        <div class="font-medium py-1">Mo</div>
+                                        <div class="font-medium py-1">Tu</div>
+                                        <div class="font-medium py-1">We</div>
+                                        <div class="font-medium py-1">Th</div>
+                                        <div class="font-medium py-1">Fr</div>
+                                        <div class="font-medium py-1">Sa</div>
+                                    </div>
+                                    <div class="days grid grid-cols-7 gap-1 mt-1"></div>
+                                </div>
                                 <x-input-error :messages="$errors->get('harvest_time')" class="mt-2" />
                             </div>
+                            
+                            <style>
+                                .datepicker-container {
+                                    position: relative;
+                                }
+                                
+                                .datepicker-calendar {
+                                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                                }
+                                
+                                .days {
+                                    min-height: 160px;
+                                }
+                                
+                                .day {
+                                    @apply p-1.5 rounded-md text-center cursor-pointer;
+                                }
+                                
+                                .day:hover {
+                                    @apply bg-indigo-100;
+                                }
+                                
+                                .day.today {
+                                    @apply font-semibold text-indigo-700;
+                                }
+                                
+                                .day.selected {
+                                    @apply bg-indigo-600 text-white;
+                                }
+                                
+                                .day.other-month {
+                                    @apply text-gray-400;
+                                }
+                                
+                                .day.disabled {
+                                    @apply text-gray-300 cursor-not-allowed;
+                                }
+                            </style>
+                            
+                            @push('scripts')
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    console.log('DOM fully loaded, initializing datepicker...');
+                                    
+                                    const displayInput = document.getElementById('harvest_time_display');
+                                    const hiddenInput = document.getElementById('harvest_time');
+                                    const calendar = document.getElementById('harvest_time_calendar');
+                                    
+                                    if (!displayInput) console.error('displayInput not found');
+                                    if (!hiddenInput) console.error('hiddenInput not found');
+                                    if (!calendar) console.error('calendar not found');
+                                    
+                                    if (!displayInput || !hiddenInput || !calendar) {
+                                        console.error('Required datepicker elements not found - aborting initialization');
+                                        return;
+                                    }
+                                    
+                                    console.log('All datepicker elements found, proceeding with initialization');
+                                    
+                                    const monthYearElement = calendar.querySelector('.month-year');
+                                    const daysContainer = calendar.querySelector('.days');
+                                    const prevMonthBtn = calendar.querySelector('.prev-month');
+                                    const nextMonthBtn = calendar.querySelector('.next-month');
+                                    
+                                    console.log('Datepicker UI elements found, starting initialization...');
+                                    
+                                    let currentDate = new Date();
+                                    let selectedDate = hiddenInput.value ? new Date(hiddenInput.value) : null;
+                                    
+                                    // Initialize the calendar
+                                    function initCalendar() {
+                                        renderCalendar();
+                                        
+                                        // Toggle calendar on input click
+                                        displayInput.addEventListener('click', function(e) {
+                                            e.stopPropagation();
+                                            calendar.classList.toggle('hidden');
+                                        });
+                                        
+                                        // Close calendar when clicking outside
+                                        document.addEventListener('click', function(e) {
+                                            if (!calendar.contains(e.target) && e.target !== displayInput) {
+                                                calendar.classList.add('hidden');
+                                            }
+                                        });
+                                        
+                                        // Navigation
+                                        prevMonthBtn.addEventListener('click', function(e) {
+                                            e.stopPropagation();
+                                            currentDate.setMonth(currentDate.getMonth() - 1);
+                                            renderCalendar();
+                                        });
+                                        
+                                        nextMonthBtn.addEventListener('click', function(e) {
+                                            e.stopPropagation();
+                                            currentDate.setMonth(currentDate.getMonth() + 1);
+                                            renderCalendar();
+                                        });
+                                    }
+                                    
+                                    // Render the calendar for the current month
+                                    function renderCalendar() {
+                                        const year = currentDate.getFullYear();
+                                        const month = currentDate.getMonth();
+                                        
+                                        // Set month and year in header
+                                        monthYearElement.textContent = new Intl.DateTimeFormat('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long' 
+                                        }).format(currentDate);
+                                        
+                                        // Get first and last day of month
+                                        const firstDay = new Date(year, month, 1);
+                                        const lastDay = new Date(year, month + 1, 0);
+                                        
+                                        // Get days in month
+                                        const daysInMonth = lastDay.getDate();
+                                        
+                                        // Get day of week for first day of month (0-6, where 0 is Sunday)
+                                        const startingDay = firstDay.getDay();
+                                        
+                                        // Clear previous days
+                                        daysContainer.innerHTML = '';
+                                        
+                                        // Add empty cells for days before first day of month
+                                        for (let i = 0; i < startingDay; i++) {
+                                            const prevMonthDay = new Date(year, month, -startingDay + i + 1);
+                                            const dayElement = createDayElement(prevMonthDay, true);
+                                            daysContainer.appendChild(dayElement);
+                                        }
+                                        
+                                        // Add days of current month
+                                        for (let i = 1; i <= daysInMonth; i++) {
+                                            const dayDate = new Date(year, month, i);
+                                            const dayElement = createDayElement(dayDate);
+                                            
+                                            // Check if this is the selected date
+                                            if (selectedDate && isSameDay(dayDate, selectedDate)) {
+                                                dayElement.classList.add('selected');
+                                            }
+                                            
+                                            // Check if this is today
+                                            if (isToday(dayDate)) {
+                                                dayElement.classList.add('today');
+                                            }
+                                            
+                                            daysContainer.appendChild(dayElement);
+                                        }
+                                        
+                                        // Add empty cells for remaining days in the last week
+                                        const remainingDays = 7 - ((startingDay + daysInMonth) % 7);
+                                        if (remainingDays < 7) { // Only add if not already a complete week
+                                            for (let i = 1; i <= remainingDays; i++) {
+                                                const nextMonthDay = new Date(year, month + 1, i);
+                                                const dayElement = createDayElement(nextMonthDay, true);
+                                                daysContainer.appendChild(dayElement);
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Create a day element
+                                    function createDayElement(date, isOtherMonth = false) {
+                                        const dayElement = document.createElement('div');
+                                        dayElement.className = 'day' + (isOtherMonth ? ' other-month' : '');
+                                        dayElement.textContent = date.getDate();
+                                        
+                                        dayElement.addEventListener('click', function(e) {
+                                            e.stopPropagation();
+                                            
+                                            // Update selected date
+                                            selectedDate = date;
+                                            
+                                            // Update display input
+                                            const formattedDate = formatDate(date);
+                                            displayInput.value = formattedDate;
+                                            
+                                            // Update hidden input (ISO format)
+                                            hiddenInput.value = date.toISOString().split('T')[0];
+                                            
+                                            // Update UI
+                                            document.querySelectorAll('.day').forEach(day => {
+                                                day.classList.remove('selected');
+                                            });
+                                            dayElement.classList.add('selected');
+                                            
+                                            // Close calendar after selection
+                                            setTimeout(() => {
+                                                calendar.classList.add('hidden');
+                                            }, 200);
+                                        });
+                                        
+                                        return dayElement;
+                                    }
+                                    
+                                    // Helper functions
+                                    function isSameDay(date1, date2) {
+                                        return date1.getDate() === date2.getDate() &&
+                                               date1.getMonth() === date2.getMonth() &&
+                                               date1.getFullYear() === date2.getFullYear();
+                                    }
+                                    
+                                    function isToday(date) {
+                                        const today = new Date();
+                                        return isSameDay(date, today);
+                                    }
+                                    
+                                    function formatDate(date) {
+                                        return date.toLocaleDateString('en-GB', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric'
+                                        }).replace(/\//g, '/');
+                                    }
+                                    
+                                    // Initialize the calendar
+                                    initCalendar();
+                                });
+                            </script>
+                            @endpush
 
                             <!-- Status -->
                             <div>
