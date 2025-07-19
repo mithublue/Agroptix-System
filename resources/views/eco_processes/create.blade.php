@@ -13,9 +13,9 @@
         $formData = json_encode(old() ?: $ecoProcess->data ?? []);
     @endphp
 
-    <form method="POST" 
-          action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess]) : route('batches.eco-processes.store', $batch) }}" 
-          x-on:submit.prevent="submitForm()" 
+    <form method="POST"
+          action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess]) : route('batches.eco-processes.store', $batch) }}"
+          x-on:submit.prevent="submitForm()"
           x-data="formHandler()">
         @csrf
         @if(isset($ecoProcess))
@@ -509,15 +509,40 @@
                         return response.json();
                     })
                     .then(data => {
-                        // Handle success
-                        alert('Form submitted successfully!');
-                        window.location.href = data.redirect || '/dashboard';
+                        // Show success toast with SweetAlert2
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Eco process has been saved successfully.'
+                        }).then(() => {
+                            // Redirect after toast is closed
+                            window.location.href = data.redirect || '/dashboard';
+                        });
                     })
                     .catch(error => {
-                        // Handle error
+                        // Show error toast with SweetAlert2
                         console.error('Error:', error);
                         const errorMessage = error.message || 'An error occurred while submitting the form.';
-                        alert(`Error: ${errorMessage}`);
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#3b82f6'
+                        });
                     });
                 }
             }

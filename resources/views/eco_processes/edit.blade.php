@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <form method="POST" action="{{ route('batches.eco-processes.update', [$batch, $ecoProcess]) }}">
+                    <form id="ecoProcessForm" method="POST" action="{{ route('batches.eco-processes.update', [$batch, $ecoProcess]) }}" onsubmit="event.preventDefault(); submitEcoProcessForm(this);">
                         @csrf
                         @method('PUT')
 
@@ -62,6 +62,66 @@
                             </x-primary-button>
                         </div>
                     </form>
+
+@push('scripts')
+<script>
+    function submitEcoProcessForm(form) {
+        // Submit the form via fetch
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(new FormData(form))
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show success toast
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+
+            Toast.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Eco process has been updated successfully.'
+            }).then(() => {
+                // Redirect after toast is closed
+                window.location.href = data.redirect || '{{ route("batches.eco-processes.index", $batch) }}';
+            });
+        })
+        .catch(error => {
+            // Show error toast
+            console.error('Error:', error);
+            const errorMessage = error.message || 'An error occurred while updating the eco process.';
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMessage,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3b82f6'
+            });
+        });
+    }
+</script>
+@endpush
                 </div>
             </div>
         </div>
