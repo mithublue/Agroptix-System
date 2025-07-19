@@ -46,7 +46,13 @@
                                             {{ $ecoProcess->id }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $ecoProcess->stage }}
+                                            @php
+                                                // Convert snake_case to Title Case and replace underscores with spaces
+                                                $stageDisplay = ucwords(str_replace(['_', '-'], ' ', $ecoProcess->stage));
+                                                // Handle special cases like 'n' to '&'
+                                                $stageDisplay = str_ireplace(' n ', ' & ', $stageDisplay);
+                                            @endphp
+                                            {{ $stageDisplay }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
