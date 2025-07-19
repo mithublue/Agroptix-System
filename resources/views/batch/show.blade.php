@@ -32,13 +32,44 @@
                             </a>
                         @endcan
                         @can('delete_batch')
-                            <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this batch? This action cannot be undone.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            <div x-data="{ showDeleteConfirm: false }" class="relative">
+                                <button @click="showDeleteConfirm = true" 
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                     {{ __('Delete Batch') }}
                                 </button>
-                            </form>
+                                
+                                <!-- Delete Confirmation Modal -->
+                                <div x-show="showDeleteConfirm" 
+                                     @click.away="showDeleteConfirm = false"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50"
+                                     style="display: none;">
+                                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                                        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+                                        <p class="text-gray-600 mb-6">Are you sure you want to delete this batch? This action cannot be undone.</p>
+                                        
+                                        <div class="flex justify-end space-x-3">
+                                            <button @click="showDeleteConfirm = false" 
+                                                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                Cancel
+                                            </button>
+                                            <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         @endcan
                     </div>
                 </div>

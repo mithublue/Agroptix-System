@@ -213,14 +213,45 @@
                                                 @endcan
 
                                                 @can('delete_batch')
-                                                    <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900"
-                                                            onclick="return confirm('Are you sure you want to delete this batch?')">
+                                                    <div x-data="{ showDeleteConfirm: false }" class="relative">
+                                                        <button @click="showDeleteConfirm = true" 
+                                                                class="text-red-600 hover:text-red-900 focus:outline-none">
                                                             Delete
                                                         </button>
-                                                    </form>
+                                                        
+                                                        <!-- Delete Confirmation Dropdown -->
+                                                        <div x-show="showDeleteConfirm" 
+                                                             @click.away="showDeleteConfirm = false"
+                                                             x-transition:enter="transition ease-out duration-100"
+                                                             x-transition:enter-start="transform opacity-0 scale-95"
+                                                             x-transition:enter-end="transform opacity-100 scale-100"
+                                                             x-transition:leave="transition ease-in duration-75"
+                                                             x-transition:leave-start="transform opacity-100 scale-100"
+                                                             x-transition:leave-end="transform opacity-0 scale-95"
+                                                             class="absolute right-0 z-10 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                                             style="display: none;">
+                                                            <div class="py-1">
+                                                                <p class="px-4 py-2 text-sm text-gray-700">
+                                                                    Delete this batch?
+                                                                </p>
+                                                                <div class="border-t border-gray-100"></div>
+                                                                <div class="flex justify-end px-4 py-2 space-x-2">
+                                                                    <button @click="showDeleteConfirm = false" 
+                                                                            class="text-sm text-gray-700 hover:bg-gray-100 px-2 py-1 rounded">
+                                                                        Cancel
+                                                                    </button>
+                                                                    <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="submit" 
+                                                                                class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
+                                                                            Delete
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 @endcan
                                             </div>
                                         </td>
