@@ -191,7 +191,7 @@
                                                 @can('create_quality_test')
                                                     <a href="{{ route('quality-tests.create', ['batch' => $batch->id]) }}"
                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                        + New Test
+                                                        + New Test 
                                                     </a>
                                                 @endcan
                                             </div>
