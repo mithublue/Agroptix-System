@@ -73,13 +73,13 @@
                                     {{--<label for="technician_name" class="block text-sm font-medium text-gray-700 mb-2">
                                         Technician Name <span class="text-red-500">*</span>
                                     </label>--}}
-                                    <input
+                                    {{--<input
                                         id="technician_name"
                                         type="text"
                                         x-model="formData.technician_name"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                         placeholder="Enter technician name"
-                                    />
+                                    />--}}
                                 </div>
                             </div>
                         </div>
@@ -503,8 +503,8 @@
                 isFormValid() {
                     return this.formData.batch_id &&
                         this.formData.test_date &&
-                        this.formData.lab_name &&
-                        this.formData.technician_name;
+                        this.formData.lab_name/* &&
+                        this.formData.technician_name*/;
                 },
 
                 getResultsCount() {
@@ -538,7 +538,7 @@
 
                     // Create a new FormData object (don't initialize with form to prevent duplicates)
                     const formData = new FormData();
-                    
+
                     // Add all form data from this.formData manually
                     Object.entries(this.formData).forEach(([key, value]) => {
                         if (value === null || value === undefined) return;
@@ -557,26 +557,26 @@
                                     formData.append(`${key}[]`, val);
                                 });
                             }
-                        } 
+                        }
                         // Handle file uploads
                         else if (value instanceof File) {
                             if (value.size > 0) {
                                 formData.set(key, value);
                             }
-                        } 
+                        }
                         // Handle objects (stringify them)
                         else if (typeof value === 'object' && value !== null) {
                             formData.set(key, JSON.stringify(value));
-                        } 
+                        }
                         // Handle all other values (strings, numbers, etc.)
                         else {
                             formData.set(key, value);
                         }
                     });
-                    
+
                     // Add the final verdict as result_status for backend compatibility
                     formData.set('result_status', this.formData.final_pass_fail || '');
-                    
+
                     // Always ensure batch_id is set
                     formData.set('batch_id', this.formData.batch_id || '{{ $batch->id }}');
 
