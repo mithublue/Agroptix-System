@@ -16,11 +16,11 @@
                         @method('PUT')
 
                         <!-- Address Section -->
-                        <div class="space-y-4" x-data="countryState" x-init="
+                        <div class="space-y-4" x-data="countryState()" x-init="
                             selectedCountry = '{{ old('country', $source->country_code) }}';
-                            loadStates();
-                            if ('{{ old('state', $source->state) }}') {
-                                // Small delay to ensure states are loaded
+                            if (selectedCountry) {
+                                loadStates();
+                                // Small delay to ensure states are loaded before selecting
                                 setTimeout(() => {
                                     selectedState = '{{ old('state', $source->state) }}';
                                 }, 100);

@@ -13,7 +13,10 @@
                         @csrf
 
                         <!-- Address Section -->
-                        <div class="space-y-4" x-data="countryState">
+                        <div class="space-y-4" x-data="countryState()" x-init="
+                            selectedCountry = '{{ old('country', '') }}';
+                            if (selectedCountry) loadStates();
+                        ">
                             <h3 class="text-lg font-medium text-gray-900">Address Information</h3>
                             
                             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -48,8 +51,8 @@
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                         <option value="">Select country</option>
                                         <template x-for="country in countries" :key="country.code">
-                                            <option :value="country.code" :selected="'{{ old('country') }}' === country.code">
-                                                <span x-text="formatOption(country)"></span>
+                                            <option :value="country.code" :selected="'{{ old('country') }}' === country.code"
+                                                x-text="formatOption(country)">
                                             </option>
                                         </template>
                                     </select>
@@ -66,8 +69,8 @@
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                         <option value="">Select state/region</option>
                                         <template x-for="state in states" :key="state.code">
-                                            <option :value="state.name" :selected="'{{ old('state') }}' === state.name">
-                                                <span x-text="formatOption(state)"></span>
+                                            <option :value="state.name" :selected="'{{ old('state') }}' === state.name"
+                                                x-text="formatOption(state)">
                                             </option>
                                         </template>
                                     </select>
