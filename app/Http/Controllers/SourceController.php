@@ -69,6 +69,8 @@ class SourceController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Source::class);
+
         // Get all users for the owner dropdown
         $users = \App\Models\User::all();
 
@@ -207,7 +209,7 @@ class SourceController extends Controller
      */
     public function updateStatus(Source $source, \Illuminate\Http\Request $request)
     {
-        $this->authorize('edit', $source);
+        $this->authorize('manage_source' );
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:' . implode(',', array_keys(config('at.source_status')))]
