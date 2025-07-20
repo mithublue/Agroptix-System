@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RpcUnitSeeder::class,
             PackagingSeeder::class,
+            PackagingPermissionsSeeder::class,
         ]);
 
         // Create admin user
