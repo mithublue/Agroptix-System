@@ -1,4 +1,4 @@
-name: Deploy Laravel App
+name: Deploy Laravel App to Production
 
 on:
   push:
@@ -10,55 +10,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml, curl
-        coverage: none
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, openssl, pdo, tokenizer, xml, curl, mysql
+          tools: composer
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - name: Install Composer Dependencies
+        run: composer install --no-dev --optimize-autoloader
 
-    - name: Install Composer dependencies
-      run: composer install --no-dev --optimize-autoloader
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-    - name: Install NPM dependencies and build assets
-      run: |
-        npm install
-        npm run build
+      - name: Install NPM Dependencies and Build Vite Assets
+        run: |
+          npm install
+          npm run build
 
-    - name: Copy files to server via rsync over SSH
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H testapp.cybercraftit.com >> ~/.ssh/known_hosts
+      - name: Setup SSH Key and Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-        rsync -avz --delete \
-          --exclude=".git*" \
-          --exclude="node_modules" \
-          --exclude="tests" \
-          --exclude="storage/logs" \
-          ./ cybercra@testapp.cybercraftit.com:/home/cybercra/repositories/Agroptix-System
+      - name: Deploy via Rsync
+        run: |
+          rsync -avz --delete \
+            --exclude=".git*" \
+            --exclude="node_modules" \
+            --exclude="tests" \
+            --exclude="storage/*.key" \
+            --exclude="storage/logs" \
+            --exclude=".env" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
 
-    - name: Run post-deploy Laravel commands on server
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        ssh cybercra@testapp.cybercraftit.com << 'EOF'
-        cd /home/cybercra/repositories/Agroptix-System
-        php artisan migrate --force
-        php artisan config:cache
-        php artisan route:cache
-        php artisan view:cache
-        chmod -R 775 storage bootstrap/cache
-        chown -R www-data:www-data .
-        EOF
+      - name: Run Laravel Post-Deploy Commands
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd ${{ secrets.SERVER_PATH }}
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+          EOF
