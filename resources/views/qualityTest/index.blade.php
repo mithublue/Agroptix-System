@@ -4,4 +4,4 @@
     @section('content')
         qualityTest.index template
     @endsection
---}} 
+--}}
