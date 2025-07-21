@@ -25,61 +25,95 @@
     ];
 @endphp
 
-<form method="POST" action="{{ $action }}" class="space-y-6" x-data="{
-    isLoading: false,
-    errors: {},
-    async submitForm(event) {
-        this.isLoading = true;
-        this.errors = {};
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('rpcForm', () => ({
+            isLoading: false,
+            errors: {},
+            isEdit: @json($isEdit),
+            redirectUrl: @json(route('rpcunit.index')),
 
-        try {
-            const form = event.target;
-            const formData = new FormData(form);
-            const response = await fetch(form.action, {
-                method: form.method,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            });
+            testFunction() {
+                alert('test function called');
+                console.log('test function executed');
+            },
 
-            const data = await response.json();
+            async submitForm(event) {
+                event.preventDefault();
+                this.isLoading = true;
+                this.errors = {};
 
-            if (!response.ok) {
-                if (response.status === 422) {
-                    this.errors = data.errors || {};
-                    throw new Error('Validation failed');
-                }
-                throw new Error(data.message || 'Something went wrong');
-            }
+                try {
+                    const form = event.target;
+                    const formData = new FormData(form);
 
-            // Show success message
-            window.dispatchEvent(new CustomEvent('show-toast', {
-                detail: {
-                    message: 'RPC Unit ' + ({{ $isEdit ? '\'updated\'' : '\'created\'' }}) + ' successfully!',
-                    type: 'success'
-                }
-            }));
+                    const response = await axios({
+                        method: form.method,
+                        url: form.action,
+                        data: formData,
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    console.log('response:', response);
+                    return false;
 
-            // Redirect to index page
-            window.location.href = '{{ route('rpcunit.index') }}';
-        } catch (error) {
-            console.error('Error:', error);
-            if (!this.errors || Object.keys(this.errors).length === 0) {
-                window.dispatchEvent(new CustomEvent('show-toast', {
-                    detail: {
-                        message: error.message || 'Failed to save RPC Unit',
-                        type: 'error'
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: {
+                            message: `RPC Unit ${this.isEdit ? 'updated' : 'created'} successfully!`,
+                            type: 'success'
+                        }
+                    }));
+
+                    window.location.href = this.redirectUrl;
+                } catch (error) {
+                    console.error('Error:', error);
+
+                    if (error.response) {
+                        // Server responded with a status other than 2xx
+                        if (error.response.status === 422) {
+                            this.errors = error.response.data.errors || {};
+                        }
+
+                        const errorMessage = error.response.data?.message ||
+                                          error.response.statusText ||
+                                          'Failed to save RPC Unit';
+
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: {
+                                message: errorMessage,
+                                type: 'error'
+                            }
+                        }));
+                    } else if (error.request) {
+                        // The request was made but no response was received
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: {
+                                message: 'No response from server. Please try again.',
+                                type: 'error'
+                            }
+                        }));
+                    } else {
+                        // Something happened in setting up the request
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: {
+                                message: error.message || 'Failed to process request',
+                                type: 'error'
+                            }
+                        }));
                     }
-                }));
+                } finally {
+                    this.isLoading = false;
+                }
             }
-        } finally {
-            this.isLoading = false;
-        }
-    }
-}" @submit.prevent="submitForm">
+        }));
+    });
+</script>
+
+<div x-data="rpcForm" class="h-full">
+
+    <form method="POST" action="{{ $action }}" class="space-y-6 h-full flex flex-col" @submit.prevent="submitForm">
     @csrf
     @method($method)
 
@@ -201,5 +235,6 @@
             <span x-show="!isLoading">{{ $submitText }}</span>
             <span x-show="isLoading">{{ __('Saving...') }}</span>
         </button>
-    </div>
-</form>
+        </div>
+    </form>
+</div>

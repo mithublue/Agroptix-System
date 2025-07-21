@@ -29,9 +29,47 @@ class RpcUnitController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
-        //
+        return response()->json([
+            'message' => 'RPC Unit created successfully',
+            'data' => $request->all()
+        ], 200);
+        try {
+            $validated = $request->validate([
+                'rpc_identifier' => 'required|string|max:255|unique:rpc_units,rpc_identifier',
+                'capacity_kg' => 'required|numeric|min:0',
+                'material_type' => 'required|string|in:plastic,metal,wood,other',
+                'status' => 'required|string|in:active,in_use,maintenance,retired',
+                'total_wash_cycles' => 'sometimes|integer|min:0',
+                'total_reuse_count' => 'sometimes|integer|min:0',
+                'initial_purchase_date' => 'sometimes|date',
+                'last_washed_date' => 'nullable|date',
+                'current_location' => 'nullable|string|max:255',
+                'notes' => 'nullable|string',
+            ]);
+
+            $rpcUnit = RpcUnit::create($validated);
+
+            return response()->json([
+                'message' => 'RPC Unit created successfully',
+                'data' => $rpcUnit
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create RPC Unit',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
