@@ -216,6 +216,11 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
+// RPC Units
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('rpcunit', \App\Http\Controllers\RpcUnitController::class)->names('rpcunit');
+});
+
 // Farmers Registration
 Route::get('/farmers/register', [\App\Http\Controllers\RegistrationController::class, 'create_farmer'])->name('farmers.create');
 Route::post('/farmers', [\App\Http\Controllers\RegistrationController::class, 'store_farmer'])->name('farmers.store');
