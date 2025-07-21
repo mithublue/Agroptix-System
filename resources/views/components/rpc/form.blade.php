@@ -59,6 +59,7 @@
                     console.log('response:', response);
                     // return false;
 
+                    // Show success message
                     window.dispatchEvent(new CustomEvent('show-toast', {
                         detail: {
                             message: `RPC Unit ${this.isEdit ? 'updated' : 'created'} successfully!`,
@@ -66,7 +67,22 @@
                         }
                     }));
 
-                    // window.location.href = this.redirectUrl;
+                    // Close the drawer
+                    const drawer = document.getElementById('rpc-unit-drawer');
+                    if (drawer) {
+                        drawer.classList.add('hidden');
+                    }
+
+                    // Emit event to refresh the RPC units list
+                    window.dispatchEvent(new CustomEvent('rpc-unit-created', {
+                        detail: {
+                            rpcUnit: response.data.data
+                        }
+                    }));
+
+                    // Reset the form
+                    form.reset();
+                    this.errors = {};
                 } catch (error) {
                     console.error('Error:', error);
 

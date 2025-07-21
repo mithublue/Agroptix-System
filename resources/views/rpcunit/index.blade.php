@@ -1,8 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('RPC Units') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('RPC Units') }}
+            </h2>
+        </div>
     </x-slot>
 
     <script>
@@ -26,6 +28,50 @@
                     Alpine.store('drawer').close();
                 }
             });
+        });
+
+        // Global function to load RPC units via AJAX
+        async function loadRpcUnits() {
+            try {
+                const response = await axios.get('{{ route("rpcunit.index") }}');
+                const parser = new DOMParser();
+                const html = parser.parseFromString(response.data, 'text/html');
+                const table = html.querySelector('table');
+                if (table) {
+                    const container = document.querySelector('#rpc-units-table');
+                    if (container) {
+                        container.innerHTML = table.outerHTML;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading RPC units:', error);
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: {
+                        message: 'Failed to refresh RPC units list',
+                        type: 'error'
+                    }
+                }));
+            }
+        }
+
+        // Listen for rpc-unit-created event to refresh the table
+        document.addEventListener('rpc-unit-created', async (e) => {
+            // Close the drawer
+            const drawer = Alpine.store('drawer');
+            if (drawer) {
+                drawer.close();
+            }
+            
+            // Show success message
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: {
+                    message: 'RPC Unit created successfully!',
+                    type: 'success'
+                }
+            }));
+            
+            // Refresh the table
+            await loadRpcUnits();
         });
     </script>
 
@@ -240,7 +286,7 @@
                     </div>
                 @endif
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" id="rpc-units-table">
                     <div class="align-middle inline-block min-w-full">
                         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-b-lg">
                             <table class="min-w-full divide-y divide-gray-200">

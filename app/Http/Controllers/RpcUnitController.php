@@ -55,7 +55,7 @@ class RpcUnitController extends Controller
                 'success' => false,
                 'message' => 'Failed to create RPC Unit. ' . $e->getMessage(),
                 //get validation errors
-                
+
             ], 500);
         }
     }
