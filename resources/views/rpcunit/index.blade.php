@@ -6,28 +6,57 @@
     </x-slot>
 
     <!-- View Modal -->
-    <div x-data="{ showModal: false, unit: null }"
-         x-on:keydown.escape="showModal = false"
-         class="fixed inset-0 z-50 overflow-y-auto"
-         x-show="showModal"
-         style="display: none;">
+    <div x-data="{
+        show: false,
+        unit: {},
+        init() {
+            // Listen for the open-rpc-modal event
+            window.addEventListener('open-rpc-modal', (event) => {
+                this.unit = event.detail;
+                this.show = true;
+                document.body.classList.add('overflow-hidden');
+            });
+            
+            // Close modal on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.show) {
+                    this.close();
+                }
+            });
+        },
+        close() {
+            this.show = false;
+            document.body.classList.remove('overflow-hidden');
+        }
+    }"
+    x-show="show"
+    x-init="init()"
+    x-transition:enter="ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 overflow-y-auto"
+    style="display: none;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true" x-show="showModal"
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+                 @click="close()"
+                 x-show="show"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
             <!-- Modal panel -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
-                 x-show="showModal"
+                 x-show="show"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                  x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -102,7 +131,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button"
-                            @click="showModal = false"
+                            @click="closeModal()"
                             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Close
                     </button>
@@ -223,8 +252,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             @can('create_packaging')
                                                 <div class="flex justify-end space-x-3">
-                                                    <button @click="
-                                                        unit = {
+                                                    <button @click="window.dispatchEvent(new CustomEvent('open-rpc-modal', { detail: {
                                                             id: '{{ $unit->id }}',
                                                             rpc_identifier: '{{ $unit->rpc_identifier }}',
                                                             capacity_kg: '{{ $unit->capacity_kg }}',
@@ -236,9 +264,9 @@
                                                             last_washed_date: '{{ $unit->last_washed_date }}',
                                                             current_location: '{{ $unit->current_location }}',
                                                             notes: '{{ addslashes($unit->notes) }}'
-                                                        };
-                                                        showModal = true;"
-                                                            class="text-indigo-600 hover:text-indigo-900 focus:outline-none">
+                                                          }}))"
+                                                            class="text-indigo-600 hover:text-indigo-900 focus:outline-none"
+                                                            aria-label="View details">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
