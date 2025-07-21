@@ -33,63 +33,30 @@ class RpcUnitController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(RpcUnitStoreRequest $request)
     {
-        $this->authorize('create_packaging' );
+        $this->authorize('create_packaging');
 
-        // Define validation rules
-        //    to get access to its rules and authorization logic.
-        $formRequest = new RpcUnitStoreRequest();
-
-        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
-        if (!$formRequest->authorize()) {
-            abort(403, 'This action is unauthorized.');
-        }
-
-        // 3. Get the validation rules from your Form Request class.
-        $rules = $formRequest->rules();
-
-        // 4. Create a new validator instance manually.
-        $validator = Validator::make($request->all(), $rules);
-
-        // Validate the request
-        if ($validator->fails()) {
-            // If this is an AJAX request, return JSON response
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'RPC unit creation failed.',
-                    'errors' => $validator->errors(),
-                ]);
-            }
-            return back()->withErrors($validator)->withInput()->setStatusCode(422);
-        }
-
-        // 7. If validation passes, get the validated data.
-        $validatedData = $validator->validated();
-
-
-        // Create the Source record
         try {
-            RpcUnit::create($request->all());
+            // Create the RPC Unit with validated data
+            $rpcUnit = RpcUnit::create($request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'RPC Unit created successfully.',
-//                'redirect' => route('batches.eco-processes.index', $batch)
-            ]);
+                'data' => $rpcUnit
+            ], 201);
 
-            return redirect()
-                ->route('rpcunit.index')
-                ->with('success', 'RPC Unit created successfully.');
         } catch (\Exception $e) {
+            Log::error('Error creating RPC Unit: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong.' . $e->getMessage()
-            ]);
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create source. ' . $e->getMessage());
+                'message' => 'Failed to create RPC Unit. ' . $e->getMessage(),
+                //get validation errors
+                
+            ], 500);
         }
     }
 
