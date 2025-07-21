@@ -4,7 +4,7 @@
             {{ __('RPC Units') }}
         </h2>
     </x-slot>
-    
+
     <script>
         document.addEventListener('alpine:init', () => {
             // Create a store for the drawer state
@@ -40,7 +40,7 @@
                 this.show = true;
                 document.body.classList.add('overflow-hidden');
             });
-            
+
             // Close modal on escape key
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.show) {
@@ -65,7 +65,7 @@
     style="display: none;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                  @click="close()"
                  x-show="show"
                  x-transition:enter="ease-out duration-300"
@@ -173,7 +173,7 @@
         }
     })">
         <!-- Overlay -->
-        <div x-show="$store.drawer.open" 
+        <div x-show="$store.drawer.open"
              x-transition:enter="transition-opacity ease-in-out duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -193,102 +193,7 @@
              x-transition:leave-start="translate-x-0"
              x-transition:leave-end="translate-x-full"
              class="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto">
-            
-            <div class="h-full flex flex-col">
-                <!-- Header -->
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-900">Add New RPC Unit</h2>
-                        <button @click="$store.drawer.close()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                            <span class="sr-only">Close panel</span>
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Form -->
-                <div class="flex-1 overflow-y-auto p-6">
-                    <x-rpc.form :submitText="__('Create RPC Unit')" @success="$store.drawer.close(); window.location.reload();" />
-                </div>
-                        <!-- Capacity -->
-                        <div>
-                            <label for="capacity_kg" class="block text-sm font-medium text-gray-700">Capacity (kg) *</label>
-                            <input type="number" step="0.01" id="capacity_kg" x-model="formData.capacity_kg"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <p x-show="errors.capacity_kg" x-text="errors.capacity_kg[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-
-                        <!-- Material Type -->
-                        <div>
-                            <label for="material_type" class="block text-sm font-medium text-gray-700">Material Type</label>
-                            <select id="material_type" x-model="formData.material_type"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="plastic">Plastic</option>
-                                <option value="metal">Metal</option>
-                                <option value="wood">Wood</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <p x-show="errors.material_type" x-text="errors.material_type[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-
-                        <!-- Status -->
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                            <select id="status" x-model="formData.status"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="maintenance">Maintenance</option>
-                                <option value="retired">Retired</option>
-                            </select>
-                            <p x-show="errors.status" x-text="errors.status[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-
-                        <!-- Initial Purchase Date -->
-                        <div>
-                            <label for="initial_purchase_date" class="block text-sm font-medium text-gray-700">Initial Purchase Date</label>
-                            <input type="date" id="initial_purchase_date" x-model="formData.initial_purchase_date"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <p x-show="errors.initial_purchase_date" x-text="errors.initial_purchase_date[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-
-                        <!-- Current Location -->
-                        <div>
-                            <label for="current_location" class="block text-sm font-medium text-gray-700">Current Location</label>
-                            <input type="text" id="current_location" x-model="formData.current_location"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <p x-show="errors.current_location" x-text="errors.current_location[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-
-                        <!-- Notes -->
-                        <div>
-                            <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea id="notes" rows="3" x-model="formData.notes"
-                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                            <p x-show="errors.notes" x-text="errors.notes[0]" class="mt-1 text-sm text-red-600"></p>
-                        </div>
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="mt-8 flex justify-end space-x-3">
-                        <button type="button" @click="closeDrawer"
-                                class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Cancel
-                        </button>
-                        <button type="submit" :disabled="isLoading"
-                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg x-show="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span x-show="!isLoading">Create RPC Unit</span>
-                            <span x-show="isLoading">Creating...</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <x-rpc.form :submitText="__('Create RPC Unit')" @success="$store.drawer.close(); window.location.reload();" />
         </div>
     </div>
 

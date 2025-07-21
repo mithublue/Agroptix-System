@@ -10,7 +10,7 @@
     $isEdit = $rpcUnit !== null;
     $action = $action ?: ($isEdit ? route('rpcunit.update', $rpcUnit) : route('rpcunit.store'));
     $method = $isEdit ? 'PUT' : 'POST';
-    
+
     $formData = [
         'rpc_identifier' => old('rpc_identifier', $rpcUnit->rpc_identifier ?? ''),
         'capacity_kg' => old('capacity_kg', $rpcUnit->capacity_kg ?? ''),
@@ -31,7 +31,7 @@
     async submitForm(event) {
         this.isLoading = true;
         this.errors = {};
-        
+
         try {
             const form = event.target;
             const formData = new FormData(form);
@@ -56,11 +56,11 @@
             }
 
             // Show success message
-            window.dispatchEvent(new CustomEvent('show-toast', { 
-                detail: { 
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: {
                     message: 'RPC Unit ' + ({{ $isEdit ? '\'updated\'' : '\'created\'' }}) + ' successfully!',
                     type: 'success'
-                } 
+                }
             }));
 
             // Redirect to index page
@@ -68,11 +68,11 @@
         } catch (error) {
             console.error('Error:', error);
             if (!this.errors || Object.keys(this.errors).length === 0) {
-                window.dispatchEvent(new CustomEvent('show-toast', { 
-                    detail: { 
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: {
                         message: error.message || 'Failed to save RPC Unit',
                         type: 'error'
-                    } 
+                    }
                 }));
             }
         } finally {
@@ -83,11 +83,21 @@
     @csrf
     @method($method)
 
+    <!-- Form Header -->
+    <div class="border-b border-gray-200 pb-5 mb-6">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">
+            {{ $isEdit ? 'Edit' : 'Create' }} RPC Unit
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            {{ $isEdit ? 'Update the RPC unit details below.' : 'Fill in the details below to create a new RPC unit.' }}
+        </p>
+    </div>
+
     <div class="space-y-6">
         <!-- RPC Identifier -->
         <div>
             <x-input-label for="rpc_identifier" :value="__('RPC Identifier *')" />
-            <x-text-input id="rpc_identifier" name="rpc_identifier" type="text" class="mt-1 block w-full" 
+            <x-text-input id="rpc_identifier" name="rpc_identifier" type="text" class="mt-1 block w-full"
                          :value="$formData['rpc_identifier']" required autofocus />
             <template x-if="errors.rpc_identifier">
                 <p x-text="errors.rpc_identifier[0]" class="mt-1 text-sm text-red-600"></p>
@@ -97,7 +107,7 @@
         <!-- Capacity -->
         <div>
             <x-input-label for="capacity_kg" :value="__('Capacity (kg) *')" />
-            <x-text-input id="capacity_kg" name="capacity_kg" type="number" step="0.01" class="mt-1 block w-full" 
+            <x-text-input id="capacity_kg" name="capacity_kg" type="number" step="0.01" class="mt-1 block w-full"
                          :value="$formData['capacity_kg']" required />
             <template x-if="errors.capacity_kg">
                 <p x-text="errors.capacity_kg[0]" class="mt-1 text-sm text-red-600"></p>
@@ -135,7 +145,7 @@
         <!-- Initial Purchase Date -->
         <div>
             <x-input-label for="initial_purchase_date" :value="__('Initial Purchase Date')" />
-            <x-text-input id="initial_purchase_date" name="initial_purchase_date" type="date" class="mt-1 block w-full" 
+            <x-text-input id="initial_purchase_date" name="initial_purchase_date" type="date" class="mt-1 block w-full"
                          :value="$formData['initial_purchase_date']" />
             <template x-if="errors.initial_purchase_date">
                 <p x-text="errors.initial_purchase_date[0]" class="mt-1 text-sm text-red-600"></p>
@@ -145,7 +155,7 @@
         <!-- Last Washed Date -->
         <div>
             <x-input-label for="last_washed_date" :value="__('Last Washed Date')" />
-            <x-text-input id="last_washed_date" name="last_washed_date" type="date" class="mt-1 block w-full" 
+            <x-text-input id="last_washed_date" name="last_washed_date" type="date" class="mt-1 block w-full"
                          :value="$formData['last_washed_date']" />
             <template x-if="errors.last_washed_date">
                 <p x-text="errors.last_washed_date[0]" class="mt-1 text-sm text-red-600"></p>
@@ -155,7 +165,7 @@
         <!-- Current Location -->
         <div>
             <x-input-label for="current_location" :value="__('Current Location')" />
-            <x-text-input id="current_location" name="current_location" type="text" class="mt-1 block w-full" 
+            <x-text-input id="current_location" name="current_location" type="text" class="mt-1 block w-full"
                          :value="$formData['current_location']" />
             <template x-if="errors.current_location">
                 <p x-text="errors.current_location[0]" class="mt-1 text-sm text-red-600"></p>
@@ -165,7 +175,7 @@
         <!-- Notes -->
         <div>
             <x-input-label for="notes" :value="__('Notes')" />
-            <textarea id="notes" name="notes" rows="3" 
+            <textarea id="notes" name="notes" rows="3"
                      class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ $formData['notes'] }}</textarea>
             <template x-if="errors.notes">
                 <p x-text="errors.notes[0]" class="mt-1 text-sm text-red-600"></p>
@@ -173,13 +183,14 @@
         </div>
     </div>
 
-    <div class="flex items-center justify-end gap-4 mt-8">
-        <a href="{{ route($cancelRoute) }}" 
+    <div class="pt-5">
+        <div class="flex justify-end gap-3">
+        <a href="{{ route($cancelRoute) }}"
            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
             {{ __('Cancel') }}
         </a>
 
-        <button type="submit" 
+        <button type="submit"
                 :disabled="isLoading"
                 class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-50">
             <svg x-show="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
