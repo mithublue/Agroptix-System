@@ -15,7 +15,7 @@
         'rpc_identifier' => old('rpc_identifier', $rpcUnit->rpc_identifier ?? ''),
         'capacity_kg' => old('capacity_kg', $rpcUnit->capacity_kg ?? ''),
         'material_type' => old('material_type', $rpcUnit->material_type ?? 'plastic'),
-        'status' => old('status', $rpcUnit->status ?? 'active'),
+        'status' => old('status', $rpcUnit->status ?? 'available'),
         'total_wash_cycles' => old('total_wash_cycles', $rpcUnit->total_wash_cycles ?? 0),
         'total_reuse_count' => old('total_reuse_count', $rpcUnit->total_reuse_count ?? 0),
         'initial_purchase_date' => old('initial_purchase_date', $rpcUnit->initial_purchase_date ?? ''),
@@ -57,7 +57,7 @@
                         }
                     });
                     console.log('response:', response);
-                    return false;
+                    // return false;
 
                     window.dispatchEvent(new CustomEvent('show-toast', {
                         detail: {
@@ -66,7 +66,7 @@
                         }
                     }));
 
-                    window.location.href = this.redirectUrl;
+                    // window.location.href = this.redirectUrl;
                 } catch (error) {
                     console.error('Error:', error);
 
@@ -166,9 +166,10 @@
         <div>
             <x-input-label for="status" :value="__('Status')" />
             <select id="status" name="status" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                <option value="active" {{ $formData['status'] === 'active' ? 'selected' : '' }}>Active</option>
-                <option value="inactive" {{ $formData['status'] === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                <option value="maintenance" {{ $formData['status'] === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                <option value="available" {{ $formData['status'] === 'available' ? 'selected' : '' }}>Available</option>
+                <option value="in_use" {{ $formData['status'] === 'in_use' ? 'selected' : '' }}>In Use</option>
+                <option value="damaged" {{ $formData['status'] === 'damaged' ? 'selected' : '' }}>Damaged</option>
+                <option value="in_repair" {{ $formData['status'] === 'in_repair' ? 'selected' : '' }}>In Repair</option>
                 <option value="retired" {{ $formData['status'] === 'retired' ? 'selected' : '' }}>Retired</option>
             </select>
             <template x-if="errors.status">

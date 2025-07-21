@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RpcUnit;
+use App\Http\Requests\RpcUnitStoreRequest;
 use Illuminate\Http\Request;
 
 class RpcUnitController extends Controller
@@ -34,41 +35,61 @@ class RpcUnitController extends Controller
      */
     public function store(Request $request)
     {
-        return response()->json([
-            'message' => 'RPC Unit created successfully',
-            'data' => $request->all()
-        ], 200);
+        $this->authorize('create_packaging' );
+
+        // Define validation rules
+        //    to get access to its rules and authorization logic.
+        $formRequest = new RpcUnitStoreRequest();
+
+        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        // 3. Get the validation rules from your Form Request class.
+        $rules = $formRequest->rules();
+
+        // 4. Create a new validator instance manually.
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate the request
+        if ($validator->fails()) {
+            // If this is an AJAX request, return JSON response
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'RPC unit creation failed.',
+                    'errors' => $validator->errors(),
+                ]);
+            }
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+
+        // 7. If validation passes, get the validated data.
+        $validatedData = $validator->validated();
+
+
+        // Create the Source record
         try {
-            $validated = $request->validate([
-                'rpc_identifier' => 'required|string|max:255|unique:rpc_units,rpc_identifier',
-                'capacity_kg' => 'required|numeric|min:0',
-                'material_type' => 'required|string|in:plastic,metal,wood,other',
-                'status' => 'required|string|in:active,in_use,maintenance,retired',
-                'total_wash_cycles' => 'sometimes|integer|min:0',
-                'total_reuse_count' => 'sometimes|integer|min:0',
-                'initial_purchase_date' => 'sometimes|date',
-                'last_washed_date' => 'nullable|date',
-                'current_location' => 'nullable|string|max:255',
-                'notes' => 'nullable|string',
+            RpcUnit::create($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'RPC Unit created successfully.',
+//                'redirect' => route('batches.eco-processes.index', $batch)
             ]);
 
-            $rpcUnit = RpcUnit::create($validated);
-
-            return response()->json([
-                'message' => 'RPC Unit created successfully',
-                'data' => $rpcUnit
-            ], 201);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            return redirect()
+                ->route('rpcunit.index')
+                ->with('success', 'RPC Unit created successfully.');
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to create RPC Unit',
-                'error' => $e->getMessage()
-            ], 500);
+                'success' => false,
+                'message' => 'Something went wrong.' . $e->getMessage()
+            ]);
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create source. ' . $e->getMessage());
         }
     }
 
