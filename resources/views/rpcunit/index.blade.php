@@ -193,7 +193,9 @@
              x-transition:leave-start="translate-x-0"
              x-transition:leave-end="translate-x-full"
              class="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto">
-            <x-rpc.form :submitText="__('Create RPC Unit')" @success="$store.drawer.close(); window.location.reload();" />
+            <div class="px-6 py-6">
+                <x-rpc.form :submitText="__('Create RPC Unit')" @success="$store.drawer.close(); window.location.reload();" />
+            </div>
         </div>
     </div>
 
