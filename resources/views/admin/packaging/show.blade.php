@@ -28,7 +28,7 @@
                             Edit
                         </a>
                         @endcan
-                        
+
                         <a href="{{ route('admin.packaging.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -38,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
                     <!-- Basic Information -->
@@ -46,7 +46,7 @@
                         <dt class="text-sm font-medium text-gray-500">ID</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->id }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Batch</dt>
                         <dd class="mt-1 text-sm text-gray-900">
@@ -57,37 +57,37 @@
                             @endif
                         </dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Package Type</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->package_type ?? 'N/A' }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Material Type</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->material_type ?? 'N/A' }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Unit Weight</dt>
+                        <dt class="text-sm font-medium text-gray-500">Unit Packaging Weight (Package Weight)</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->unit_weight_packaging ? number_format($packaging->unit_weight_packaging, 3) . ' kg' : 'N/A' }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Total Product Weight</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->total_product_weight ? number_format($packaging->total_product_weight, 3) . ' kg' : 'N/A' }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Total Package Weight</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->total_package_weight ? number_format($packaging->total_package_weight, 3) . ' kg' : 'N/A' }}</dd>
                     </div>
-                    
+
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Quantity of Units</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $packaging->quantity_of_units ?? 'N/A' }}</dd>
                     </div>
-                    
+
                     <!-- Timestamps -->
                     <div class="sm:col-span-2 border-t border-gray-200 pt-5">
                         <h4 class="text-sm font-medium text-gray-500 mb-4">Timestamps</h4>
@@ -98,7 +98,7 @@
                                     {{ $packaging->packaging_start_time ? $packaging->packaging_start_time->format('M d, Y H:i') : 'N/A' }}
                                 </dd>
                             </div>
-                            
+
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Packaging End Time</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
@@ -107,7 +107,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Additional Information -->
                     <div class="sm:col-span-2 border-t border-gray-200 pt-5">
                         <h4 class="text-sm font-medium text-gray-500 mb-4">Additional Information</h4>
@@ -122,12 +122,12 @@
                                     @endif
                                 </dd>
                             </div>
-                            
+
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Packaging Location</dt>
                                 <dd class="mt-1 text-sm text-gray-900">{{ $packaging->packaging_location ?? 'N/A' }}</dd>
                             </div>
-                            
+
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Cleanliness Checklist</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
@@ -142,14 +142,14 @@
                                     @endif
                                 </dd>
                             </div>
-                            
+
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">CO2 Estimate</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
                                     {{ $packaging->co2_estimate ? number_format($packaging->co2_estimate, 3) . ' kg CO₂e' : 'N/A' }}
                                 </dd>
                             </div>
-                            
+
                             @if($packaging->qr_code)
                             <div class="sm:col-span-2">
                                 <dt class="text-sm font-medium text-gray-500">QR Code</dt>
@@ -163,7 +163,7 @@
                     </div>
                 </dl>
             </div>
-            
+
             <div class="px-4 py-4 bg-gray-50 sm:px-6 flex justify-between">
                 <div class="text-sm text-gray-500">
                     Created {{ $packaging->created_at->diffForHumans() }}
@@ -172,7 +172,7 @@
                         Updated {{ $packaging->updated_at->diffForHumans() }}
                     @endif
                 </div>
-                
+
                 @can('delete_packaging')
                 <form action="{{ route('admin.packaging.destroy', $packaging) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this packaging record? This action cannot be undone.');">
                     @csrf
