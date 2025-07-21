@@ -85,10 +85,40 @@ class RpcUnitController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified RPC unit from storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $rpcUnit = RpcUnit::findOrFail($id);
+            $this->authorize('delete_packaging', $rpcUnit);
+            
+            $rpcUnit->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'RPC Unit deleted successfully',
+                ]);
+            }
+
+            return redirect()->route('rpcunit.index')
+                ->with('success', 'RPC Unit deleted successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting RPC Unit: ' . $e->getMessage());
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete RPC Unit. ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to delete RPC Unit: ' . $e->getMessage());
+        }
     }
 }
