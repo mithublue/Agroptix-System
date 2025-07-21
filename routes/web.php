@@ -282,6 +282,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     });
 
+    // Packaging
+    Route::middleware(['can:view_packaging'])->group(function () {
+        Route::resource('packaging', \App\Http\Controllers\PackagingController::class)->except(['show']);
+        
+        // Additional routes for packaging
+        Route::post('packaging/import', [\App\Http\Controllers\PackagingController::class, 'import'])
+             ->name('packaging.import')
+             ->middleware('can:import_packaging');
+             
+        Route::get('packaging/export', [\App\Http\Controllers\PackagingController::class, 'export'])
+             ->name('packaging.export')
+             ->middleware('can:export_packaging');
+    });
+
     // Permissions
     Route::middleware(['can:manage_permissions'])->group(function () {
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])

@@ -189,6 +189,20 @@
                     @endcanany
 
                     <!-- Admin Section -->
+                    <!-- Packaging -->
+                    @can('view_packaging')
+                    <div class="pt-4 mt-4 border-t border-gray-200">
+                        <div x-data="{ open: {{ request()->is('admin/packaging*') ? 'true' : 'false' }} }">
+                            <a href="{{ route('admin.packaging.index') }}" class="flex items-center px-4 py-2 text-sm font-medium rounded-md group {{ request()->is('admin/packaging*') ? 'bg-gray-100 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <svg class="w-5 h-5 mr-3 {{ request()->is('admin/packaging*') ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                                Packaging
+                            </a>
+                        </div>
+                    </div>
+                    @endcan
+
                     @canany(['manage_users', 'manage_roles', 'manage_permissions'])
                     <div class="pt-4 mt-4 border-t border-gray-200">
                         <h3 class="px-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">Administration</h3>
