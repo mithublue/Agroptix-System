@@ -103,6 +103,14 @@ class Batch extends Model
     }
 
     /**
+     * Get the packaging records for the batch.
+     */
+    public function packaging(): HasMany
+    {
+        return $this->hasMany(Packaging::class);
+    }
+
+    /**
      * Scope a query to only include batches of a given status.
      */
     public function scopeStatus(Builder $query, string $status): void

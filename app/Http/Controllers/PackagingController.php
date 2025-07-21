@@ -8,11 +8,19 @@ use Illuminate\Http\Request;
 class PackagingController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the packaging records.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        //
+        $this->authorize('view_packaging', Packaging::class);
+        
+        $packages = Packaging::with('batch')
+            ->latest()
+            ->paginate(15);
+            
+        return view('admin.packaging.index', compact('packages'));
     }
 
     /**
@@ -32,11 +40,19 @@ class PackagingController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified packaging record.
+     *
+     * @param  \App\Models\Packaging  $packaging
+     * @return \Illuminate\View\View
      */
     public function show(Packaging $packaging)
     {
-        //
+        $this->authorize('view_packaging', $packaging);
+        
+        // Eager load relationships for the view
+        $packaging->load(['batch', 'packer']);
+        
+        return view('admin.packaging.show', compact('packaging'));
     }
 
     /**

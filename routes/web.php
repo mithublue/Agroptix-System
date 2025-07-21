@@ -284,7 +284,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Packaging
     Route::middleware(['can:view_packaging'])->group(function () {
-        Route::resource('packaging', \App\Http\Controllers\PackagingController::class)->except(['show']);
+        Route::resource('packaging', \App\Http\Controllers\PackagingController::class);
         
         // Additional routes for packaging
         Route::post('packaging/import', [\App\Http\Controllers\PackagingController::class, 'import'])
