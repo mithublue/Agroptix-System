@@ -1,42 +1,70 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Packaging') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Packaging') }}
+            </h2>
+            @can('create_packaging')
+            <button @click="$store.drawer.open = true; $store.drawer.packagingData = null" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Add New Packaging
+            </button>
+            @endcan
+        </div>
     </x-slot>
+    
+    <!-- Success Message -->
+    <div x-data="{ show: {{ session('success') ? 'true' : 'false' }}" 
+         x-show="show" 
+         x-init="setTimeout(() => show = false, 5000)"
+         class="fixed top-4 right-4 z-50">
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded shadow-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-800">
+                        {{ session('success') }}
+                    </p>
+                </div>
+                <div class="ml-4">
+                    <button @click="show = false" class="text-green-500 hover:text-green-600 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="py-6">
-<div class="py-6">
-    <div class="mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <div class="flex justify-between items-center">
+    <div class="py-6" x-data="{
+        init() {
+            // Listen for refresh event
+            this.$el.addEventListener('refresh-data', () => {
+                // Reload the page to refresh data
+                window.location.reload();
+            });
+            
+            // Listen for notifications
+            this.$el.addEventListener('notify', (event) => {
+                const { type, message } = event.detail;
+                // You could implement a toast notification system here
+                alert(`${type.toUpperCase()}: ${message}`);
+            });
+        }
+    }">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
                     <h3 class="text-lg leading-6 font-medium text-gray-900">
                         Packaging Records
                     </h3>
-                    @can('create_packaging')
-                    <a href="{{ route('admin.packaging.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Add New Packaging
-                    </a>
-                    @endcan
                 </div>
-                @if (session('success'))
-                    <div class="mt-4 p-4 bg-green-50 rounded-md">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-green-800">
-                                    {{ session('success') }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -118,4 +146,75 @@
         </div>
     </div>
     </div>
-</x-app-layout>
+        <!-- Side Drawer -->
+        <div x-data="{
+            open: false,
+            packagingData: null
+        }" 
+        x-init="
+            $store.drawer = {
+                open: false,
+                packagingData: null
+            };
+            $watch('open', value => $store.drawer.open = value);
+            $watch('$store.drawer.open', value => open = value);
+            $watch('$store.drawer.packagingData', value => packagingData = value);
+        "
+        @keydown.escape.window="if(open) open = false"
+        class="fixed inset-0 overflow-hidden z-50"
+        style="display: none;"
+        x-show="open"
+        x-transition:opacity.300ms>
+            <div class="absolute inset-0 overflow-hidden">
+                <!-- Overlay -->
+                <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+                     x-show="open" 
+                     x-transition:enter="ease-in-out duration-500" 
+                     x-transition:enter-start="opacity-0" 
+                     x-transition:enter-end="opacity-100" 
+                     x-transition:leave="ease-in-out duration-500" 
+                     x-transition:leave-start="opacity-100" 
+                     x-transition:leave-end="opacity-0"
+                     @click="open = false"></div>
+                
+                <!-- Drawer Panel -->
+                <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+                    <div class="w-screen max-w-md" 
+                         x-show="open" 
+                         x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700" 
+                         x-transition:enter-start="translate-x-full" 
+                         x-transition:enter-end="translate-x-0" 
+                         x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700" 
+                         x-transition:leave-start="translate-x-0" 
+                         x-transition:leave-end="translate-x-full">
+                        <div class="h-full flex flex-col bg-white shadow-xl">
+                            @php
+                                $batches = \App\Models\Batch::with('product')->latest()->get();
+                                $rpcUnits = \App\Models\RpcUnit::all();
+                                $users = \App\Models\User::all();
+                            @endphp
+                            <x-packaging.form :batches="$batches" :rpcUnits="$rpcUnits" :users="$users" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        // Initialize Alpine store if not already initialized
+        document.addEventListener('alpine:init', () => {
+            if (!window.Alpine.store('drawer')) {
+                window.Alpine.store('drawer', {
+                    open: false,
+                    packagingData: null
+                });
+            }
+            
+            // Add global event dispatcher
+            window.dispatchEvent = function(event, detail = {}) {
+                window.dispatchEvent(new CustomEvent(event, { detail }));
+                return true;
+            };
+        });
+        </script>
+    </x-app-layout>
