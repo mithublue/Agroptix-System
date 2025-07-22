@@ -33,23 +33,6 @@ jobs:
           npm install
           npm run build
 
-      - name: Setup SSH Key and Known Hosts
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Deploy via Rsync
-        run: |
-          rsync -avz --delete \
-            --exclude=".git*" \
-            --exclude="node_modules" \
-            --exclude="tests" \
-            --exclude="storage/*.key" \
-            --exclude="storage/logs" \
-            --exclude=".env" \
-            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
 
       - name: Run Laravel Post-Deploy Commands
         run: |
