@@ -289,7 +289,7 @@
                                        value="{{ request('capacity_kg') }}" step="0.01" min="0"
                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             </div>
-                            
+
                             <!-- Buttons -->
                             <div class="lg:col-span-1 flex items-end space-x-2">
                                 <button type="submit" class="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1">
@@ -478,7 +478,7 @@
                                 <tr>
                                     <td colspan="8" class="px-6 py-4">
                                         <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                                            <div class="text-sm text-gray-700">
+                                            <div class="text-sm text-gray-700 px-6">
                                                 Showing <span class="font-medium">{{ $rpcUnits->firstItem() }}</span> to
                                                 <span class="font-medium">{{ $rpcUnits->lastItem() }}</span> of
                                                 <span class="font-medium">{{ $rpcUnits->total() }}</span> results

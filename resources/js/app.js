@@ -35,26 +35,49 @@ document.addEventListener('turbo:before-render', () => {
     
     // Save all Alpine stores
     document.querySelectorAll('[x-data]').forEach(el => {
-        const alpineComponent = el.__x.$data;
-        if (alpineComponent) {
-            const componentId = el.getAttribute('x-id');
-            if (componentId) {
-                alpinePersisted[componentId] = { ...alpineComponent.$data };
+        try {
+            // Check if Alpine is initialized and has the component
+            if (el.__x && el.__x.$data) {
+                const alpineComponent = el.__x.$data;
+                const componentId = el.getAttribute('x-id') || el.getAttribute('id');
+                
+                if (componentId && alpineComponent.$data) {
+                    // Only save serializable data
+                    alpinePersisted[componentId] = JSON.parse(JSON.stringify(alpineComponent.$data));
+                }
             }
+        } catch (error) {
+            console.warn('Error saving Alpine state:', error);
         }
     });
 
     // Restore Alpine stores after navigation
-    document.addEventListener('turbo:render', () => {
+    const restoreAlpineState = () => {
         document.querySelectorAll('[x-data]').forEach(el => {
-            const componentId = el.getAttribute('x-id');
-            if (componentId && alpinePersisted[componentId]) {
-                const alpineComponent = el.__x.$data;
-                if (alpineComponent) {
-                    Object.assign(alpineComponent.$data, alpinePersisted[componentId]);
+            try {
+                const componentId = el.getAttribute('x-id') || el.getAttribute('id');
+                if (componentId && alpinePersisted[componentId]) {
+                    // Wait for Alpine to be initialized
+                    const checkAlpine = setInterval(() => {
+                        if (el.__x && el.__x.$data && el.__x.$data.$data) {
+                            clearInterval(checkAlpine);
+                            Object.assign(el.__x.$data.$data, alpinePersisted[componentId]);
+                        }
+                    }, 10);
+                    
+                    // Timeout after 1 second if Alpine doesn't initialize
+                    setTimeout(() => clearInterval(checkAlpine), 1000);
                 }
+            } catch (error) {
+                console.warn('Error restoring Alpine state:', error);
             }
         });
+    };
+
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+        // Small delay to ensure Alpine has processed the new page
+        setTimeout(restoreAlpineState, 10);
     });
 });
 
