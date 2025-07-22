@@ -214,13 +214,13 @@
 
                                                 @can('delete_batch')
                                                     <div x-data="{ showDeleteConfirm: false }" class="relative">
-                                                        <button @click="showDeleteConfirm = true" 
+                                                        <button @click="showDeleteConfirm = true"
                                                                 class="text-red-600 hover:text-red-900 focus:outline-none">
                                                             Delete
                                                         </button>
-                                                        
+
                                                         <!-- Delete Confirmation Dropdown -->
-                                                        <div x-show="showDeleteConfirm" 
+                                                        <div x-show="showDeleteConfirm"
                                                              @click.away="showDeleteConfirm = false"
                                                              x-transition:enter="transition ease-out duration-100"
                                                              x-transition:enter-start="transform opacity-0 scale-95"
@@ -236,14 +236,14 @@
                                                                 </p>
                                                                 <div class="border-t border-gray-100"></div>
                                                                 <div class="flex justify-end px-4 py-2 space-x-2">
-                                                                    <button @click="showDeleteConfirm = false" 
+                                                                    <button @click="showDeleteConfirm = false"
                                                                             class="text-sm text-gray-700 hover:bg-gray-100 px-2 py-1 rounded">
                                                                         Cancel
                                                                     </button>
                                                                     <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
                                                                         @csrf
                                                                         @method('DELETE')
-                                                                        <button type="submit" 
+                                                                        <button type="submit"
                                                                                 class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
                                                                             Delete
                                                                         </button>
@@ -277,40 +277,4 @@
             </div>
         </div>
     </div>
-@push('scripts')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Select2 for status dropdown
-            $('.select2-status').select2({
-                placeholder: 'Select a status',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#status').parent()
-            });
-
-            // Initialize Select2 for source dropdown
-            $('.select2-source').select2({
-                placeholder: 'Select a source',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#source_id').parent()
-            });
-
-            // Initialize Select2 for product dropdown
-            $('.select2-product').select2({
-                placeholder: 'Select a product',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#product_id').parent()
-            });
-
-            // Handle form submission to maintain Select2 state
-            $('form').on('submit', function() {
-                $('.select2-hidden-accessible').remove();
-            });
-        });
-    </script>
-@endpush
 </x-app-layout>
