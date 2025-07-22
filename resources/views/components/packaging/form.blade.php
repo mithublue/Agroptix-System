@@ -149,21 +149,37 @@ function packagingForm() {
             _method: 'POST'
         },
         errors: {},
+        store: null,
         
         init() {
-            // Listen for edit event
-            this.$watch('$store.drawer.packagingData', (data) => {
-                if (data) {
-                    this.editing = true;
-                    this.formData = {
-                        ...this.formData,
-                        ...data,
-                        _method: 'PUT'
-                    };
-                } else {
-                    this.resetForm();
-                }
-            });
+            // Store the Alpine store reference
+            this.store = window.Alpine.store('drawer');
+            
+            // Initialize the form based on store state
+            if (this.store && this.store.packagingData) {
+                this.editing = true;
+                this.formData = {
+                    ...this.formData,
+                    ...this.store.packagingData,
+                    _method: 'PUT'
+                };
+            }
+            
+            // Listen for store changes
+            if (this.store) {
+                this.$watch('store.packagingData', (data) => {
+                    if (data) {
+                        this.editing = true;
+                        this.formData = {
+                            ...this.formData,
+                            ...data,
+                            _method: 'PUT'
+                        };
+                    } else {
+                        this.resetForm();
+                    }
+                });
+            }
         },
         
         resetForm() {
@@ -184,23 +200,32 @@ function packagingForm() {
         },
         
         async submitForm() {
-            this.loading = true;
-            this.errors = {};
-            
-            const url = this.editing 
-                ? `/admin/packaging/${this.formData.id}`
-                : '{{ route("admin.packaging.store") }}';
-                
             try {
+                this.loading = true;
+                this.errors = {};
+                
+                // Prepare the form data
+                const formData = new FormData();
+                
+                // Convert form data to FormData for proper file handling
+                Object.entries(this.formData).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                        formData.append(key, value);
+                    }
+                });
+                
+                const url = this.editing 
+                    ? `/admin/packaging/${this.formData.id}`
+                    : '{{ route("admin.packaging.store") }}';
+                
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(this.formData)
+                    body: formData
                 });
                 
                 const data = await response.json();
@@ -213,22 +238,36 @@ function packagingForm() {
                     throw new Error(data.message || 'Something went wrong');
                 }
                 
-                // Success
-                this.$dispatch('notify', {
-                    type: 'success',
-                    message: this.editing ? 'Packaging updated successfully' : 'Packaging created successfully'
-                });
+                // Show success message
+                const successMessage = this.editing ? 'Packaging updated successfully' : 'Packaging created successfully';
                 
-                // Close drawer and refresh data
-                this.$dispatch('close-drawer');
-                this.$dispatch('refresh-data');
+                // Close the drawer
+                if (this.store) {
+                    this.store.open = false;
+                }
+                
+                // Reset the form
+                this.resetForm();
+                
+                // Dispatch refresh event
+                window.dispatchEvent(new CustomEvent('refresh-data'));
+                
+                // Show success notification
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        type: 'success',
+                        message: successMessage
+                    }
+                }));
                 
             } catch (error) {
                 console.error('Error:', error);
-                this.$dispatch('notify', {
-                    type: 'error',
-                    message: error.message || 'An error occurred. Please try again.'
-                });
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        type: 'error',
+                        message: error.message || 'An error occurred. Please try again.'
+                    }
+                }));
             } finally {
                 this.loading = false;
             }

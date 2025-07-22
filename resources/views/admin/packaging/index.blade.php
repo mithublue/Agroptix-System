@@ -14,10 +14,11 @@
     </x-slot>
     
     <!-- Success Message -->
-    <div x-data="{ show: {{ session('success') ? 'true' : 'false' }}" 
-         x-show="show" 
-         x-init="setTimeout(() => show = false, 5000)"
-         class="fixed top-4 right-4 z-50">
+    <div x-data="{ show: {{ json_encode(session('success') ? true : false) }}, message: '{{ addslashes(session('success', '')) }}' }" 
+         x-show="show && message" 
+         x-init="if(show) { setTimeout(() => { show = false }, 5000) }"
+         class="fixed top-4 right-4 z-50"
+         style="display: none;">
         <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded shadow-lg">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -26,9 +27,7 @@
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-green-800">
-                        {{ session('success') }}
-                    </p>
+                    <p class="text-sm font-medium text-green-800" x-text="message"></p>
                 </div>
                 <div class="ml-4">
                     <button @click="show = false" class="text-green-500 hover:text-green-600 focus:outline-none">
@@ -42,22 +41,106 @@
         </div>
     </div>
 
-    <div class="py-6" x-data="{
-        init() {
-            // Listen for refresh event
-            this.$el.addEventListener('refresh-data', () => {
-                // Reload the page to refresh data
-                window.location.reload();
-            });
-            
-            // Listen for notifications
-            this.$el.addEventListener('notify', (event) => {
-                const { type, message } = event.detail;
-                // You could implement a toast notification system here
-                alert(`${type.toUpperCase()}: ${message}`);
-            });
+    <div class="py-6" x-data="packagingIndex()">
+        <script>
+        function packagingIndex() {
+            return {
+                init() {
+                    // Listen for refresh event
+                    this.$el.addEventListener('refresh-data', async () => {
+                        try {
+                            // Fetch updated data via AJAX
+                            const response = await fetch('{{ route("admin.packaging.index") }}');
+                            const html = await response.text();
+                            
+                            // Create a temporary container to parse the HTML
+                            const temp = document.createElement('div');
+                            temp.innerHTML = html;
+                            
+                            // Find the table body in the new HTML
+                            const newTableBody = temp.querySelector('tbody');
+                            const currentTableBody = this.$el.querySelector('tbody');
+                            
+                            if (newTableBody && currentTableBody) {
+                                // Replace the table body content
+                                currentTableBody.innerHTML = newTableBody.innerHTML;
+                                
+                                // Update pagination if it exists
+                                const pagination = temp.querySelector('.pagination');
+                                if (pagination) {
+                                    const currentPagination = this.$el.querySelector('.pagination');
+                                    if (currentPagination) {
+                                        currentPagination.outerHTML = pagination.outerHTML;
+                                    }
+                                }
+                                
+                                // Show success message
+                                this.$dispatch('notify', {
+                                    type: 'success',
+                                    message: 'Packaging list updated successfully'
+                                });
+                            } else {
+                                // Fallback to page reload if something goes wrong
+                                window.location.reload();
+                            }
+                        } catch (error) {
+                            console.error('Error refreshing data:', error);
+                            // Fallback to page reload if AJAX fails
+                            window.location.reload();
+                        }
+                    });
+                    
+                    // Listen for notifications
+                    this.$el.addEventListener('notify', (event) => {
+                        const { type, message } = event.detail;
+                        // Show toast notification
+                        const toast = document.createElement('div');
+                        toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-md shadow-lg ${
+                            type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`;
+                        
+                        const closeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        closeSvg.setAttribute('class', 'h-5 w-5');
+                        closeSvg.setAttribute('fill', 'none');
+                        closeSvg.setAttribute('viewBox', '0 0 24 24');
+                        closeSvg.setAttribute('stroke', 'currentColor');
+                        closeSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+                        
+                        const closeButton = document.createElement('button');
+                        closeButton.className = 'ml-4';
+                        closeButton.appendChild(closeSvg);
+                        
+                        const messageSpan = document.createElement('span');
+                        messageSpan.className = 'mr-2';
+                        messageSpan.textContent = message;
+                        
+                        const flexDiv = document.createElement('div');
+                        flexDiv.className = 'flex items-center';
+                        flexDiv.appendChild(messageSpan);
+                        flexDiv.appendChild(closeButton);
+                        
+                        toast.appendChild(flexDiv);
+                        
+                        document.body.appendChild(toast);
+                        
+                        // Auto-remove after 5 seconds
+                        setTimeout(() => {
+                            if (toast.parentNode) {
+                                toast.remove();
+                            }
+                        }, 5000);
+                        
+                        // Add click handler to close button
+                        closeButton.addEventListener('click', () => {
+                            if (toast.parentNode) {
+                                toast.remove();
+                            }
+                        });
+                    });
+                }
+            };
         }
-    }">
+        </script>
         <div class="mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -147,24 +230,13 @@
     </div>
     </div>
         <!-- Side Drawer -->
-        <div x-data="{
-            open: false,
-            packagingData: null
-        }" 
-        x-init="
-            $store.drawer = {
-                open: false,
-                packagingData: null
-            };
-            $watch('open', value => $store.drawer.open = value);
-            $watch('$store.drawer.open', value => open = value);
-            $watch('$store.drawer.packagingData', value => packagingData = value);
-        "
-        @keydown.escape.window="if(open) open = false"
-        class="fixed inset-0 overflow-hidden z-50"
-        style="display: none;"
-        x-show="open"
-        x-transition:opacity.300ms>
+        <div x-data="drawer()" 
+             x-init="init()"
+             @keydown.escape.window="if(open) close()"
+             class="fixed inset-0 overflow-hidden z-50"
+             style="display: none;"
+             x-show="open"
+             x-transition:opacity.300ms>
             <div class="absolute inset-0 overflow-hidden">
                 <!-- Overlay -->
                 <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
@@ -175,7 +247,7 @@
                      x-transition:leave="ease-in-out duration-500" 
                      x-transition:leave-start="opacity-100" 
                      x-transition:leave-end="opacity-0"
-                     @click="open = false"></div>
+                     @click="close()"></div>
                 
                 <!-- Drawer Panel -->
                 <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
@@ -201,6 +273,51 @@
         </div>
         
         <script>
+        function drawer() {
+            return {
+                open: false,
+                packagingData: null,
+                
+                init() {
+                    // Initialize the store if it doesn't exist
+                    if (!window.Alpine.store('drawer')) {
+                        window.Alpine.store('drawer', {
+                            open: false,
+                            packagingData: null
+                        });
+                    }
+                    
+                    // Sync with store
+                    this.$watch('open', value => {
+                        if (window.Alpine.store('drawer').open !== value) {
+                            window.Alpine.store('drawer').open = value;
+                        }
+                    });
+                    
+                    // Listen for store changes
+                    this.$watch('$store.drawer.open', value => {
+                        if (this.open !== value) {
+                            this.open = value;
+                        }
+                    });
+                    
+                    // Listen for close events
+                    this.$el.addEventListener('close-drawer', () => {
+                        this.close();
+                    });
+                },
+                
+                close() {
+                    this.open = false;
+                    if (window.Alpine.store('drawer')) {
+                        window.Alpine.store('drawer').open = false;
+                    }
+                }
+            };
+        }
+        </script>
+        
+        <script>
         // Initialize Alpine store if not already initialized
         document.addEventListener('alpine:init', () => {
             if (!window.Alpine.store('drawer')) {
@@ -211,9 +328,9 @@
             }
             
             // Add global event dispatcher
-            window.dispatchEvent = function(event, detail = {}) {
-                window.dispatchEvent(new CustomEvent(event, { detail }));
-                return true;
+            const originalDispatchEvent = window.dispatchEvent;
+            window.dispatchCustomEvent = function(eventName, detail = {}) {
+                return originalDispatchEvent.call(window, new CustomEvent(eventName, { detail }));
             };
         });
         </script>
