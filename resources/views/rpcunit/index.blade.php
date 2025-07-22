@@ -61,7 +61,7 @@
             if (drawer) {
                 drawer.close();
             }
-            
+
             // Show success message
             window.dispatchEvent(new CustomEvent('show-toast', {
                 detail: {
@@ -69,7 +69,7 @@
                     type: 'success'
                 }
             }));
-            
+
             // Refresh the table
             await loadRpcUnits();
         });
@@ -255,11 +255,11 @@
                             <!-- RPC Identifier -->
                             <div>
                                 <label for="rpc_identifier" class="block text-sm font-medium text-gray-700">RPC ID</label>
-                                <input type="text" name="rpc_identifier" id="rpc_identifier" 
+                                <input type="text" name="rpc_identifier" id="rpc_identifier"
                                        value="{{ request('rpc_identifier') }}"
                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             </div>
-                            
+
                             <!-- Material Type -->
                             <div>
                                 <label for="material_type" class="block text-sm font-medium text-gray-700">Material Type</label>
@@ -270,7 +270,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
+
                             <!-- Status -->
                             <div>
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -281,40 +281,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
+
                             <!-- Capacity (kg) -->
                             <div>
                                 <label for="capacity_kg" class="block text-sm font-medium text-gray-700">Capacity (kg)</label>
-                                <input type="number" name="capacity_kg" id="capacity_kg" 
+                                <input type="number" name="capacity_kg" id="capacity_kg"
                                        value="{{ request('capacity_kg') }}" step="0.01" min="0"
                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             </div>
                         </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <div class="flex space-x-3">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Apply Filters
-                                </button>
-                                <a href="{{ route('rpcunit.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Reset
-                                </a>
-                            </div>
-                            
-                            <!-- Items per page dropdown -->
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-gray-700">Items per page:</span>
-                                <select id="per_page" name="per_page" onchange="this.form.submit()" class="block w-20 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    @foreach([5, 10, 20, 30, 50] as $perPage)
-                                        <option value="{{ $perPage }}" {{ request('per_page', 20) == $perPage ? 'selected' : '' }}>{{ $perPage }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="submit" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-32">
+                                Apply Filters
+                            </button>
+                            <a href="{{ route('rpcunit.index') }}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-24">
+                                Reset
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
-            
+
             <div class="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
                     <div class="flex justify-between items-center">
@@ -451,7 +439,7 @@
                                                         </svg>
                                                     </a>
                                                     <div class="inline-flex items-center space-x-1 delete-container">
-                                                        <button 
+                                                        <button
                                                             type="button"
                                                             class="delete-btn text-red-600 hover:text-red-900 focus:outline-none"
                                                             data-id="{{ $unit->id }}"
@@ -484,15 +472,50 @@
                                 @endforelse
                                 </tbody>
                             </table>
+
+                            <!-- Table Footer with Pagination -->
+                            <tfoot class="bg-gray-50">
+                                <tr>
+                                    <td colspan="8" class="px-6 py-4">
+                                        <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                                            <div class="text-sm text-gray-700">
+                                                Showing <span class="font-medium">{{ $rpcUnits->firstItem() }}</span> to
+                                                <span class="font-medium">{{ $rpcUnits->lastItem() }}</span> of
+                                                <span class="font-medium">{{ $rpcUnits->total() }}</span> results
+                                            </div>
+
+                                            <div class="flex items-center space-x-4">
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-sm text-gray-700">Items per page:</span>
+                                                    <form method="GET" action="{{ route('rpcunit.index') }}" class="inline-block">
+                                                        <!-- Include all current filters as hidden inputs -->
+                                                        @foreach(request()->except('per_page', 'page') as $key => $value)
+                                                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                                        @endforeach
+                                                        <select name="per_page" onchange="this.form.submit()"
+                                                                class="block w-20 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                            @foreach([5, 10, 20, 30, 50] as $perPage)
+                                                                <option value="{{ $perPage }}" {{ request('per_page', 20) == $perPage ? 'selected' : '' }}>
+                                                                    {{ $perPage }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </form>
+                                                </div>
+
+                                                @if($rpcUnits->hasPages())
+                                                    <div class="pagination">
+                                                        {{ $rpcUnits->withQueryString()->links() }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </div>
                     </div>
                 </div>
-
-                @if($rpcUnits->hasPages())
-                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-                        {{ $rpcUnits->links() }}
-                    </div>
-                @endif
             </div>
         </div>
     </div>
@@ -503,7 +526,7 @@
         display: inline-flex;
         vertical-align: middle;
     }
-    
+
     .confirmation-buttons {
         position: absolute;
         left: 100%;
@@ -518,7 +541,7 @@
         margin-left: 8px;
         border: 1px solid #e5e7eb;
     }
-    
+
     .confirmation-buttons:before {
         content: '';
         position: absolute;
@@ -529,7 +552,7 @@
         border-style: solid;
         border-color: transparent #e5e7eb transparent transparent;
     }
-    
+
     .confirmation-buttons:after {
         content: '';
         position: absolute;
@@ -552,22 +575,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const deleteBtn = e.target.closest('.delete-btn');
         const confirmBtn = e.target.closest('.confirm-delete');
         const cancelBtn = e.target.closest('.cancel-delete');
-        
+
         // Show confirmation buttons when delete is clicked
         if (deleteBtn) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             // Hide all other open confirmations
             document.querySelectorAll('.confirmation-buttons').forEach(el => {
                 el.classList.add('hidden');
             });
-            
+
             // Show this confirmation
             const container = deleteBtn.closest('.delete-container');
             const confirmation = container.querySelector('.confirmation-buttons');
             confirmation.classList.remove('hidden');
-            
+
             // Close on outside click
             const clickHandler = function(event) {
                 if (!container.contains(event.target)) {
@@ -575,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.removeEventListener('click', clickHandler);
                 }
             };
-            
+
             // Add a small delay to prevent immediate close
             setTimeout(() => {
                 document.addEventListener('click', clickHandler);
@@ -585,13 +608,13 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (confirmBtn) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const container = confirmBtn.closest('.delete-container');
             const deleteBtn = container.querySelector('.delete-btn');
             const confirmation = container.querySelector('.confirmation-buttons');
             const id = deleteBtn.getAttribute('data-id');
             const url = deleteBtn.getAttribute('data-url');
-            
+
             // Show loading state
             confirmation.innerHTML = `
                 <span class="flex items-center">
@@ -602,10 +625,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     Deleting...
                 </span>
             `;
-            
+
             // Get CSRF token from meta tag
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
+
             // Send DELETE request
             fetch(url, {
                 method: 'DELETE',
@@ -630,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'success'
                     }
                 }));
-                
+
                 // Remove the row from the table
                 const row = container.closest('tr');
                 if (row) {
@@ -640,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                
+
                 // Show error message
                 window.dispatchEvent(new CustomEvent('show-toast', {
                     detail: {
@@ -648,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'error'
                     }
                 }));
-                
+
                 // Reset confirmation UI
                 confirmation.classList.add('hidden');
             });
@@ -657,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (cancelBtn) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const container = cancelBtn.closest('.delete-container');
             const confirmation = container.querySelector('.confirmation-buttons');
             confirmation.classList.add('hidden');
