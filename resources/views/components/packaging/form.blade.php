@@ -12,7 +12,7 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-6">
-        <form id="packaging-form" @submit.prevent="submitForm">
+        <form id="packaging-form" x-ref="packagingForm" @submit.prevent="submitForm">
             @csrf
             <input type="hidden" name="_method" x-bind:value="editing ? 'PUT' : 'POST'">
             
@@ -204,19 +204,37 @@ function packagingForm() {
                 this.loading = true;
                 this.errors = {};
                 
-                // Prepare the form data
-                const formData = new FormData();
+                // Get the form element safely
+                const form = this.$refs.packagingForm;
+                if (!form) {
+                    console.error('Form element not found');
+                    return;
+                }
                 
-                // Convert form data to FormData for proper file handling
-                Object.entries(this.formData).forEach(([key, value]) => {
-                    if (value !== null && value !== undefined) {
-                        formData.append(key, value);
-                    }
+                // Create FormData from the form
+                const formData = new FormData(form);
+                
+                // Ensure checkbox values are properly set
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    formData.set(checkbox.name, checkbox.checked ? '1' : '0');
                 });
+                
+                // Add method override for PUT requests if editing
+                if (this.editing) {
+                    formData.set('_method', 'PUT');
+                }
                 
                 const url = this.editing 
                     ? `/admin/packaging/${this.formData.id}`
                     : '{{ route("admin.packaging.store") }}';
+                
+                // Convert FormData to URL-encoded string for better debugging
+                const formDataObj = {};
+                for (let [key, value] of formData.entries()) {
+                    formDataObj[key] = value;
+                }
+                console.log('Submitting form data:', formDataObj);
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -224,6 +242,7 @@ function packagingForm() {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
+                        // Let the browser set the Content-Type with boundary for FormData
                     },
                     body: formData
                 });
@@ -232,7 +251,24 @@ function packagingForm() {
                 
                 if (!response.ok) {
                     if (response.status === 422) {
-                        this.errors = data.errors || {};
+                        // Convert Laravel validation errors to a more usable format
+                        const formattedErrors = {};
+                        for (const [field, messages] of Object.entries(data.errors || {})) {
+                            formattedErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                        }
+                        this.errors = formattedErrors;
+                        
+                        // Scroll to the first error
+                        this.$nextTick(() => {
+                            const firstError = Object.keys(formattedErrors)[0];
+                            if (firstError) {
+                                const element = this.$el.querySelector(`[name="${firstError}"]`);
+                                if (element) {
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    element.focus();
+                                }
+                            }
+                        });
                         return;
                     }
                     throw new Error(data.message || 'Something went wrong');
