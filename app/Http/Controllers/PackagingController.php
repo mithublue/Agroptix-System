@@ -12,13 +12,32 @@ class PackagingController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    /**
+     * Display a listing of the packaging records.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function index(Request $request)
     {
         $this->authorize('view_packaging', Packaging::class);
         
         $packages = Packaging::with('batch')
+            ->when($request->filled('batch_id'), function($query) use ($request) {
+                $query->where('batch_id', $request->batch_id);
+            })
+            ->when($request->filled('package_type'), function($query) use ($request) {
+                $query->where('package_type', 'like', '%' . $request->package_type . '%');
+            })
+            ->when($request->filled('material_type'), function($query) use ($request) {
+                $query->where('material_type', 'like', '%' . $request->material_type . '%');
+            })
+            ->when($request->filled('quantity_of_units'), function($query) use ($request) {
+                $query->where('quantity_of_units', $request->quantity_of_units);
+            })
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
             
         return view('admin.packaging.index', compact('packages'));
     }

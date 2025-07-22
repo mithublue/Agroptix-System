@@ -173,6 +173,60 @@
                     </h3>
                 </div>
             
+            <!-- Filters -->
+            <div class="bg-white px-4 py-3 border-b border-gray-200 sm:px-6">
+                <form method="GET" action="{{ route('admin.packaging.index') }}" class="space-y-4 sm:space-y-0 sm:flex sm:space-x-4">
+                    <!-- Batch Filter -->
+                    <div class="w-full sm:w-1/4">
+                        <label for="batch_id" class="block text-sm font-medium text-gray-700">Batch</label>
+                        <select id="batch_id" name="batch_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">All Batches</option>
+                            @foreach(\App\Models\Batch::all() as $batch)
+                                <option value="{{ $batch->id }}" {{ request('batch_id') == $batch->id ? 'selected' : '' }}>
+                                    {{ $batch->batch_code }} (ID: {{ $batch->id }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <!-- Package Type Filter -->
+                    <div class="w-full sm:w-1/4">
+                        <label for="package_type" class="block text-sm font-medium text-gray-700">Package Type</label>
+                        <input type="text" name="package_type" id="package_type" value="{{ request('package_type') }}"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="Filter by type">
+                    </div>
+                    
+                    <!-- Material Type Filter -->
+                    <div class="w-full sm:w-1/4">
+                        <label for="material_type" class="block text-sm font-medium text-gray-700">Material Type</label>
+                        <input type="text" name="material_type" id="material_type" value="{{ request('material_type') }}"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="Filter by material">
+                    </div>
+                    
+                    <!-- Quantity Filter -->
+                    <div class="w-full sm:w-1/4">
+                        <label for="quantity_of_units" class="block text-sm font-medium text-gray-700">Quantity</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="number" name="quantity_of_units" id="quantity_of_units" value="{{ request('quantity_of_units') }}"
+                                   class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                   placeholder="Exact quantity">
+                            <div class="flex items-center">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Filter
+                                </button>
+                                @if(request()->hasAny(['batch_id', 'package_type', 'material_type', 'quantity_of_units']))
+                                    <a href="{{ route('admin.packaging.index') }}" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Reset
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
