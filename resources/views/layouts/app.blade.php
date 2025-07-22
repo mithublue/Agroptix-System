@@ -167,7 +167,7 @@
                                 <svg class="w-5 h-5 mr-3 {{ request()->is('shipments*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                 </svg>
-                                Packaging
+                                Shipments
                             </div>
                             <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -189,6 +189,33 @@
                     @endcanany
 
                     <!-- Admin Section -->
+                    <!-- Packaging -->
+                    @can('view_packaging')
+                    <div class="pt-4 mt-4 border-t border-gray-200">
+                        <div x-data="{ open: {{ request()->is('admin/packaging*') || request()->is('rpcunit*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/packaging*') || request()->is('rpcunit*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 {{ request()->is('admin/packaging*') || request()->is('rpcunit*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                    Packaging
+                                </div>
+                                <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" class="mt-1 space-y-1 pl-11" x-collapse>
+                                <a href="{{ route('admin.packaging.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('admin.packaging.*') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    Packaging Records
+                                </a>
+                                <a href="{{ route('rpcunit.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('rpcunit.*') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                    RPC Units
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    @endcan
+
                     @canany(['manage_users', 'manage_roles', 'manage_permissions'])
                     <div class="pt-4 mt-4 border-t border-gray-200">
                         <h3 class="px-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">Administration</h3>
@@ -336,7 +363,7 @@
             // You can add Alpine.js components here if needed
         });
     </script>
-    
+
     <!-- Scripts Stack -->
     @stack('scripts')
 </body>

@@ -20,6 +20,13 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             TestUsersSeeder::class,
         ]);
+        
+        // Seed RPC Units and Packaging
+        $this->call([
+            RpcUnitSeeder::class,
+            PackagingSeeder::class,
+            PackagingPermissionsSeeder::class,
+        ]);
 
         // Create admin user
         $adminUser = User::firstOrCreate(

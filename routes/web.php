@@ -216,6 +216,11 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
+// RPC Units
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('rpcunit', \App\Http\Controllers\RpcUnitController::class)->names('rpcunit');
+});
+
 // Farmers Registration
 Route::get('/farmers/register', [\App\Http\Controllers\RegistrationController::class, 'create_farmer'])->name('farmers.create');
 Route::post('/farmers', [\App\Http\Controllers\RegistrationController::class, 'store_farmer'])->name('farmers.store');
@@ -280,6 +285,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
         Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
+    });
+
+    // Packaging
+    Route::middleware(['can:view_packaging'])->group(function () {
+        Route::resource('packaging', \App\Http\Controllers\PackagingController::class);
+
+        // Explicitly define the update route to ensure it's included
+        Route::put('packaging/{packaging}', [\App\Http\Controllers\PackagingController::class, 'update'])
+             ->name('packaging.update')
+             ->middleware('can:edit_packaging');
+
+        // Additional routes for packaging
+        Route::post('packaging/import', [\App\Http\Controllers\PackagingController::class, 'import'])
+             ->name('packaging.import')
+             ->middleware('can:import_packaging');
+
+        Route::get('packaging/export', [\App\Http\Controllers\PackagingController::class, 'export'])
+             ->name('packaging.export')
+             ->middleware('can:export_packaging');
     });
 
     // Permissions
