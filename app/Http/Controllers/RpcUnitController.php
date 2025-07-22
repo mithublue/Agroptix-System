@@ -13,9 +13,30 @@ class RpcUnitController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rpcUnits = RpcUnit::paginate(20);
+        // Define valid per page values
+        $perPage = in_array($request->per_page, [5, 10, 20, 30, 50])
+            ? (int)$request->per_page
+            : 20; // Default to 20 if not specified or invalid
+            
+        $rpcUnits = RpcUnit::query()
+            ->when($request->filled('rpc_identifier'), function($query) use ($request) {
+                $query->where('rpc_identifier', 'like', '%' . $request->rpc_identifier . '%');
+            })
+            ->when($request->filled('material_type'), function($query) use ($request) {
+                $query->where('material_type', $request->material_type);
+            })
+            ->when($request->filled('status'), function($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->filled('capacity_kg'), function($query) use ($request) {
+                $query->where('capacity_kg', $request->capacity_kg);
+            })
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+            
         return view('rpcunit.index', compact('rpcUnits'));
     }
 
