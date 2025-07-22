@@ -232,7 +232,7 @@ function packagingForm() {
                 }
                 
                 const url = this.editing 
-                    ? `/admin/packaging/${this.formData.id}`
+                    ? '{{ route("admin.packaging.update", "") }}/' + this.formData.id
                     : '{{ route("admin.packaging.store") }}';
                 
                 // Convert FormData to URL-encoded string for better debugging

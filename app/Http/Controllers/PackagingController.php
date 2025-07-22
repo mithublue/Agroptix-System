@@ -132,7 +132,7 @@ class PackagingController extends Controller
      */
     public function update(Request $request, Packaging $packaging)
     {
-        $this->authorize('update_packaging', $packaging);
+        $this->authorize('edit_packaging', $packaging);
 
         $validated = $request->validate([
             'batch_id' => 'sometimes|required|exists:batches,id',
