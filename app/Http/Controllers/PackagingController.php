@@ -21,7 +21,12 @@ class PackagingController extends Controller
     public function index(Request $request)
     {
         $this->authorize('view_packaging', Packaging::class);
-        
+
+        // Define valid per page values
+        $perPage = in_array($request->per_page, [5, 10, 20, 30, 50])
+            ? (int)$request->per_page
+            : 15; // Default to 15 if not specified or invalid
+
         $packages = Packaging::with('batch')
             ->when($request->filled('batch_id'), function($query) use ($request) {
                 $query->where('batch_id', $request->batch_id);
@@ -36,9 +41,9 @@ class PackagingController extends Controller
                 $query->where('quantity_of_units', $request->quantity_of_units);
             })
             ->latest()
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
-            
+
         return view('admin.packaging.index', compact('packages'));
     }
 
@@ -59,7 +64,7 @@ class PackagingController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create_packaging', Packaging::class);
-        
+
         $validated = $request->validate([
             'batch_id' => 'required|exists:batches,id',
             'package_type' => 'required|string|max:255',
@@ -71,21 +76,21 @@ class PackagingController extends Controller
             'packaging_location' => 'required|string|max:255',
             'cleanliness_checklist' => 'sometimes|boolean'
         ]);
-        
+
         try {
             // Set default values
             $validated['cleanliness_checklist'] = $validated['cleanliness_checklist'] ?? false;
-            
+
             // Generate QR code (you might want to implement your own logic here)
             $validated['qr_code'] = 'PKG-' . uniqid();
-            
+
             $packaging = Packaging::create($validated);
-            
+
             return response()->json([
                 'message' => 'Packaging created successfully',
                 'data' => $packaging
             ], 201);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error creating packaging',
@@ -103,10 +108,10 @@ class PackagingController extends Controller
     public function show(Packaging $packaging)
     {
         $this->authorize('view_packaging', $packaging);
-        
+
         // Eager load relationships for the view
         $packaging->load(['batch', 'packer']);
-        
+
         return view('admin.packaging.show', compact('packaging'));
     }
 
@@ -128,7 +133,7 @@ class PackagingController extends Controller
     public function update(Request $request, Packaging $packaging)
     {
         $this->authorize('update_packaging', $packaging);
-        
+
         $validated = $request->validate([
             'batch_id' => 'sometimes|required|exists:batches,id',
             'package_type' => 'sometimes|required|string|max:255',
@@ -140,15 +145,15 @@ class PackagingController extends Controller
             'packaging_location' => 'sometimes|required|string|max:255',
             'cleanliness_checklist' => 'sometimes|boolean'
         ]);
-        
+
         try {
             $packaging->update($validated);
-            
+
             return response()->json([
                 'message' => 'Packaging updated successfully',
                 'data' => $packaging
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error updating packaging',
@@ -166,19 +171,19 @@ class PackagingController extends Controller
     public function destroy(Packaging $packaging)
     {
         $this->authorize('delete_packaging', $packaging);
-        
+
         try {
             $packaging->delete();
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'message' => 'Packaging deleted successfully'
                 ]);
             }
-            
+
             return redirect()->route('admin.packaging.index')
                 ->with('success', 'Packaging deleted successfully');
-                
+
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json([
@@ -186,7 +191,7 @@ class PackagingController extends Controller
                     'error' => $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Error deleting packaging: ' . $e->getMessage());
         }
     }

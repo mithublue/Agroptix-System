@@ -312,8 +312,34 @@
             </div>
             
             @if($packages->hasPages())
-                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6">
-                    {{ $packages->links() }}
+                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+                    <div class="flex-1">
+                        {{ $packages->links() }}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-700">Items per page:</span>
+                        <form method="GET" action="{{ route('admin.packaging.index') }}" class="inline-flex" id="perPageForm">
+                            <!-- Include all current query parameters except 'page' -->
+                            @foreach(request()->except('page', 'per_page') as $key => $value)
+                                @if(is_array($value))
+                                    @foreach($value as $item)
+                                        <input type="hidden" name="{{ $key }}[]" value="{{ $item }}">
+                                    @endforeach
+                                @else
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
+                            @endforeach
+                            
+                            <select name="per_page" onchange="document.getElementById('perPageForm').submit()" 
+                                    class="block w-full pl-3 pr-10 py-1.5 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                @foreach([5, 10, 20, 30, 50] as $perPage)
+                                    <option value="{{ $perPage }}" {{ request('per_page', 15) == $perPage ? 'selected' : '' }}>
+                                        {{ $perPage }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
             @endif
         </div>
