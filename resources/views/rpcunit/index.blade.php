@@ -251,9 +251,9 @@
             <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
                 <div class="px-4 py-5 sm:p-6">
                     <form method="GET" action="{{ route('rpcunit.index') }}" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             <!-- RPC Identifier -->
-                            <div>
+                            <div class="lg:col-span-1">
                                 <label for="rpc_identifier" class="block text-sm font-medium text-gray-700">RPC ID</label>
                                 <input type="text" name="rpc_identifier" id="rpc_identifier"
                                        value="{{ request('rpc_identifier') }}"
@@ -261,7 +261,7 @@
                             </div>
 
                             <!-- Material Type -->
-                            <div>
+                            <div class="lg:col-span-1">
                                 <label for="material_type" class="block text-sm font-medium text-gray-700">Material Type</label>
                                 <select id="material_type" name="material_type" class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Types</option>
@@ -272,7 +272,7 @@
                             </div>
 
                             <!-- Status -->
-                            <div>
+                            <div class="lg:col-span-1">
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select id="status" name="status" class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Statuses</option>
@@ -283,22 +283,22 @@
                             </div>
 
                             <!-- Capacity (kg) -->
-                            <div>
+                            <div class="lg:col-span-1">
                                 <label for="capacity_kg" class="block text-sm font-medium text-gray-700">Capacity (kg)</label>
                                 <input type="number" name="capacity_kg" id="capacity_kg"
                                        value="{{ request('capacity_kg') }}" step="0.01" min="0"
                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             </div>
-                        </div>
-
-                        <div class="flex justify-end space-x-3">
-                            <button type="submit" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-32">
-                                Apply Filters
-                            </button>
-                            <a href="{{ route('rpcunit.index') }}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-24">
-                                Reset
-                            </a>
-                        </div>
+                            
+                            <!-- Buttons -->
+                            <div class="lg:col-span-1 flex items-end space-x-2">
+                                <button type="submit" class="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1">
+                                    Apply
+                                </button>
+                                <a href="{{ route('rpcunit.index') }}" class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1">
+                                    Reset
+                                </a>
+                            </div>
                     </form>
                 </div>
             </div>
