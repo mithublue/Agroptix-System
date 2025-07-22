@@ -45,7 +45,31 @@
         <script>
         function packagingIndex() {
             return {
+                packages: @json($packages->items()),
+                pagination: {
+                    currentPage: {{ $packages->currentPage() }},
+                    lastPage: {{ $packages->lastPage() }},
+                    perPage: {{ $packages->perPage() }},
+                    total: {{ $packages->total() }},
+                    links: @json($packages->linkCollection()->toArray())
+                },
+                
                 init() {
+                    // Listen for new packaging created event
+                    this.$el.addEventListener('packaging-created', (event) => {
+                        const newPackaging = event.detail;
+                        
+                        // Add new packaging to the beginning of the list
+                        this.packages.unshift(newPackaging);
+                        
+                        // If we have more items than per page, remove the last one
+                        if (this.packages.length > this.pagination.perPage) {
+                            this.packages.pop();
+                            // Update pagination total
+                            this.pagination.total++;
+                        }
+                    });
+                    
                     // Listen for refresh event
                     this.$el.addEventListener('refresh-data', async () => {
                         try {
@@ -165,22 +189,21 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($packages as $package)
+                        <template x-for="(package, index) in packages" :key="package.id" x-init="console.log('Package:', package)">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ $package->id }}
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="package.id"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    @if($package->batch)
-                                        {{ $package->batch->batch_code }} (ID: {{ $package->batch_id }})
-                                    @else
-                                        <span class="text-gray-400">No batch assigned</span>
-                                    @endif
+                                    <template x-if="package.batch">
+                                        <span x-text="package.batch.batch_code + ' (ID: ' + package.batch_id + ')'"></span>
+                                    </template>
+                                    <template x-if="!package.batch">
+                                        <span>N/A</span>
+                                    </template>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
                                         @can('view_packaging')
-                                        <a href="{{ route('admin.packaging.show', $package->id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a :href="'{{ route('admin.packaging.show', '') }}/' + package.id" class="text-indigo-600 hover:text-indigo-900">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -189,15 +212,15 @@
                                         @endcan
                                         
                                         @can('edit_packaging')
-                                        <a href="{{ route('admin.packaging.edit', $package->id) }}" class="text-yellow-600 hover:text-yellow-900">
+                                        <button @click="$store.drawer.open = true; $store.drawer.packagingData = package" class="text-indigo-600 hover:text-indigo-900">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
-                                        </a>
+                                        </button>
                                         @endcan
                                         
                                         @can('delete_packaging')
-                                        <form action="{{ route('admin.packaging.destroy', $package->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this packaging record?')">
+                                        <form :action="'{{ route('admin.packaging.destroy', '') }}/' + package.id" method="POST" onsubmit="return confirm('Are you sure you want to delete this packaging record?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-900">
@@ -210,13 +233,14 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                    No packaging records found.
-                                </td>
-                            </tr>
-                        @endforelse
+                        </template>
+                        
+                        <!-- Empty state -->
+                        <tr x-show="!packages || packages.length === 0">
+                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                No packaging records found.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

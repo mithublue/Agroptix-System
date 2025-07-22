@@ -197,6 +197,12 @@ function packagingForm() {
                 _method: 'POST'
             };
             this.errors = {};
+            
+            // Reset form validation state
+            const form = this.$refs.packagingForm;
+            if (form) {
+                form.reset();
+            }
         },
         
         async submitForm() {
@@ -272,6 +278,23 @@ function packagingForm() {
                         return;
                     }
                     throw new Error(data.message || 'Something went wrong');
+                }
+                
+                // If we're here, the request was successful
+                if (response.ok) {
+                    // Emit event with the created packaging data
+                    this.$dispatch('packaging-created', data.data || data);
+                    
+                    // Show success message
+                    this.$dispatch('notify', {
+                        type: 'success',
+                        message: 'Packaging created successfully!',
+                        timeout: 3000
+                    });
+                    
+                    // Reset form and close drawer
+                    this.resetForm();
+                    this.$dispatch('close-drawer');
                 }
                 
                 // Show success message
