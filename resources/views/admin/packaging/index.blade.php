@@ -189,21 +189,21 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="(package, index) in packages" :key="package.id" x-init="console.log('Package:', package)">
+                        <template x-for="(pkg, index) in packages" :key="pkg.id">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="package.id"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="pkg.id"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <template x-if="package.batch">
-                                        <span x-text="package.batch.batch_code + ' (ID: ' + package.batch_id + ')'"></span>
+                                    <template x-if="pkg.batch">
+                                        <span x-text="pkg.batch.batch_code + ' (ID: ' + pkg.batch_id + ')'"></span>
                                     </template>
-                                    <template x-if="!package.batch">
+                                    <template x-if="!pkg.batch">
                                         <span>N/A</span>
                                     </template>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
                                         @can('view_packaging')
-                                        <a :href="'{{ route('admin.packaging.show', '') }}/' + package.id" class="text-indigo-600 hover:text-indigo-900">
+                                        <a :href="'{{ route('admin.packaging.show', '') }}/' + pkg.id" class="text-indigo-600 hover:text-indigo-900">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -212,7 +212,7 @@
                                         @endcan
                                         
                                         @can('edit_packaging')
-                                        <button @click="$store.drawer.open = true; $store.drawer.packagingData = package" class="text-indigo-600 hover:text-indigo-900">
+                                        <button @click="$store.drawer.open = true; $store.drawer.packagingData = pkg" class="text-indigo-600 hover:text-indigo-900">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
@@ -220,7 +220,7 @@
                                         @endcan
                                         
                                         @can('delete_packaging')
-                                        <form :action="'{{ route('admin.packaging.destroy', '') }}/' + package.id" method="POST" onsubmit="return confirm('Are you sure you want to delete this packaging record?')">
+                                        <form :action="'{{ route('admin.packaging.destroy', '') }}/' + pkg.id" method="POST" onsubmit="return confirm('Are you sure you want to delete this packaging record?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-900">
