@@ -4,8 +4,26 @@ import { Turbo } from '@hotwired/turbo-rails';
 import Swal from 'sweetalert2';
 import './country-state';
 
+// Alpine.js click-outside directive
+Alpine.directive('click-outside', (el, { expression }, { evaluateLater, effect }) => {
+    const handleClick = (event) => {
+        if (!el.contains(event.target) && !event.defaultPrevented) {
+            const method = evaluateLater(expression);
+            method();
+        }
+    };
+
+    document.addEventListener('click', handleClick);
+    
+    // Cleanup
+    el._clickOutsideCleanup = () => {
+        document.removeEventListener('click', handleClick);
+    };
+});
+
 // Make Swal available globally
 window.Swal = Swal;
+
 
 // Initialize Alpine.js
 window.Alpine = Alpine;
@@ -27,6 +45,8 @@ window.Toast = Swal.mixin({
 document.addEventListener('turbo:load', () => {
     // Initialize Alpine.js
     Alpine.start();
+    
+    // Initialize any Alpine.js plugins or custom directives here
 });
 
 // Persist Alpine stores across Turbo navigation

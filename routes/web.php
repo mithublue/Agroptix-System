@@ -179,7 +179,10 @@ Route::middleware('auth')->group(function () {
 
     // Eco Processes
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
-
+        // Timeline routes
+        Route::get('/timeline', [\App\Http\Controllers\BatchController::class, 'timeline'])
+             ->name('batches.timeline');
+        
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
              ->name('batches.eco-processes.index');
 
@@ -282,9 +285,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Roles
     Route::middleware(['can:manage_roles'])->group(function () {
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
+    });
 
-        Route::resource('batches', \App\Http\Controllers\BatchController::class);
+    // Batches
+    Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
+    // Traceability Routes
+    Route::middleware(['auth', 'verified'])->group(function () {
+        // Batch Traceability
+        Route::prefix('batches/{batch}')->group(function () {
+            // Batch Timeline
+            Route::get('timeline', [\App\Http\Controllers\BatchController::class, 'showTimeline'])
+                ->name('batches.timeline');
+                
+            // Batch QR Code
+            Route::get('qrcode', [\App\Http\Controllers\BatchController::class, 'showQrCode'])
+                ->name('batches.qr-code');
+                
+            // Batch Trace Events
+            Route::get('trace-events', [\App\Http\Controllers\BatchController::class, 'listTraceEvents'])
+                ->name('batches.trace-events');
+        });
+        
+        // QR Code Scanner
+        Route::get('/qr-scanner', [\App\Http\Controllers\QrCodeController::class, 'showScanner'])
+            ->name('qr-scanner');
+            
+        // Handle QR Code Scan
+        Route::post('/qr-scan', [\App\Http\Controllers\QrCodeController::class, 'handleScan'])
+            ->name('qr-scan');
     });
 
     // Packaging

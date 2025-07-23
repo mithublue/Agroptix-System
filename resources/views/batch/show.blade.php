@@ -1,4 +1,48 @@
 <x-app-layout>
+    @push('scripts')
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('batchTabs', () => ({
+                activeTab: 'overview',
+
+                init() {
+                    // Set initial tab from URL hash if valid
+                    if (window.location.hash) {
+                        const hash = window.location.hash.substring(1);
+                        if (['overview', 'timeline', 'traceability'].includes(hash)) {
+                            this.activeTab = hash;
+                        }
+                    }
+
+                    // Handle browser back/forward navigation
+                    window.addEventListener('popstate', () => {
+                        if (window.location.hash) {
+                            const hash = window.location.hash.substring(1);
+                            if (['overview', 'timeline', 'traceability'].includes(hash)) {
+                                this.activeTab = hash;
+                                return;
+                            }
+                        }
+                        this.activeTab = 'overview';
+                    });
+                },
+
+                setActiveTab(tab) {
+                    if (this.activeTab !== tab) {
+                        this.activeTab = tab;
+                        window.history.pushState({}, '', window.location.pathname + '#' + tab);
+                    }
+                },
+
+                isActive(tab) {
+                    return this.activeTab === tab;
+                }
+            }));
+        });
+    </script>
+    @endpush
+
+    <div x-data="batchTabs">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -14,9 +58,46 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-            <div class="p-6 bg-white border-b border-gray-200">
-                <div class="flex justify-between items-start mb-6">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
+                <!-- Tab Navigation -->
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px px-5">
+                        <button
+                            @click="setActiveTab('overview')"
+                            :class="{
+                                'border-indigo-500 text-indigo-600': activeTab === 'overview',
+                                'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'overview',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm': true
+                            }"
+                        >
+                            Overview
+                        </button>
+                        <button
+                            @click="setActiveTab('timeline')"
+                            :class="{
+                                'border-indigo-500 text-indigo-600': activeTab === 'timeline',
+                                'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'timeline',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8': true
+                            }"
+                        >
+                            Timeline
+                        </button>
+                        <button
+                            @click="setActiveTab('traceability')"
+                            :class="{
+                                'border-indigo-500 text-indigo-600': activeTab === 'traceability',
+                                'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'traceability',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8': true
+                            }"
+                        >
+                            Traceability
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab Content -->
+                <div x-show="activeTab === 'overview'" x-cloak x-transition class="p-6">
+                    <div class="flex justify-between items-start mb-6">
                     <div>
                         <h2 class="text-2xl font-semibold text-gray-800">
                             {{ $batch->display_name }}
@@ -33,13 +114,13 @@
                         @endcan
                         @can('delete_batch')
                             <div x-data="{ showDeleteConfirm: false }" class="relative">
-                                <button @click="showDeleteConfirm = true" 
+                                <button @click="showDeleteConfirm = true"
                                         class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                     {{ __('Delete Batch') }}
                                 </button>
-                                
+
                                 <!-- Delete Confirmation Modal -->
-                                <div x-show="showDeleteConfirm" 
+                                <div x-show="showDeleteConfirm"
                                      @click.away="showDeleteConfirm = false"
                                      x-transition:enter="transition ease-out duration-100"
                                      x-transition:enter-start="transform opacity-0 scale-95"
@@ -52,16 +133,16 @@
                                     <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
                                         <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
                                         <p class="text-gray-600 mb-6">Are you sure you want to delete this batch? This action cannot be undone.</p>
-                                        
+
                                         <div class="flex justify-end space-x-3">
-                                            <button @click="showDeleteConfirm = false" 
+                                            <button @click="showDeleteConfirm = false"
                                                     class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                                 Cancel
                                             </button>
                                             <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" 
+                                                <button type="submit"
                                                         class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                                     Delete
                                                 </button>
@@ -149,9 +230,63 @@
                     </div>
                 @endif
             </div>
+                <!-- Timeline Tab Content -->
+                <div x-show="activeTab === 'timeline'" x-cloak x-transition class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Batch Timeline</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        @if($batch->traceEvents->count() > 0)
+                            <div class="flow-root">
+                                <ul class="-mb-8">
+                                    @foreach($batch->traceEvents->sortBy('created_at')->take(5) as $event)
+                                        @include('partials.timeline-event', ['event' => $event, 'loop' => $loop])
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <div class="mt-6 text-right">
+                                <a href="{{ route('batches.timeline', $batch) }}" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                                    View full timeline
+                                    <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        @else
+                            <div class="text-center py-6">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No timeline events</h3>
+                                <p class="mt-1 text-sm text-gray-500">This batch doesn't have any timeline events yet.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Traceability Tab Content -->
+                <div x-show="activeTab === 'traceability'" x-cloak x-transition class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Traceability</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        @if($batch->traceEvents->count() > 0)
+                            <div class="space-y-4">
+                                @foreach($batch->traceEvents->sortBy('created_at') as $event)
+                                    @include('partials.trace-event-item', ['event' => $event])
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-6">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No traceability data</h3>
+                                <p class="mt-1 text-sm text-gray-500">This batch doesn't have any traceability events yet.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
         </div>
 
-        <!-- Eco Processes Section -->
+
+        <!-- Eco Processes Section (Outside Tabs) -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center mb-6">
@@ -246,5 +381,30 @@
             </div>
         </div>
         </div>
+    </div>
+
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
+
+        @push('scripts')
+        <script>
+            function copyToClipboard(elementId, event) {
+                const copyText = document.getElementById(elementId);
+                copyText.select();
+                copyText.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+
+                // Show temporary tooltip
+                const button = event.currentTarget;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Copied!';
+
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            }
+        </script>
+        @endpush
     </div>
 </x-app-layout>

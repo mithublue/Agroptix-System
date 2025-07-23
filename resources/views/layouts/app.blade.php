@@ -357,6 +357,9 @@
         </div>
     </div>
 
+    <!-- Scripts Stack -->
+    @stack('scripts')
+    
     <!-- Alpine.js for sidebar functionality -->
     <script>
         document.addEventListener('alpine:init', () => {

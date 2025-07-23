@@ -290,8 +290,28 @@ class QualityTestController extends Controller
                 $updateData['test_certificate'] = $path;
             }
 
-            // Update the quality test
-            $qualityTest->update($updateData);
+            // Log the test update event
+            try {
+                $this->traceabilityService->logEvent(
+                    batch: $batch,
+                    eventType: TraceEvent::TYPE_QC_UPDATE,
+                    actor: Auth::user(),
+                    data: [
+                        'test_id' => $qualityTest->id,
+                        'test_type' => $qualityTest->test_type,
+                        'update_data' => $updateData
+                    ],
+                    location: 'Lab',
+                    ipAddress: $request->ip()
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to log test update event: ' . $e->getMessage(), [
+                    'test_id' => $qualityTest->id,
+                    'batch_id' => $batch->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue with the response even if logging fails
+            }
 
             return response()->json([
                 'success' => true,
@@ -303,6 +323,80 @@ class QualityTestController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating test: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function rejectTest(Request $request, QualityTest $qualityTest)
+    {
+        try {
+            // Validate the request
+            $request->validate([
+                'rejection_reason' => 'required|string|max:1000',
+                'rejection_date' => 'required|date',
+                'corrective_action' => 'nullable|string|max:1000'
+            ]);
+            
+            // Update the test status
+            $qualityTest->update([
+                'status' => 'rejected',
+                'rejected_by' => Auth::id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $request->input('rejection_reason'),
+                'corrective_action' => $request->input('corrective_action')
+            ]);
+            
+            // Get the associated batch
+            $batch = $qualityTest->batch;
+            
+            // Log the test rejection event
+            try {
+                if ($batch) {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: TraceEvent::TYPE_QC_REJECTION,
+                        actor: Auth::user(),
+                        data: [
+                            'test_id' => $qualityTest->id,
+                            'test_type' => $qualityTest->test_type,
+                            'rejection_reason' => $request->input('rejection_reason'),
+                            'corrective_action' => $request->input('corrective_action'),
+                            'rejection_date' => $request->input('rejection_date')
+                        ],
+                        location: 'Lab',
+                        ipAddress: $request->ip()
+                    );
+                    
+                    // Update batch status to QC rejected
+                    $batch->status = Batch::STATUS_QC_REJECTED;
+                    $batch->save();
+                }
+                
+            } catch (\Exception $e) {
+                Log::error('Failed to log test rejection event: ' . $e->getMessage(), [
+                    'test_id' => $qualityTest->id,
+                    'batch_id' => $batch->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue with the response even if logging fails
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test rejected successfully',
+                'data' => $qualityTest,
+                'batch_status' => $batch->status ?? null
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to reject test: ' . $e->getMessage(), [
+                'test_id' => $qualityTest->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject test: ' . $e->getMessage()
             ], 500);
         }
     }

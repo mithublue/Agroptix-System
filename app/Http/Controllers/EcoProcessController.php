@@ -187,31 +187,62 @@ class EcoProcessController extends Controller
     public function destroy(Batch $batch, EcoProcess $ecoProcess)
     {
         try {
+            // Log the processing deletion event
+            try {
+                $this->traceabilityService->logEvent(
+                    batch: $batch,
+                    eventType: TraceEvent::TYPE_PROCESSING_DELETED,
+                    actor: Auth::user(),
+                    data: [
+                        'process_id' => $ecoProcess->id,
+                        'stage' => $ecoProcess->stage,
+                        'processing_type' => $ecoProcess->processing_type,
+                        'status' => $ecoProcess->status,
+                        'start_time' => $ecoProcess->start_time,
+                        'end_time' => $ecoProcess->end_time
+                    ],
+                    location: 'Processing Facility',
+                    ipAddress: request()->ip()
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to log processing deletion event: ' . $e->getMessage(), [
+                    'process_id' => $ecoProcess->id,
+                    'batch_id' => $batch->id,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue with deletion even if logging fails
+            }
+            
+            // Delete the eco process
             $ecoProcess->delete();
 
-            if (request()->wantsJson() || request()->ajax()) {
+            if (request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Eco process deleted successfully.'
+                    'message' => 'Eco process deleted successfully'
                 ]);
             }
 
             return redirect()
-                ->route('batches.eco-processes.index', $batch)
-                ->with('success', 'Eco process deleted successfully.');
-
+                ->route('batches.eco-processes.index', $batch->id)
+                ->with('success', 'Eco process deleted successfully');
+                
         } catch (\Exception $e) {
-            \Log::error('Error deleting eco process: ' . $e->getMessage());
-
-            if (request()->wantsJson() || request()->ajax()) {
+            Log::error('Failed to delete eco process: ' . $e->getMessage(), [
+                'process_id' => $ecoProcess->id,
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error deleting eco process: ' . $e->getMessage()
+                    'message' => 'Failed to delete eco process: ' . $e->getMessage()
                 ], 500);
             }
 
             return back()
-                ->with('error', 'Error deleting eco process: ' . $e->getMessage());
+                ->with('error', 'Failed to delete eco process: ' . $e->getMessage());
         }
     }
 
