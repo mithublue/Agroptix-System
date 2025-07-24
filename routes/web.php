@@ -180,8 +180,12 @@ Route::middleware('auth')->group(function () {
     // Eco Processes
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
         // Timeline routes
-        Route::get('/timeline', [\App\Http\Controllers\BatchController::class, 'timeline'])
+        Route::get('/timeline', [\App\Http\Controllers\BatchController::class, 'showTimeline'])
              ->name('batches.timeline');
+             
+        // QR Code route
+        Route::get('/qrcode', [\App\Http\Controllers\BatchController::class, 'showQrCode'])
+             ->name('batches.qr-code');
         
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
              ->name('batches.eco-processes.index');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BatchStoreRequest;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\BatchUpdateRequest;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\SourceUpdateRequest;
@@ -192,8 +193,13 @@ class BatchController extends Controller
 
     public function show(Batch $batch): View
     {
-        $batch->load(['source', 'product']);
-        return view('batch.show', compact('batch'));
+        $batch->load(['source', 'product', 'traceEvents.actor']);
+        $timeline = $batch->traceEvents()->with('actor')->latest()->paginate(10);
+        
+        return view('batch.show', [
+            'batch' => $batch,
+            'timeline' => $timeline
+        ]);
     }
 
     public function edit(Batch $batch): View
@@ -372,14 +378,14 @@ class BatchController extends Controller
     public function showTimeline(Batch $batch)
     {
         try {
-            $traceEvents = $batch->traceEvents()
+            $timeline = $batch->traceEvents()
                 ->with('actor')
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
 
             return view('batch.timeline', [
                 'batch' => $batch,
-                'traceEvents' => $traceEvents,
+                'timeline' => $timeline,
                 'title' => 'Timeline: ' . $batch->batch_code
             ]);
 
@@ -391,6 +397,40 @@ class BatchController extends Controller
 
             return redirect()->back()
                 ->with('error', 'Failed to load batch timeline. Please try again.');
+        }
+    }
+
+    /**
+     * Display the QR code for the batch.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View
+     */
+    public function showQrCode(Batch $batch)
+    {
+        try {
+            // Generate the QR code URL for this batch's timeline
+            $qrCodeUrl = route('batches.timeline', $batch->trace_code);
+            
+            // Generate the QR code as an SVG string
+            $qrCode = QrCode::format('svg')
+                ->size(300)
+                ->generate($qrCodeUrl);
+            
+            return view('batch.qr-code', [
+                'batch' => $batch,
+                'qrCode' => $qrCode,
+                'title' => 'QR Code: ' . $batch->batch_code
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to generate QR code: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to generate QR code. Please try again.');
         }
     }
 
