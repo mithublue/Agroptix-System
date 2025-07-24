@@ -35,7 +35,7 @@
                     <div class="px-4 py-5 sm:p-6">
                         <!-- QR Code Display -->
                         <div class="text-center mb-8">
-                            <div class="p-4 bg-white rounded-lg shadow-md mb-6 border border-gray-200">
+                            <div class="p-4 bg-white rounded-lg shadow-md mb-6 border border-gray-200 qr-code-print">
                                 {!! $qrCode !!}
                             </div>
 
@@ -99,6 +99,146 @@
 
     @push('scripts')
     <script>
+        function printQR() {
+            // Get the QR code SVG element
+            const qrCodeElement = document.querySelector('.qr-code-print');
+            
+            // Create a new window for printing
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Create the print content with proper styling
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>QR Code - {{ $batch->batch_code }}</title>
+                    <style>
+                        @page { size: auto; margin: 0mm; }
+                        body { 
+                            font-family: Arial, sans-serif;
+                            text-align: center;
+                            padding: 20px;
+                        }
+                        .print-container { 
+                            max-width: 100%;
+                            margin: 0 auto;
+                        }
+                        .qr-code {
+                            margin: 20px auto;
+                            padding: 20px;
+                            max-width: 300px;
+                        }
+                        .batch-info {
+                            margin: 20px 0;
+                        }
+                        .batch-code {
+                            font-size: 24px;
+                            font-weight: bold;
+                            margin-bottom: 10px;
+                        }
+                        .print-date {
+                            color: #666;
+                            margin-top: 20px;
+                            font-size: 14px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-container">
+                        <div class="batch-info">
+                            <div class="batch-code">{{ $batch->batch_code }}</div>
+                            @if($batch->production_date)
+                                <div>Produced on {{ \Carbon\Carbon::parse($batch->production_date)->format('F j, Y') }}</div>
+                            @endif
+                        </div>
+                        <div class="qr-code">
+                            {!! $qrCode !!}
+                        </div>
+                        @if(isset($batch->trace_code))
+                            <div class="trace-code">
+                                <div>Trace Code: <strong>{{ $batch->trace_code }}</strong></div>
+                            </div>
+                        @endif
+                        <div class="print-date">
+                            Printed on {{ now()->format('F j, Y \a\t g:i A') }}
+                        </div>
+                    </div>
+                    <script>
+                        // Auto-print when the print window loads
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            }, 200);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `;
+            
+            // Write the content to the new window
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+        
+        function downloadQR() {
+            // Get the SVG element
+            const svg = document.querySelector('svg');
+            if (!svg) return;
+            
+            // Serialize the SVG to a string
+            const serializer = new XMLSerializer();
+            let svgString = serializer.serializeToString(svg);
+            
+            // Add XML namespace if not present
+            if(!svgString.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+                svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            
+            // Add XML declaration
+            svgString = '<?xml version="1.0" standalone="no"?>\r\n' + svgString;
+            
+            // Convert SVG string to data URL
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.download = '{{ $batch->batch_code }}_qrcode.png';
+                a.href = canvas.toDataURL('image/png');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+            
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+        }
+        
+        function copyToClipboard() {
+            const copyText = document.getElementById('trace-code');
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            
+            document.execCommand('copy');
+            
+            // Change button text temporarily
+            const button = copyText.nextElementSibling;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg><span class="ml-1 text-sm font-medium">Copied!</span>';
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        }
         // Download QR Code as PNG
         function downloadQR() {
             const svg = document.querySelector('svg');
