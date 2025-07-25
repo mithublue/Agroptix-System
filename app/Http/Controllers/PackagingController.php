@@ -215,14 +215,14 @@ class PackagingController extends Controller
 
             // Delete the packaging record
             $packaging->delete();
-
-            return response()->json([
+            return redirect()->route('admin.packaging.index')
+                             ->with('success', 'Packaging record deleted successfully');
+            /*return response()->json([
                 'success' => true,
                 'message' => 'Packaging record deleted successfully',
                 'batch_status' => $batch->status ?? null
-            ]);
-            return redirect()->route('admin.packaging.index')
-                ->with('success', 'Packaging record deleted successfully');
+            ]);*/
+
 
         } catch (\Exception $e) {
             /*Log::error('Failed to delete packaging record: ' . $e->getMessage(), [

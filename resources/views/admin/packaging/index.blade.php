@@ -287,27 +287,15 @@
                                         @endcan
 
                                         @can('delete_packaging')
-                                            <div class="inline-flex items-center space-x-1 delete-container">
-                                                <button
-                                                    type="button"
-                                                    class="delete-btn text-red-600 hover:text-red-900 focus:outline-none"
-                                                    :data-id="pkg.id"
-                                                    :data-url="'{{ route('admin.packaging.destroy', '') }}/' + pkg.id"
-                                                    title="Delete Packaging">
+                                            <form :action="'{{ route('admin.packaging.destroy', '') }}/' + pkg.id" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this packaging record?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 focus:outline-none" title="Delete Packaging">
                                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
                                                 </button>
-                                                <div class="confirmation-buttons hidden items-center space-x-1">
-                                                    <span class="text-xs text-gray-600 mr-1">Are you sure?</span>
-                                                    <button type="button" class="confirm-delete px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none">
-                                                        Yes
-                                                    </button>
-                                                    <button type="button" class="cancel-delete px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none">
-                                                        No
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            </form>
                                         @endcan
                                     </div>
                                 </td>
@@ -497,101 +485,8 @@
         @push('scripts')
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    document.addEventListener('click', function(e) {
-                        const deleteBtn = e.target.closest('.delete-btn');
-                        const confirmBtn = e.target.closest('.confirm-delete');
-                        const cancelBtn = e.target.closest('.cancel-delete');
-
-                        if (deleteBtn) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            document.querySelectorAll('.confirmation-buttons').forEach(el => {
-                                el.classList.add('hidden');
-                            });
-                            const container = deleteBtn.closest('.delete-container');
-                            const confirmation = container.querySelector('.confirmation-buttons');
-                            confirmation.classList.remove('hidden');
-                            const clickHandler = function(event) {
-                                if (!container.contains(event.target)) {
-                                    confirmation.classList.add('hidden');
-                                    document.removeEventListener('click', clickHandler);
-                                }
-                            };
-                            setTimeout(() => {
-                                document.addEventListener('click', clickHandler);
-                            }, 100);
-                        }
-                        else if (confirmBtn) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const container = confirmBtn.closest('.delete-container');
-                            if (!container) {
-                                return;
-                            }
-                            const deleteBtn = container.querySelector('.delete-btn');
-                            const confirmation = container.querySelector('.confirmation-buttons');
-                            const id = deleteBtn.getAttribute('data-id');
-                            const url = deleteBtn.getAttribute('data-url');
-                            confirmation.innerHTML = `
-                        <span class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Deleting...
-                        </span>
-                    `;
-                            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                            fetch(url, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': token,
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                }
-                            })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        return response.json().then(err => { throw err; });
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    window.dispatchEvent(new CustomEvent('notify', {
-                                        detail: {
-                                            message: data.message || 'Packaging record deleted successfully',
-                                            type: 'success',
-                                            timeout: 3000
-                                        }
-                                    }));
-                                    const row = container.closest('tr');
-                                    if (row) {
-                                        row.style.opacity = '0';
-                                        setTimeout(() => row.remove(), 300);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error:', error);
-                                    window.dispatchEvent(new CustomEvent('notify', {
-                                        detail: {
-                                            message: error.message || 'Failed to delete packaging record',
-                                            type: 'error',
-                                            timeout: 5000
-                                        }
-                                    }));
-                                    confirmation.classList.add('hidden');
-                                });
-                        }
-                        else if (cancelBtn) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const container = cancelBtn.closest('.delete-container');
-                            const confirmation = container.querySelector('.confirmation-buttons');
-                            confirmation.classList.add('hidden');
-                        }
-                    });
+                    // This script can be used for any additional client-side functionality
                 });
             </script>
-    @endpush
+        @endpush
 </x-app-layout>
