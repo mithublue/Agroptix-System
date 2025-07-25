@@ -61,26 +61,8 @@
                         // Listener for packaging-created
                         this.listeners.packagingCreated = (event) => {
                             console.log('packaging-created event:', event); // Debug
-                            const newPackaging = event.detail;
-                            if (newPackaging && newPackaging.id) {
-                                this.packages.unshift(newPackaging);
-                                if (this.packages.length > this.pagination.perPage) {
-                                    this.packages.pop();
-                                    this.pagination.total++;
-                                }
-                                this.$dispatch('notify', {
-                                    type: 'success',
-                                    message: 'Packaging added to list',
-                                    timeout: 3000
-                                });
-                            } else {
-                                console.warn('Invalid packaging data:', newPackaging);
-                                this.$dispatch('notify', {
-                                    type: 'error',
-                                    message: 'Failed to add packaging to list',
-                                    timeout: 5000
-                                });
-                            }
+
+                            window.location.reload();
                         };
                         window.addEventListener('packaging-created', this.listeners.packagingCreated);
 
