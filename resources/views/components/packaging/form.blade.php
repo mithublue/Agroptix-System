@@ -12,10 +12,10 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-6">
-        <form id="packaging-form" x-ref="packagingForm" @submit.prevent="submitForm">
+        <form id="packaging-form" x-ref="packagingForm" @submit.prevent="console.log('Form submitted'); submitForm()">
             @csrf
             <input type="hidden" name="_method" x-bind:value="editing ? 'PUT' : 'POST'">
-            
+
             <div class="space-y-6">
                 <!-- Batch Selection -->
                 <div>
@@ -108,11 +108,11 @@
 
             <!-- Form Actions -->
             <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" @click="$dispatch('close-drawer')" 
+                <button type="button" @click="$dispatch('close-drawer')"
                         class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Cancel
                 </button>
-                <button type="submit" 
+                <button type="submit"
                         class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         :disabled="loading">
                     <span x-show="!loading">
@@ -132,59 +132,11 @@
 </div>
 
 <script>
-function packagingForm() {
-    return {
-        loading: false,
-        editing: false,
-        formData: {
-            batch_id: '',
-            package_type: '',
-            material_type: '',
-            unit_weight_packaging: '',
-            quantity_of_units: '',
-            rpc_unit_id: '',
-            packer_id: '',
-            packaging_location: '',
-            cleanliness_checklist: false,
-            _method: 'POST'
-        },
-        errors: {},
-        store: null,
-        
-        init() {
-            // Store the Alpine store reference
-            this.store = window.Alpine.store('drawer');
-            
-            // Initialize the form based on store state
-            if (this.store && this.store.packagingData) {
-                this.editing = true;
-                this.formData = {
-                    ...this.formData,
-                    ...this.store.packagingData,
-                    _method: 'PUT'
-                };
-            }
-            
-            // Listen for store changes
-            if (this.store) {
-                this.$watch('store.packagingData', (data) => {
-                    if (data) {
-                        this.editing = true;
-                        this.formData = {
-                            ...this.formData,
-                            ...data,
-                            _method: 'PUT'
-                        };
-                    } else {
-                        this.resetForm();
-                    }
-                });
-            }
-        },
-        
-        resetForm() {
-            this.editing = false;
-            this.formData = {
+    function packagingForm() {
+        return {
+            loading: false,
+            editing: false,
+            formData: {
                 batch_id: '',
                 package_type: '',
                 material_type: '',
@@ -195,142 +147,129 @@ function packagingForm() {
                 packaging_location: '',
                 cleanliness_checklist: false,
                 _method: 'POST'
-            };
-            this.errors = {};
-            
-            // Reset form validation state
-            const form = this.$refs.packagingForm;
-            if (form) {
-                form.reset();
-            }
-        },
-        
-        async submitForm() {
-            try {
-                this.loading = true;
-                this.errors = {};
-                
-                // Get the form element safely
-                const form = this.$refs.packagingForm;
-                if (!form) {
-                    console.error('Form element not found');
-                    return;
+            },
+            errors: {},
+            store: null,
+
+            init() {
+                console.log('packagingForm initialized'); // Debug
+                this.store = window.Alpine.store('drawer');
+                if (this.store && this.store.packagingData) {
+                    this.editing = true;
+                    this.formData = {
+                        ...this.formData,
+                        ...this.store.packagingData,
+                        _method: 'PUT'
+                    };
                 }
-                
-                // Create FormData from the form
-                const formData = new FormData(form);
-                
-                // Ensure checkbox values are properly set
-                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => {
-                    formData.set(checkbox.name, checkbox.checked ? '1' : '0');
-                });
-                
-                // Add method override for PUT requests if editing
-                if (this.editing) {
-                    formData.set('_method', 'PUT');
-                }
-                
-                const url = this.editing 
-                    ? '{{ route("admin.packaging.update", "") }}/' + this.formData.id
-                    : '{{ route("admin.packaging.store") }}';
-                
-                // Convert FormData to URL-encoded string for better debugging
-                const formDataObj = {};
-                for (let [key, value] of formData.entries()) {
-                    formDataObj[key] = value;
-                }
-                console.log('Submitting form data:', formDataObj);
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                        // Let the browser set the Content-Type with boundary for FormData
-                    },
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    if (response.status === 422) {
-                        // Convert Laravel validation errors to a more usable format
-                        const formattedErrors = {};
-                        for (const [field, messages] of Object.entries(data.errors || {})) {
-                            formattedErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                if (this.store) {
+                    this.$watch('store.packagingData', (data) => {
+                        if (data) {
+                            this.editing = true;
+                            this.formData = {
+                                ...this.formData,
+                                ...data,
+                                _method: 'PUT'
+                            };
+                        } else {
+                            this.resetForm();
                         }
-                        this.errors = formattedErrors;
-                        
-                        // Scroll to the first error
-                        this.$nextTick(() => {
-                            const firstError = Object.keys(formattedErrors)[0];
-                            if (firstError) {
-                                const element = this.$el.querySelector(`[name="${firstError}"]`);
-                                if (element) {
-                                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    element.focus();
-                                }
-                            }
-                        });
-                        return;
-                    }
-                    throw new Error(data.message || 'Something went wrong');
+                    });
                 }
-                
-                // If we're here, the request was successful
-                if (response.ok) {
-                    // Emit event with the created packaging data
+            },
+
+            resetForm() {
+                this.editing = false;
+                this.formData = {
+                    batch_id: '',
+                    package_type: '',
+                    material_type: '',
+                    unit_weight_packaging: '',
+                    quantity_of_units: '',
+                    rpc_unit_id: '',
+                    packer_id: '',
+                    packaging_location: '',
+                    cleanliness_checklist: false,
+                    _method: 'POST'
+                };
+                this.errors = {};
+                const form = this.$refs.packagingForm;
+                if (form) {
+                    form.reset();
+                }
+            },
+
+            async submitForm() {
+                try {
+                    this.loading = true;
+                    this.errors = {};
+                    console.log('Submitting form...'); // Debug
+                    const form = this.$refs.packagingForm;
+                    if (!form) throw new Error('Form element not found');
+                    const formData = new FormData(form);
+                    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        formData.set(checkbox.name, checkbox.checked ? '1' : '0');
+                    });
+                    if (this.editing) formData.set('_method', 'PUT');
+                    const url = this.editing
+                        ? `{{ route("admin.packaging.update", "") }}/${this.formData.id}`
+                        : '{{ route("admin.packaging.store") }}';
+                    console.log('Form data:', Object.fromEntries(formData)); // Debug
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content || '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    console.log('Response status:', response.status); // Debug
+                    const data = await response.json();
+                    console.log('Response data:', data); // Debug
+                    if (!response.ok) {
+                        if (response.status === 422) {
+                            const formattedErrors = {};
+                            for (const [field, messages] of Object.entries(data.errors || {})) {
+                                formattedErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                            }
+                            this.errors = formattedErrors;
+                            console.log('Validation errors:', formattedErrors); // Debug
+                            this.$nextTick(() => {
+                                const firstError = Object.keys(formattedErrors)[0];
+                                if (firstError) {
+                                    const element = this.$el.querySelector(`[name="${firstError}"]`);
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        element.focus();
+                                    }
+                                }
+                            });
+                            return;
+                        }
+                        throw new Error(data.message || 'Something went wrong');
+                    }
+                    console.log('Dispatching packaging-created:', data.data || data); // Debug
                     this.$dispatch('packaging-created', data.data || data);
-                    
-                    // Show success message
                     this.$dispatch('notify', {
                         type: 'success',
-                        message: 'Packaging created successfully!',
+                        message: this.editing ? 'Packaging updated successfully' : 'Packaging created successfully',
                         timeout: 3000
                     });
-                    
-                    // Reset form and close drawer
                     this.resetForm();
                     this.$dispatch('close-drawer');
-                }
-                
-                // Show success message
-                const successMessage = this.editing ? 'Packaging updated successfully' : 'Packaging created successfully';
-                
-                // Close the drawer
-                if (this.store) {
-                    this.store.open = false;
-                }
-                
-                // Reset the form
-                this.resetForm();
-                
-                // Dispatch refresh event
-                window.dispatchEvent(new CustomEvent('refresh-data'));
-                
-                // Show success notification
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
-                        type: 'success',
-                        message: successMessage
-                    }
-                }));
-                
-            } catch (error) {
-                console.error('Error:', error);
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: {
+                    this.$dispatch('refresh-data');
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.$dispatch('notify', {
                         type: 'error',
-                        message: error.message || 'An error occurred. Please try again.'
-                    }
-                }));
-            } finally {
-                this.loading = false;
+                        message: error.message || 'An error occurred. Please try again.',
+                        timeout: 5000
+                    });
+                } finally {
+                    this.loading = false;
+                }
             }
-        }
-    };
-}
+        };
+    }
 </script>
