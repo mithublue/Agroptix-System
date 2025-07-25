@@ -525,6 +525,9 @@
                             e.preventDefault();
                             e.stopPropagation();
                             const container = confirmBtn.closest('.delete-container');
+                            if (!container) {
+                                return;
+                            }
                             const deleteBtn = container.querySelector('.delete-btn');
                             const confirmation = container.querySelector('.confirmation-buttons');
                             const id = deleteBtn.getAttribute('data-id');
