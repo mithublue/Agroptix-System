@@ -168,7 +168,7 @@ class PackagingController extends Controller
      * @param  \App\Models\Packaging  $packaging
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Packaging $packaging)
+    public function destroy(Packaging $packaging, Request $request)
     {
         $this->authorize('delete_packaging', $packaging);
 
@@ -176,7 +176,7 @@ class PackagingController extends Controller
             // Get the associated batch before deletion
             $batch = $packaging->batch;
             $packageId = $packaging->id;
-            
+
             // Log the packaging deletion event
             try {
                 if ($batch) {
@@ -196,7 +196,7 @@ class PackagingController extends Controller
                         location: 'Packaging Facility',
                         ipAddress: request()->ip()
                     );
-                    
+
                     // If this was the last package, update batch status
                     $remainingPackages = $batch->packages()->count();
                     if ($remainingPackages === 0) {
@@ -205,14 +205,14 @@ class PackagingController extends Controller
                     }
                 }
             } catch (\Exception $e) {
-                Log::error('Failed to log packaging deletion event: ' . $e->getMessage(), [
+                /*Log::error('Failed to log packaging deletion event: ' . $e->getMessage(), [
                     'package_id' => $packageId,
                     'batch_id' => $batch->id ?? null,
                     'trace' => $e->getTraceAsString()
-                ]);
+                ]);*/
                 // Continue with deletion even if logging fails
             }
-            
+
             // Delete the packaging record
             $packaging->delete();
 
@@ -221,20 +221,20 @@ class PackagingController extends Controller
                 'message' => 'Packaging record deleted successfully',
                 'batch_status' => $batch->status ?? null
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to delete packaging record: ' . $e->getMessage(), [
                 'package_id' => $packaging->id ?? null,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to delete packaging record: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Error deleting packaging: ' . $e->getMessage());
         }
     }
