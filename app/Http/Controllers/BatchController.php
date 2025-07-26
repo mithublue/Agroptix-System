@@ -300,15 +300,15 @@ class BatchController extends Controller
             try {
                 $this->traceabilityService->logEvent(
                     batch: $batch,
-                    eventType: TraceEvent::TYPE_BATCH_DELETED,
+                    eventType: TraceEvent::TYPE_DISPOSED, // Using DISPOSED as the closest match for deletion
                     actor: Auth::user(),
                     data: [
                         'batch_code' => $batch->batch_code,
                         'source_id' => $batch->source_id,
-                        'product_id' => $batch->product_id
-                    ],
-                    location: 'System',
-                    ipAddress: request()->ip()
+                        'product_id' => $batch->product_id,
+                        'action' => 'deleted', // Adding action to clarify this is a deletion
+                        'ip_address' => request()->ip()
+                    ]
                 );
             } catch (\Exception $e) {
                 Log::error('Failed to log batch deletion event: ' . $e->getMessage(), [
