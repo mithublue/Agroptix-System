@@ -1,3 +1,7 @@
+@php
+    $showDrawer = request()->has('create') || $errors->any();
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -6,7 +10,14 @@
             </h2>
             <div class="flex space-x-2">
                 @can('create_shipment')
-                    <a href="{{ route('shipments.create') }}"
+                    <a href="{{ route('shipments.index', ['create' => 1]) }}" 
+                       @if(!$showDrawer) 
+                           x-data="{}" 
+                           x-on:click.prevent="
+                               $dispatch('open-drawer');
+                               window.history.pushState({}, '', '{{ route('shipments.index', ['create' => 1]) }}');
+                           "
+                       @endif
                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Shipment') }}
                     </a>
@@ -182,12 +193,46 @@
         </div>
     </div>
 
+    <!-- Side Drawer for Creating/Editing Shipments -->
+    <x-shipment.drawer :show="$showDrawer" :title="'Add New Shipment'" :formAction="route('shipments.store')">
+        <x-shipment.form :batches="\App\Models\Batch::latest()->limit(100)->get()" />
+    </x-shipment.drawer>
+
     @push('scripts')
         <script>
-            // Initialize any JavaScript components here
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize any JavaScript functionality needed
-                console.log('Shipment index page loaded');
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('shipmentDrawer', () => ({
+                    show: @js($showDrawer),
+                    init() {
+                        // Listen for the open-drawer event
+                        window.addEventListener('open-drawer', () => {
+                            this.show = true;
+                        });
+                        
+                        // Handle browser back/forward buttons
+                        window.addEventListener('popstate', (event) => {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            this.show = urlParams.has('create');
+                        });
+                    },
+                    close() {
+                        this.show = false;
+                        // Update URL without page reload
+                        window.history.pushState({}, '', '{{ route('shipments.index') }}');
+                    }
+                }));
+            });
+
+            // Handle successful form submission
+            document.addEventListener('shipment-created', (event) => {
+                // Close the drawer
+                const drawer = document.querySelector('[x-data^="shipmentDrawer"]');
+                if (drawer) {
+                    drawer.__x.$data.show = false;
+                }
+                
+                // Reload the page to show the new shipment
+                window.location.reload();
             });
         </script>
     @endpush
