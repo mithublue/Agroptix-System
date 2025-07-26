@@ -27,7 +27,6 @@ class ShipmentStoreRequest extends FormRequest
             'co2_estimate' => ['nullable', 'numeric', 'between:-999999.99,999999.99'],
             'departure_time' => ['nullable', 'string'],
             'arrival_time' => ['nullable', 'string'],
-            'batch_as_batch_id' => ['required', 'integer', 'exists:batch_as_batches,id'],
         ];
     }
 }

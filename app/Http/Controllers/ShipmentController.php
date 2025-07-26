@@ -35,13 +35,13 @@ class ShipmentController extends Controller
         // Apply sorting (default to latest first)
         $sortField = $request->input('sort', 'id');
         $sortDirection = $request->input('direction', 'desc');
-        
+
         // Validate sort field to prevent SQL injection
         $validSortFields = ['id', 'origin', 'destination', 'vehicle_type', 'mode', 'departure_time', 'created_at'];
         if (!in_array($sortField, $validSortFields)) {
             $sortField = 'id';
         }
-        
+
         $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
 
         // Paginate the results
@@ -77,7 +77,7 @@ class ShipmentController extends Controller
     {
         try {
             $shipment = Shipment::create($request->validated());
-            
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -89,7 +89,7 @@ class ShipmentController extends Controller
             return redirect()
                 ->route('shipments.index')
                 ->with('success', 'Shipment created successfully!');
-                
+
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -133,7 +133,7 @@ class ShipmentController extends Controller
             // Get the associated batch before deletion
             $batch = $shipment->batch;
             $shipmentId = $shipment->id;
-            
+
             // Log the shipment deletion event
             try {
                 if ($batch) {
@@ -152,7 +152,7 @@ class ShipmentController extends Controller
                         location: 'System',
                         ipAddress: request()->ip()
                     );
-                    
+
                     // Revert batch status to packaged if this was the only shipment
                     $remainingShipments = $batch->shipments()->count();
                     if ($remainingShipments === 1 && $batch->status === Batch::STATUS_SHIPPED) {
@@ -168,7 +168,7 @@ class ShipmentController extends Controller
                 ]);
                 // Continue with deletion even if logging fails
             }
-            
+
             // Delete the shipment
             $shipment->delete();
 
@@ -179,23 +179,23 @@ class ShipmentController extends Controller
                     'batch_status' => $batch->status ?? null
                 ]);
             }
-            
+
             return redirect()->route('shipments.index')
                 ->with('success', 'Shipment deleted successfully');
-                
+
         } catch (\Exception $e) {
             Log::error('Failed to delete shipment: ' . $e->getMessage(), [
                 'shipment_id' => $shipment->id ?? null,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to delete shipment: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()
                 ->with('error', 'Failed to delete shipment: ' . $e->getMessage());
         }
