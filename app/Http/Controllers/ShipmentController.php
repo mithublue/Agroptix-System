@@ -73,35 +73,13 @@ class ShipmentController extends Controller
         return view('shipment.create');
     }
 
-    public function store(ShipmentStoreRequest $request)
+    public function store(ShipmentStoreRequest $request): Response
     {
-        try {
-            $shipment = Shipment::create($request->validated());
-            
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Shipment created successfully',
-                    'redirect' => route('shipments.index')
-                ]);
-            }
+        $shipment = Shipment::create($request->validated());
 
-            return redirect()->route('shipments.index')
-                ->with('success', 'Shipment created successfully');
-                
-        } catch (\Exception $e) {
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create shipment: ' . $e->getMessage(),
-                    'errors' => ['general' => $e->getMessage()]
-                ], 500);
-            }
-            
-            return back()
-                ->withInput()
-                ->withErrors(['error' => 'Failed to create shipment: ' . $e->getMessage()]);
-        }
+        $request->session()->flash('shipment.id', $shipment->id);
+
+        return redirect()->route('shipments.index');
     }
 
     public function show(Request $request, Shipment $shipment): Response
