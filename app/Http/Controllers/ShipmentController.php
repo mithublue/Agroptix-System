@@ -13,10 +13,58 @@ class ShipmentController extends Controller
 {
     public function index(Request $request): View
     {
-        $shipments = Shipment::all();
+        $query = Shipment::with(['batch']);
+
+        // Apply filters
+        if ($request->filled('origin')) {
+            $query->where('origin', 'like', '%' . $request->origin . '%');
+        }
+
+        if ($request->filled('destination')) {
+            $query->where('destination', 'like', '%' . $request->destination . '%');
+        }
+
+        if ($request->filled('vehicle_type')) {
+            $query->where('vehicle_type', $request->vehicle_type);
+        }
+
+        if ($request->filled('mode')) {
+            $query->where('mode', $request->mode);
+        }
+
+        // Apply sorting (default to latest first)
+        $sortField = $request->input('sort', 'id');
+        $sortDirection = $request->input('direction', 'desc');
+        
+        // Validate sort field to prevent SQL injection
+        $validSortFields = ['id', 'origin', 'destination', 'vehicle_type', 'mode', 'departure_time', 'created_at'];
+        if (!in_array($sortField, $validSortFields)) {
+            $sortField = 'id';
+        }
+        
+        $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+
+        // Paginate the results
+        $shipments = $query->paginate(15)->withQueryString();
+
+        // Get unique values for filter dropdowns
+        $vehicleTypes = Shipment::select('vehicle_type')
+            ->whereNotNull('vehicle_type')
+            ->distinct()
+            ->pluck('vehicle_type')
+            ->filter();
+
+        $modes = Shipment::select('mode')
+            ->whereNotNull('mode')
+            ->distinct()
+            ->pluck('mode')
+            ->filter();
 
         return view('shipment.index', [
             'shipments' => $shipments,
+            'vehicleTypes' => $vehicleTypes,
+            'modes' => $modes,
+            'filters' => $request->only(['origin', 'destination', 'vehicle_type', 'mode']),
         ]);
     }
 
