@@ -11,13 +11,7 @@
             <div class="flex space-x-2">
                 @can('create_shipment')
                     <a href="{{ route('shipments.index', ['create' => 1]) }}" 
-                       @if(!$showDrawer) 
-                           x-data="{}" 
-                           x-on:click.prevent="
-                               $dispatch('open-drawer');
-                               window.history.pushState({}, '', '{{ route('shipments.index', ['create' => 1]) }}');
-                           "
-                       @endif
+                       data-action="add-shipment"
                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Shipment') }}
                     </a>
@@ -194,45 +188,214 @@
     </div>
 
     <!-- Side Drawer for Creating/Editing Shipments -->
-    <x-shipment.drawer :show="$showDrawer" :title="'Add New Shipment'" :formAction="route('shipments.store')">
-        <x-shipment.form :batches="\App\Models\Batch::latest()->limit(100)->get()" />
-    </x-shipment.drawer>
+    <div x-data="drawer" x-cloak>
+        <div x-show="isOpen" class="fixed inset-0 overflow-hidden z-50" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+            <div x-show="isOpen" 
+                 x-transition:enter="ease-in-out duration-500"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in-out duration-500"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="close()"
+                 aria-hidden="true">
+            </div>
+
+            <div class="fixed inset-y-0 right-0 max-w-full flex">
+                <div x-show="isOpen"
+                     x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
+                     x-transition:enter-start="translate-x-full"
+                     x-transition:enter-end="translate-x-0"
+                     x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
+                     x-transition:leave-start="translate-x-0"
+                     x-transition:leave-end="translate-x-full"
+                     class="w-screen max-w-2xl">
+                    
+                    <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+                        <div class="flex-1 overflow-y-auto py-6">
+                            <!-- Header -->
+                            <div class="px-4 sm:px-6 border-b border-gray-200 pb-4">
+                                <div class="flex items-start justify-between">
+                                    <h2 class="text-lg font-medium text-gray-900">
+                                        Add New Shipment
+                                    </h2>
+                                    <div class="ml-3 h-7 flex items-center">
+                                        <button type="button" 
+                                                @click="close()"
+                                                class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <span class="sr-only">Close panel</span>
+                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form -->
+                            <div class="mt-6 px-4 sm:px-6">
+                                <form id="shipment-form" 
+                                      action="{{ route('shipments.store') }}" 
+                                      method="POST"
+                                      @submit.prevent="submitForm"
+                                      class="space-y-6">
+                                    @csrf
+                                    <x-shipment.form :batches="\App\Models\Batch::latest()->limit(100)->get()" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @push('scripts')
         <script>
+            // Initialize drawer component
             document.addEventListener('alpine:init', () => {
-                Alpine.data('shipmentDrawer', () => ({
-                    show: @js($showDrawer),
+                Alpine.data('drawer', () => ({
+                    isOpen: @js($showDrawer),
+                    
                     init() {
-                        // Listen for the open-drawer event
-                        window.addEventListener('open-drawer', () => {
-                            this.show = true;
+                        // Handle browser back/forward buttons
+                        window.addEventListener('popstate', () => {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            this.isOpen = urlParams.has('create');
                         });
                         
-                        // Handle browser back/forward buttons
-                        window.addEventListener('popstate', (event) => {
-                            const urlParams = new URLSearchParams(window.location.search);
-                            this.show = urlParams.has('create');
+                        // Close on Escape key
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                this.close();
+                            }
                         });
+                        
+                        // Make the open method available globally
+                        this.$el.openDrawer = this.open.bind(this);
                     },
+                    
+                    open() {
+                        this.isOpen = true;
+                        document.body.style.overflow = 'hidden';
+                        window.history.pushState({}, '', '{{ route('shipments.index', ['create' => 1]) }}');
+                    },
+                    
                     close() {
-                        this.show = false;
-                        // Update URL without page reload
+                        this.isOpen = false;
+                        document.body.style.overflow = '';
                         window.history.pushState({}, '', '{{ route('shipments.index') }}');
+                    },
+                    
+                    async submitForm(event) {
+                        const form = event.target;
+                        const submitButton = form.querySelector('button[type="submit"]');
+                        const originalButtonText = submitButton.innerHTML;
+                        
+                        try {
+                            // Show loading state
+                            submitButton.disabled = true;
+                            submitButton.innerHTML = `
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing...
+                            `;
+                            
+                            const response = await fetch(form.action, {
+                                method: form.method,
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: new FormData(form)
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (response.ok) {
+                                // Show success message
+                                window.dispatchEvent(new CustomEvent('notify', {
+                                    detail: {
+                                        type: 'success',
+                                        message: data.message || 'Shipment created successfully!'
+                                    }
+                                }));
+                                
+                                // Close the drawer
+                                this.close();
+                                
+                                // Reload the page to show the new shipment
+                                window.location.reload();
+                            } else {
+                                // Show error message
+                                window.dispatchEvent(new CustomEvent('notify', {
+                                    detail: {
+                                        type: 'error',
+                                        message: data.message || 'An error occurred. Please try again.'
+                                    }
+                                }));
+                                
+                                // Handle validation errors
+                                if (data.errors) {
+                                    console.error('Validation errors:', data.errors);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    message: 'An unexpected error occurred. Please try again.'
+                                }
+                            }));
+                        } finally {
+                            // Reset button state
+                            submitButton.disabled = false;
+                            submitButton.innerHTML = originalButtonText;
+                        }
                     }
                 }));
             });
-
-            // Handle successful form submission
-            document.addEventListener('shipment-created', (event) => {
-                // Close the drawer
-                const drawer = document.querySelector('[x-data^="shipmentDrawer"]');
-                if (drawer) {
-                    drawer.__x.$data.show = false;
+            
+            // Handle the Add New Shipment button click
+            document.addEventListener('DOMContentLoaded', () => {
+                const addButton = document.querySelector('[data-action="add-shipment"]');
+                if (addButton) {
+                    addButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const drawer = document.querySelector('[x-data]');
+                        if (drawer && drawer.__x && drawer.__x.$data) {
+                            drawer.__x.$data.open();
+                        } else {
+                            // Fallback in case Alpine hasn't fully initialized
+                            window.location.href = '{{ route('shipments.index', ['create' => 1]) }}';
+                        }
+                    });
                 }
                 
-                // Reload the page to show the new shipment
-                window.location.reload();
+                // Handle initial load with create parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('create')) {
+                    const drawer = document.querySelector('[x-data]');
+                    if (drawer && drawer.__x && drawer.__x.$data) {
+                        drawer.__x.$data.open();
+                    }
+                }
+            });
+            
+            // Handle Alpine.js initialization after page load
+            document.addEventListener('alpine:initialized', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('create')) {
+                    const drawer = document.querySelector('[x-data]');
+                    if (drawer && drawer.__x && drawer.__x.$data) {
+                        drawer.__x.$data.open();
+                    }
+                }
             });
         </script>
     @endpush
