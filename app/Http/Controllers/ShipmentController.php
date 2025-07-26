@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShipmentStoreRequest;
 use App\Http\Requests\ShipmentUpdateRequest;
+use App\Models\Batch;
 use App\Models\Shipment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class ShipmentController extends Controller
@@ -127,7 +129,7 @@ class ShipmentController extends Controller
         return redirect()->route('shipments.index');
     }
 
-    public function destroy(Request $request, Shipment $shipment): Response
+    public function destroy(Request $request, Shipment $shipment): RedirectResponse
     {
         try {
             // Get the associated batch before deletion
