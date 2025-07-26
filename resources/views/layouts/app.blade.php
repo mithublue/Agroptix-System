@@ -158,37 +158,6 @@
                         </div>
                     </div>
                     @endcanany
-
-                    <!-- Shipments -->
-                    @canany(['view_shipment', 'create_shipment'])
-                    <div x-data="{ open: {{ request()->is('shipments*') ? 'true' : 'false' }} }">
-                        <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('shipments*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-3 {{ request()->is('shipments*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                Shipments
-                            </div>
-                            <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div x-show="open" class="mt-1 space-y-1" x-collapse>
-                            @can('view_shipment')
-                            <a href="{{ route('shipments.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('shipments.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
-                                View All
-                            </a>
-                            @endcan
-                            @can('create_shipment')
-                            <a href="{{ route('shipments.create') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('shipments.create') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
-                                New Shipment
-                            </a>
-                            @endcan
-                        </div>
-                    </div>
-                    @endcanany
-
-                    <!-- Admin Section -->
                     <!-- Packaging -->
                     @can('view_packaging')
                     <div class="pt-4 mt-4 border-t border-gray-200">
@@ -215,7 +184,34 @@
                         </div>
                     </div>
                     @endcan
-
+                    <!-- Shipments -->
+                    @canany(['view_shipment', 'create_shipment'])
+                        <div x-data="{ open: {{ request()->is('shipments*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('shipments*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 {{ request()->is('shipments*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    Shipments
+                                </div>
+                                <svg :class="{'transform rotate-180': open}" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" class="mt-1 space-y-1" x-collapse>
+                                @can('view_shipment')
+                                    <a href="{{ route('shipments.index') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('shipments.index') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                        View All
+                                    </a>
+                                @endcan
+                                @can('create_shipment')
+                                    <a href="{{ route('shipments.create') }}" class="flex items-center px-4 py-2 pl-11 text-sm rounded-md {{ request()->routeIs('shipments.create') ? 'bg-gray-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                                        New Shipment
+                                    </a>
+                                @endcan
+                            </div>
+                        </div>
+                    @endcanany
                     @canany(['manage_users', 'manage_roles', 'manage_permissions'])
                     <div class="pt-4 mt-4 border-t border-gray-200">
                         <h3 class="px-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">Administration</h3>
@@ -359,7 +355,7 @@
 
     <!-- Scripts Stack -->
     @stack('scripts')
-    
+
     <!-- Alpine.js for sidebar functionality -->
     <script>
         document.addEventListener('alpine:init', () => {
