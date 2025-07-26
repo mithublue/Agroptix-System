@@ -6,16 +6,20 @@
             </h2>
             <div class="flex space-x-2">
                 @can('create_shipment')
-                    <a href="{{ route('shipments.create') }}"
-                       class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <button @click="$dispatch('shipment-form-drawer:show')"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Shipment') }}
-                    </a>
+                    </button>
                 @endcan
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="shipmentIndex()">
+        <!-- Shipment Form Drawer -->
+        <x-shipment.shipment-form-drawer>
+            <x-shipment.shipment-form :batches="\App\Models\Batch::latest()->take(50)->get()" />
+        </x-shipment.shipment-form-drawer>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (session('success'))
                 <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -182,13 +186,31 @@
         </div>
     </div>
 
-    @push('scripts')
-        <script>
-            // Initialize any JavaScript components here
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize any JavaScript functionality needed
-                console.log('Shipment index page loaded');
-            });
-        </script>
-    @endpush
+    <script>
+        function shipmentIndex() {
+            return {
+                init() {
+                    // Listen for the form submission success event
+                    window.addEventListener('shipment-created', (event) => {
+                        // Show success message
+                        const successEvent = new CustomEvent('notify', {
+                            detail: {
+                                type: 'success',
+                                message: event.detail.message || 'Shipment created successfully!'
+                            }
+                        });
+                        window.dispatchEvent(successEvent);
+
+                        // Close the drawer
+                        window.dispatchEvent(new CustomEvent('shipment-form-drawer:close'));
+                        
+                        // Reload the page to show the new shipment
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    });
+                }
+            };
+        }
+    </script>
 </x-app-layout>
