@@ -152,9 +152,11 @@ Route::middleware('auth')->group(function () {
         Route::get('shipments/create', [App\Http\Controllers\ShipmentController::class, 'create'])->name('shipments.create');
         Route::post('shipments', [App\Http\Controllers\ShipmentController::class, 'store'])->name('shipments.store');
     });
+
     Route::middleware(['can:view_shipment'])->group(function () {
         Route::get('shipments', [App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('shipments/{shipment}', [App\Http\Controllers\ShipmentController::class, 'show'])->name('shipments.show');
+        Route::post('shipments/render-details', [App\Http\Controllers\ShipmentController::class, 'renderDetails'])->name('shipments.render-details');
     });
 
     Route::middleware(['can:edit_shipment'])->group(function () {

@@ -122,6 +122,33 @@ class ShipmentController extends Controller
         return view('shipment.show', compact('shipment'));
     }
 
+    /**
+     * Render shipment details as HTML
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function renderDetails(Request $request)
+    {
+        $shipment = $request->input('shipment');
+
+        if (empty($shipment)) {
+            return response()->json(['error' => 'No shipment data provided'], 400);
+        }
+
+        try {
+            $html = view('components.shipment.shipment-details', [
+                'shipment' => $shipment
+            ])->render();
+
+            return response($html);
+
+        } catch (\Exception $e) {
+            \Log::error('Error rendering shipment details: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to render shipment details'], 500);
+        }
+    }
+
     public function edit(Request $request, Shipment $shipment): Response
     {
         return view('shipment.edit', [

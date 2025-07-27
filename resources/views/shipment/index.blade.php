@@ -51,9 +51,10 @@
                             </div>
 
                             <div class="mt-8">
-                                <div class="space-y-4" x-html="shipmentDetails">
-                                    <!-- Shipment details will be loaded here -->
+                                <div x-show="isLoading">
+                                    <x-shipment.loading-state />
                                 </div>
+                                <div x-show="!isLoading" x-html="shipmentDetails"></div>
                             </div>
                         </div>
                     </div>
@@ -253,12 +254,19 @@
         function shipmentIndex() {
             return {
                 showViewDrawer: false,
+                isLoading: false,
                 shipmentDetails: '',
+                currentShipment: null,
                 
                 async viewShipment(shipmentId) {
                     try {
-                        // Show loading state
-                        this.shipmentDetails = '<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>';
+                        // Reset state
+                        this.isLoading = true;
+                        this.shipmentDetails = '';
+                        this.currentShipment = null;
+                        
+                        // Show the drawer immediately
+                        this.showViewDrawer = true;
                         
                         // Fetch shipment data
                         const response = await fetch(`{{ route('shipments.show', '') }}/${shipmentId}`, {
@@ -274,71 +282,24 @@
                         }
                         
                         const { data: shipment } = await response.json();
+                        this.currentShipment = shipment;
                         
-                        // Format the shipment details
-                        this.shipmentDetails = `
-                            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                                <div class="px-4 py-5 sm:px-6 bg-gray-50">
-                                    <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                        Shipment #${shipment.id}
-                                    </h3>
-                                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                                        Details and information about this shipment
-                                    </p>
-                                </div>
-                                <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
-                                    <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Batch</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.batch ? shipment.batch.name : 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Origin</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.origin || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Destination</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.destination || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Vehicle Type</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.vehicle_type || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Mode</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.mode || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Fuel Type</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.fuel_type || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Route Distance (km)</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.route_distance || 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">CO2 Estimate</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.co2_estimate ? shipment.co2_estimate.toFixed(2) : 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Departure Time</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.departure_time ? new Date(shipment.departure_time).toLocaleString() : 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-1">
-                                            <dt class="text-sm font-medium text-gray-500">Arrival Time</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">${shipment.arrival_time ? new Date(shipment.arrival_time).toLocaleString() : 'N/A'}</dd>
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <dt class="text-sm font-medium text-gray-500">Notes</dt>
-                                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">${shipment.notes || 'No notes available'}</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                            </div>
-                        `;
+                        // Render the shipment details using the Blade component
+                        const responseHtml = await fetch('{{ route("shipments.render-details") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ shipment })
+                        });
                         
-                        // Show the drawer
-                        this.showViewDrawer = true;
+                        if (!responseHtml.ok) {
+                            throw new Error('Failed to render shipment details');
+                        }
+                        
+                        this.shipmentDetails = await responseHtml.text();
                         
                     } catch (error) {
                         console.error('Error fetching shipment:', error);
@@ -364,7 +325,8 @@
                                 </div>
                             </div>
                         `;
-                        this.showViewDrawer = true;
+                    } finally {
+                        this.isLoading = false;
                     }
                 },
                 
