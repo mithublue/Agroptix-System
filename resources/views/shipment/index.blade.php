@@ -20,19 +20,28 @@
         <x-shipment.shipment-form-drawer>
             <x-shipment.shipment-form :batches="\App\Models\Batch::latest()->take(50)->get()" />
         </x-shipment.shipment-form-drawer>
-        
+
         <!-- Shipment Show Drawer -->
-        <div x-show="showViewDrawer" 
-             @click.away="showViewDrawer = false"
+        <div x-show="showViewDrawer"
              class="fixed inset-0 overflow-hidden z-50"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
              x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-            <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+        >
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="showViewDrawer = false"
+                 aria-hidden="true"></div>
+            <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex"
+                 x-on:click.away.stop
+                 x-on:keydown.escape.window="showViewDrawer = false"
+                 x-show="showViewDrawer"
+                 x-transition:enter="transform transition ease-in-out duration-300 sm:duration-500"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in-out duration-300 sm:duration-500"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full">
                 <div class="relative w-screen max-w-2xl">
                     <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
                         <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
@@ -195,15 +204,15 @@
                                                 @endcan
                                                 @can('delete_shipment')
                                                     <div class="inline-flex items-center" x-data="{ showConfirm: false }">
-                                                        <button x-show="!showConfirm" 
-                                                                @click="showConfirm = true" 
+                                                        <button x-show="!showConfirm"
+                                                                @click="showConfirm = true"
                                                                 class="text-red-600 hover:text-red-900"
                                                                 type="button">
                                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                             </svg>
                                                         </button>
-                                                        <div x-show="showConfirm" 
+                                                        <div x-show="showConfirm"
                                                              x-transition:enter="transition ease-out duration-100"
                                                              x-transition:enter-start="opacity-0 scale-95"
                                                              x-transition:enter-end="opacity-100 scale-100"
@@ -257,17 +266,17 @@
                 isLoading: false,
                 shipmentDetails: '',
                 currentShipment: null,
-                
+
                 async viewShipment(shipmentId) {
                     try {
                         // Reset state
                         this.isLoading = true;
                         this.shipmentDetails = '';
                         this.currentShipment = null;
-                        
+
                         // Show the drawer immediately
                         this.showViewDrawer = true;
-                        
+
                         // Fetch shipment data
                         const response = await fetch(`{{ route('shipments.show', '') }}/${shipmentId}`, {
                             headers: {
@@ -276,14 +285,14 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
                         });
-                        
+
                         if (!response.ok) {
                             throw new Error('Failed to fetch shipment details');
                         }
-                        
+
                         const { data: shipment } = await response.json();
                         this.currentShipment = shipment;
-                        
+
                         // Render the shipment details using the Blade component
                         const responseHtml = await fetch('{{ route("shipments.render-details") }}', {
                             method: 'POST',
@@ -294,13 +303,13 @@
                             },
                             body: JSON.stringify({ shipment })
                         });
-                        
+
                         if (!responseHtml.ok) {
                             throw new Error('Failed to render shipment details');
                         }
-                        
+
                         this.shipmentDetails = await responseHtml.text();
-                        
+
                     } catch (error) {
                         console.error('Error fetching shipment:', error);
                         this.shipmentDetails = `
@@ -329,24 +338,24 @@
                         this.isLoading = false;
                     }
                 },
-                
+
                 resetForm() {
                     const form = document.getElementById('shipment-form');
                     if (form) {
                         // Reset form fields
                         form.reset();
-                        
+
                         // Remove _method field if it exists
                         const methodInput = form.querySelector('input[name="_method"]');
                         if (methodInput) {
                             methodInput.remove();
                         }
-                        
+
                         // Reset form action to create route
                         form.action = '{{ route('shipments.store') }}';
                     }
                 },
-                
+
                 init() {
                     // Handle Add New Shipment button click
                     document.querySelectorAll('.add-shipment-btn').forEach(button => {
@@ -354,7 +363,7 @@
                             this.resetForm();
                         });
                     });
-                    
+
                     // Also handle the "Create one now" link if it exists
                     const createLink = document.querySelector('a[onclick*="shipment-form-drawer:show"]');
                     if (createLink) {
@@ -412,7 +421,7 @@
                         // Update form action and method
                         const form = document.getElementById('shipment-form');
                         form.action = `{{ route('shipments.update', '') }}/${shipmentId}`;
-                        
+
                         // Add or update _method field for PUT
                         let methodInput = form.querySelector('input[name="_method"]');
                         if (!methodInput) {
