@@ -242,7 +242,16 @@
                         // Update form action and method
                         const form = document.getElementById('shipment-form');
                         form.action = `{{ route('shipments.update', '') }}/${shipmentId}`;
-                        form._method = 'PUT';
+                        
+                        // Add or update _method field for PUT
+                        let methodInput = form.querySelector('input[name="_method"]');
+                        if (!methodInput) {
+                            methodInput = document.createElement('input');
+                            methodInput.type = 'hidden';
+                            methodInput.name = '_method';
+                            form.appendChild(methodInput);
+                        }
+                        methodInput.value = 'PUT';
 
                         // Set form values
                         if (form) {

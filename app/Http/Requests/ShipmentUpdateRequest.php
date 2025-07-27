@@ -20,7 +20,7 @@ class ShipmentUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['nullable', 'integer', 'exists:batches,,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'origin' => ['nullable', 'string'],
             'destination' => ['nullable', 'string'],
             'vehicle_type' => ['nullable', 'string'],
