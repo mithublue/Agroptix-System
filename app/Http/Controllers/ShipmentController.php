@@ -106,10 +106,11 @@ class ShipmentController extends Controller
         }
     }
 
-    public function show(Request $request, Shipment $shipment): Response
+    public function show(Shipment $shipment)
     {
-        return view('shipment.show', [
-            'shipment' => $shipment,
+        return response()->json([
+            'success' => true,
+            'data' => $shipment->load('batch')
         ]);
     }
 

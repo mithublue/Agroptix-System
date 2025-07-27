@@ -144,11 +144,13 @@
                                                     </a>
                                                 @endcan
                                                 @can('edit_shipment')
-                                                    <a href="{{ route('shipments.edit', $shipment) }}" class="text-yellow-600 hover:text-yellow-900">
+                                                    <button type="button"
+                                                            class="text-indigo-600 hover:text-indigo-900 edit-shipment"
+                                                            data-id="{{ $shipment->id }}">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                 @endcan
                                                 @can('delete_shipment')
                                                     <form action="{{ route('shipments.destroy', $shipment) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this shipment?');">
@@ -209,6 +211,89 @@
                             window.location.reload();
                         }, 500);
                     });
+
+                    // Handle edit button clicks
+                    document.querySelectorAll('.edit-shipment').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const shipmentId = button.dataset.id;
+                            this.editShipment(shipmentId);
+                        });
+                    });
+                },
+
+                async editShipment(shipmentId) {
+                    try {
+                        // Show loading state
+                        const response = await fetch(`{{ route('shipments.show', '') }}/${shipmentId}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch shipment data');
+                        }
+
+                        const { data: shipment } = await response.json();
+
+                        // Update form action and method
+                        const form = document.getElementById('shipment-form');
+                        form.action = `/shipments/${shipmentId}`;
+                        form._method = 'PUT';
+
+                        // Set form values
+                        if (form) {
+                            // Set basic fields
+                            const fields = [
+                                'batch_id', 'origin', 'destination', 'vehicle_type', 'mode',
+                                'fuel_type', 'temperature', 'route_distance', 'notes'
+                            ];
+
+                            fields.forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    if (input.type === 'checkbox') {
+                                        input.checked = shipment[field];
+                                    } else {
+                                        input.value = shipment[field] || '';
+                                    }
+                                }
+                            });
+
+                            // Set datetime fields
+                            const dateFields = ['departure_time', 'arrival_time'];
+                            dateFields.forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input && shipment[field]) {
+                                    const date = new Date(shipment[field]);
+                                    input.value = date.toISOString().slice(0, 16);
+                                }
+                            });
+
+                            // Set status if exists
+                            if (shipment.status) {
+                                const statusSelect = form.querySelector('[name="status"]');
+                                if (statusSelect) {
+                                    statusSelect.value = shipment.status;
+                                }
+                            }
+                        }
+
+                        // Show the drawer
+                        window.dispatchEvent(new CustomEvent('shipment-form-drawer:show'));
+
+                    } catch (error) {
+                        console.error('Error fetching shipment data:', error);
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: {
+                                type: 'error',
+                                message: 'Failed to load shipment data. Please try again.'
+                            }
+                        }));
+                    }
                 }
             };
         }
