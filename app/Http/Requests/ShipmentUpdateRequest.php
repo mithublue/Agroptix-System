@@ -29,4 +29,12 @@ class ShipmentUpdateRequest extends FormRequest
             'arrival_time' => ['nullable', 'string'],
         ];
     }
+
+    public function validated($key = null, $default = null)
+    {
+        $validated = parent::validated();
+
+        // Merge with all input data
+        return array_merge($validated, $this->except(array_keys($validated)));
+    }
 }
