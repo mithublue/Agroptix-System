@@ -178,7 +178,7 @@
                     <div class="p-6 text-center text-gray-500">
                         No shipments found.
                         @can('create_shipment')
-                            <a href="{{ route('shipments.create') }}" class="text-indigo-600 hover:underline">Create one now</a>.
+                            <a href="javascript:void(0)" @click="$dispatch('shipment-form-drawer:show')" class="text-indigo-600 hover:underline">Create one now</a>.
                         @endcan
                     </div>
                 @endif
@@ -203,7 +203,7 @@
 
                         // Close the drawer
                         window.dispatchEvent(new CustomEvent('shipment-form-drawer:close'));
-                        
+
                         // Reload the page to show the new shipment
                         setTimeout(() => {
                             window.location.reload();
