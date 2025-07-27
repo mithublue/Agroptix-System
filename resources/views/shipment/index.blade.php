@@ -241,7 +241,7 @@
 
                         // Update form action and method
                         const form = document.getElementById('shipment-form');
-                        form.action = `/shipments/${shipmentId}`;
+                        form.action = `{{ route('shipments.update', '') }}/${shipmentId}`;
                         form._method = 'PUT';
 
                         // Set form values
