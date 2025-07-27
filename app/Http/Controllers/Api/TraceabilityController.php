@@ -91,22 +91,36 @@ class TraceabilityController extends Controller
                 ipAddress: $validated['ip_address'] ?? $request->ip()
             );
             
+            // Map any legacy event types to the current ones
+            $eventTypeMap = [
+                'qc' => TraceEvent::TYPE_QC_PENDING,
+                'qc_approval' => TraceEvent::TYPE_QC_APPROVED,
+                'shipping' => TraceEvent::TYPE_SHIPPED,
+                'delivery' => TraceEvent::TYPE_DELIVERED,
+                'packaging' => TraceEvent::TYPE_PACKAGED
+            ];
+            
+            $eventType = $validated['event_type'];
+            $mappedEventType = $eventTypeMap[$eventType] ?? $eventType;
+            
             // Update batch status based on event type if needed
-            if (in_array($validated['event_type'], [
+            if (in_array($mappedEventType, [
                 TraceEvent::TYPE_HARVEST,
                 TraceEvent::TYPE_PROCESSING,
-                TraceEvent::TYPE_QC,
-                TraceEvent::TYPE_PACKAGING,
-                TraceEvent::TYPE_SHIPPING,
-                TraceEvent::TYPE_DELIVERY,
+                TraceEvent::TYPE_QC_PENDING,
+                TraceEvent::TYPE_QC_APPROVED,
+                TraceEvent::TYPE_PACKAGED,
+                TraceEvent::TYPE_SHIPPED,
+                TraceEvent::TYPE_DELIVERED,
             ])) {
                 $statusMap = [
                     TraceEvent::TYPE_HARVEST => Batch::STATUS_HARVESTED,
                     TraceEvent::TYPE_PROCESSING => Batch::STATUS_PROCESSING,
-                    TraceEvent::TYPE_QC => Batch::STATUS_QC_PENDING,
-                    TraceEvent::TYPE_PACKAGING => Batch::STATUS_PACKAGING,
-                    TraceEvent::TYPE_SHIPPING => Batch::STATUS_SHIPPED,
-                    TraceEvent::TYPE_DELIVERY => Batch::STATUS_DELIVERED,
+                    TraceEvent::TYPE_QC_PENDING => Batch::STATUS_QC_PENDING,
+                    TraceEvent::TYPE_QC_APPROVED => Batch::STATUS_QC_APPROVED,
+                    TraceEvent::TYPE_PACKAGED => Batch::STATUS_PACKAGED,
+                    TraceEvent::TYPE_SHIPPED => Batch::STATUS_SHIPPED,
+                    TraceEvent::TYPE_DELIVERED => Batch::STATUS_DELIVERED,
                 ];
                 
                 if (isset($statusMap[$validated['event_type']])) {
@@ -246,15 +260,30 @@ class TraceabilityController extends Controller
                 'metadata' => $validated['metadata'] ?? [],
             ];
             
+            // Map any legacy event types to the current ones
+            $eventTypeMap = [
+                'qc' => TraceEvent::TYPE_QC_PENDING,
+                'qc_approval' => TraceEvent::TYPE_QC_APPROVED,
+                'shipping' => TraceEvent::TYPE_SHIPPED,
+                'delivery' => TraceEvent::TYPE_DELIVERED,
+                'packaging' => TraceEvent::TYPE_PACKAGED
+            ];
+            
+            $mappedEventType = $eventTypeMap[$eventType] ?? $eventType;
+            
+            // Add location and other metadata to the event data
+            $eventData = array_merge($eventData, [
+                'location' => $location,
+                'ip_address' => $request->ip(),
+                'timestamp' => $validated['timestamp'] ?? now()->toDateTimeString()
+            ]);
+            
             // Log the scan event
             $event = $this->traceabilityService->logEvent(
                 batch: $batch,
-                eventType: $eventType,
+                eventType: $mappedEventType,
                 actor: Auth::user(),
-                data: $eventData,
-                location: $location,
-                ipAddress: $request->ip(),
-                timestamp: $validated['timestamp'] ?? null
+                data: $eventData
             );
             
             // Update batch status based on event type if needed
@@ -298,18 +327,32 @@ class TraceabilityController extends Controller
      */
     protected function updateBatchStatusOnScan(Batch $batch, string $eventType): array
     {
+        // Map any legacy event types to the current ones
+        $eventTypeMap = [
+            'qc' => TraceEvent::TYPE_QC_PENDING,
+            'qc_approval' => TraceEvent::TYPE_QC_APPROVED,
+            'shipping' => TraceEvent::TYPE_SHIPPED,
+            'delivery' => TraceEvent::TYPE_DELIVERED,
+            'packaging' => TraceEvent::TYPE_PACKAGED
+        ];
+        
+        $mappedEventType = $eventTypeMap[$eventType] ?? $eventType;
+        
         $statusMap = [
             TraceEvent::TYPE_HARVEST => Batch::STATUS_HARVESTED,
             TraceEvent::TYPE_PROCESSING => Batch::STATUS_PROCESSING,
-            TraceEvent::TYPE_QC => Batch::STATUS_QC_PENDING,
-            TraceEvent::TYPE_QC_APPROVAL => Batch::STATUS_QC_APPROVED,
+            TraceEvent::TYPE_QC_PENDING => Batch::STATUS_QC_PENDING,
+            TraceEvent::TYPE_QC_APPROVED => Batch::STATUS_QC_APPROVED,
+            TraceEvent::TYPE_QC_REJECTED => Batch::STATUS_QC_REJECTED,
             TraceEvent::TYPE_PACKAGED => Batch::STATUS_PACKAGED,
-            TraceEvent::TYPE_SHIPPING => Batch::STATUS_SHIPPED,
-            TraceEvent::TYPE_DELIVERY => Batch::STATUS_DELIVERED,
+            TraceEvent::TYPE_SHIPPED => Batch::STATUS_SHIPPED,
+            TraceEvent::TYPE_DELIVERED => Batch::STATUS_DELIVERED,
+            TraceEvent::TYPE_QUARANTINE => Batch::STATUS_QUARANTINED,
+            TraceEvent::TYPE_DISPOSED => Batch::STATUS_DISPOSED,
         ];
         
-        if (isset($statusMap[$eventType])) {
-            $newStatus = $statusMap[$eventType];
+        if (isset($statusMap[$mappedEventType])) {
+            $newStatus = $statusMap[$mappedEventType];
             
             // Only update if the status is different
             if ($batch->status !== $newStatus) {
@@ -320,16 +363,16 @@ class TraceabilityController extends Controller
                 // Log the status change
                 $this->traceabilityService->logEvent(
                     batch: $batch,
-                    eventType: 'status_changed',
+                    eventType: TraceEvent::TYPE_PROCESSING, // Using PROCESSING for status changes
                     actor: Auth::user(),
                     data: [
                         'old_status' => $oldStatus,
                         'new_status' => $newStatus,
                         'triggered_by' => 'scan_event',
-                        'event_type' => $eventType,
-                    ],
-                    location: 'System',
-                    ipAddress: request()->ip()
+                        'event_type' => $mappedEventType,
+                        'location' => 'System',
+                        'ip_address' => request()->ip()
+                    ]
                 );
                 
                 return [
