@@ -83,7 +83,7 @@ class SourceController extends Controller
         return view('source.create', compact('users', 'userOwners'));
     }
 
-    public function store(SourceStoreRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', Source::class);
 
@@ -100,7 +100,7 @@ class SourceController extends Controller
         if (!$formRequest->authorize()) {
             abort(403, 'This action is unauthorized.');
         }
-        
+
         // 3. Get the validation rules from your Form Request class.
         $rules = $formRequest->rules();
 
