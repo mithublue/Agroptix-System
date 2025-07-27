@@ -4,7 +4,71 @@
             {{ __('Products') }}
         </h2>
     </x-slot>
-    <div class="container mx-auto px-4 py-8">
+
+    @push('scripts')
+    <script>
+        function productIndex() {
+            return {
+                showViewDrawer: false,
+                isLoading: false,
+                productDetails: '',
+                currentProduct: null,
+
+                async viewProduct(productId) {
+                    try {
+                        // Reset state
+                        this.isLoading = true;
+                        this.productDetails = '';
+                        this.currentProduct = null;
+
+                        // Show the drawer immediately
+                        this.showViewDrawer = true;
+
+                        // Fetch product data
+                        const response = await fetch(`{{ route('products.show', '') }}/${productId}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch product details');
+                        }
+
+                        const { data: product } = await response.json();
+                        this.currentProduct = product;
+
+                        // Create a temporary div to render the component
+                        const tempDiv = document.createElement('div');
+
+                        // Use the product-details component with the product data
+                        tempDiv.innerHTML = `
+                            <x-product.product-details :product="${JSON.stringify(product).replace(/"/g, '&quot;')}" />
+                        `;
+
+                        this.productDetails = tempDiv.innerHTML;
+
+                    } catch (error) {
+                        console.error('Error fetching product:', error);
+                        this.productDetails = `
+                            <div class="p-4 text-red-600">
+                                <p>Error loading product details. Please try again.</p>
+                                <button @click="viewProduct(${productId})" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+                                    Retry
+                                </button>
+                            </div>
+                        `;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            };
+        }
+    </script>
+    @endpush
+    <div class="container mx-auto px-4 py-8" x-data="productIndex()">
         @if (session('success'))
             <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
                 <p>{{ session('success') }}</p>
@@ -27,7 +91,7 @@
                 <!-- Min Price -->
                 <div>
                     <label for="min_price" class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
-                    <input type="number" id="min_price" name="min_price" 
+                    <input type="number" id="min_price" name="min_price"
                            value="{{ request('min_price') }}" step="0.01" min="0"
                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                            placeholder="Min price">
@@ -36,7 +100,7 @@
                 <!-- Max Price -->
                 <div>
                     <label for="max_price" class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
-                    <input type="number" id="max_price" name="max_price" 
+                    <input type="number" id="max_price" name="max_price"
                            value="{{ request('max_price') }}" step="0.01" min="0"
                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                            placeholder="Max price">
@@ -182,7 +246,12 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex space-x-2">
                                 @can('view_product')
-                                <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                                <button @click="viewProduct({{ $product->id }})" class="text-blue-600 hover:text-blue-900">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
                                 @endcan
 
                                 @can('edit_product')
@@ -212,5 +281,53 @@
             </div>
         @endif
     </div>
-</div>
+        <!-- Product Details Drawer -->
+        <div x-show="showViewDrawer"
+             class="fixed inset-0 overflow-hidden z-50"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:leave="transition ease-in duration-200"
+        >
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="showViewDrawer = false"
+                 aria-hidden="true"></div>
+            <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex"
+                 x-on:click.away.stop
+                 x-on:keydown.escape.window="showViewDrawer = false"
+                 x-show="showViewDrawer"
+                 x-transition:enter="transform transition ease-in-out duration-300 sm:duration-500"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in-out duration-300 sm:duration-500"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full">
+                <div class="relative w-screen max-w-2xl">
+                    <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+                        <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
+                            <div class="flex items-start justify-between">
+                                <h2 class="text-lg font-medium text-gray-900" id="slide-over-title">
+                                    Product Details
+                                </h2>
+                                <div class="ml-3 h-7 flex items-center">
+                                    <button @click="showViewDrawer = false" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <span class="sr-only">Close panel</span>
+                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-8">
+                                <div x-show="isLoading">
+                                    <x-product.loading-state />
+                                </div>
+                                <div x-show="!isLoading" x-html="productDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
