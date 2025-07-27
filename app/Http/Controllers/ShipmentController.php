@@ -120,7 +120,7 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function update(ShipmentUpdateRequest $request, Shipment $shipment): Response
+    public function update(ShipmentUpdateRequest $request, Shipment $shipment): RedirectResponse
     {
         $shipment->update($request->validated());
 
