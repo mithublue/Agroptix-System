@@ -23,6 +23,10 @@ class Shipment extends Model
         'co2_estimate',
         'departure_time',
         'arrival_time',
+        'fuel_type',
+        'temperature',
+        'mode',
+        'route_distance',
     ];
 
     /**

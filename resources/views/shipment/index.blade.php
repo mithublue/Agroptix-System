@@ -7,7 +7,7 @@
             <div class="flex space-x-2">
                 @can('create_shipment')
                     <button @click="$dispatch('shipment-form-drawer:show')"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            class="add-shipment-btn inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Shipment') }}
                     </button>
                 @endcan
@@ -191,7 +191,38 @@
     <script>
         function shipmentIndex() {
             return {
+                resetForm() {
+                    const form = document.getElementById('shipment-form');
+                    if (form) {
+                        // Reset form fields
+                        form.reset();
+                        
+                        // Remove _method field if it exists
+                        const methodInput = form.querySelector('input[name="_method"]');
+                        if (methodInput) {
+                            methodInput.remove();
+                        }
+                        
+                        // Reset form action to create route
+                        form.action = '{{ route('shipments.store') }}';
+                    }
+                },
+                
                 init() {
+                    // Handle Add New Shipment button click
+                    document.querySelectorAll('.add-shipment-btn').forEach(button => {
+                        button.addEventListener('click', () => {
+                            this.resetForm();
+                        });
+                    });
+                    
+                    // Also handle the "Create one now" link if it exists
+                    const createLink = document.querySelector('a[onclick*="shipment-form-drawer:show"]');
+                    if (createLink) {
+                        createLink.addEventListener('click', () => {
+                            this.resetForm();
+                        });
+                    }
                     // Listen for the form submission success event
                     window.addEventListener('shipment-created', (event) => {
                         // Show success message
