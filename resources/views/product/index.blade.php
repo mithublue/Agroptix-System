@@ -40,15 +40,61 @@
                         const { data: product } = await response.json();
                         this.currentProduct = product;
 
-                        // Create a temporary div to render the component
-                        const tempDiv = document.createElement('div');
+                        // Create HTML for the product details
+                        const formatDate = (dateString) => {
+                            if (!dateString) return 'N/A';
+                            const date = new Date(dateString);
+                            return date.toLocaleDateString();
+                        };
 
-                        // Use the product-details component with the product data
-                        tempDiv.innerHTML = `
-                            <x-product.product-details :product="${JSON.stringify(product).replace(/"/g, '&quot;')}" />
+                        const statusBadge = product.is_active ?
+                            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>' :
+                            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>';
+
+                        this.productDetails = `
+                            <div class="space-y-4">
+                                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                                    <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                            ${product.name || 'Product Details'}
+                                        </h3>
+                                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                                            Details and information about this product
+                                        </p>
+                                    </div>
+                                    <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                                        <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                                            <div class="sm:col-span-1">
+                                                <dt class="text-sm font-medium text-gray-500">Name</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">${product.name || 'N/A'}</dd>
+                                            </div>
+                                            <div class="sm:col-span-1">
+                                                <dt class="text-sm font-medium text-gray-500">SKU</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">${product.sku || 'N/A'}</dd>
+                                            </div>
+                                            <div class="sm:col-span-1">
+                                                <dt class="text-sm font-medium text-gray-500">Price</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">
+                                                    ${product.price ? '$' + parseFloat(product.price).toFixed(2) : 'N/A'}
+                                                </dd>
+                                            </div>
+                                            <div class="sm:col-span-1">
+                                                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                                <dd class="mt-1 text-sm">
+                                                    ${statusBadge}
+                                                </dd>
+                                            </div>
+                                            <div class="sm:col-span-2">
+                                                <dt class="text-sm font-medium text-gray-500">Description</dt>
+                                                <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+                                                    ${product.description || 'No description available'}
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
                         `;
-
-                        this.productDetails = tempDiv.innerHTML;
 
                     } catch (error) {
                         console.error('Error fetching product:', error);
@@ -286,8 +332,7 @@
              class="fixed inset-0 overflow-hidden z-50"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
-             x-transition:leave="transition ease-in duration-200"
-        >
+             x-transition:leave="transition ease-in duration-200">
             <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                  @click="showViewDrawer = false"
                  aria-hidden="true"></div>
