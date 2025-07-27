@@ -437,7 +437,7 @@
                             // Set basic fields
                             const fields = [
                                 'batch_id', 'origin', 'destination', 'vehicle_type', 'mode',
-                                'fuel_type', 'temperature', 'route_distance', 'notes'
+                                'fuel_type', 'temperature', 'route_distance', 'co2_estimate', 'notes'
                             ];
 
                             fields.forEach(field => {
