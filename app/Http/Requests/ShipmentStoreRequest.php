@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ShipmentStoreRequest extends FormRequest
+class ShipmentStoreRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -28,13 +28,5 @@ class ShipmentStoreRequest extends FormRequest
             'departure_time' => ['nullable', 'string'],
             'arrival_time' => ['nullable', 'string'],
         ];
-    }
-
-    public function validated($key = null, $default = null)
-    {
-        $validated = parent::validated();
-
-        // Merge with all input data
-        return array_merge($validated, $this->except(array_keys($validated)));
     }
 }
