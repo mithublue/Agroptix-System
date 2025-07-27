@@ -20,6 +20,46 @@
         <x-shipment.shipment-form-drawer>
             <x-shipment.shipment-form :batches="\App\Models\Batch::latest()->take(50)->get()" />
         </x-shipment.shipment-form-drawer>
+        
+        <!-- Shipment Show Drawer -->
+        <div x-show="showViewDrawer" 
+             @click.away="showViewDrawer = false"
+             class="fixed inset-0 overflow-hidden z-50"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+                <div class="relative w-screen max-w-2xl">
+                    <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+                        <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
+                            <div class="flex items-start justify-between">
+                                <h2 class="text-lg font-medium text-gray-900" id="slide-over-title">
+                                    Shipment Details
+                                </h2>
+                                <div class="ml-3 h-7 flex items-center">
+                                    <button @click="showViewDrawer = false" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <span class="sr-only">Close panel</span>
+                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-8">
+                                <div class="space-y-4" x-html="shipmentDetails">
+                                    <!-- Shipment details will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (session('success'))
                 <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -136,12 +176,12 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-2">
                                                 @can('view_shipment')
-                                                    <a href="{{ route('shipments.show', $shipment) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                    <button @click="viewShipment({{ $shipment->id }})" class="text-indigo-600 hover:text-indigo-900">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                 @endcan
                                                 @can('edit_shipment')
                                                     <button type="button"
@@ -212,6 +252,122 @@
     <script>
         function shipmentIndex() {
             return {
+                showViewDrawer: false,
+                shipmentDetails: '',
+                
+                async viewShipment(shipmentId) {
+                    try {
+                        // Show loading state
+                        this.shipmentDetails = '<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>';
+                        
+                        // Fetch shipment data
+                        const response = await fetch(`{{ route('shipments.show', '') }}/${shipmentId}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch shipment details');
+                        }
+                        
+                        const { data: shipment } = await response.json();
+                        
+                        // Format the shipment details
+                        this.shipmentDetails = `
+                            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                                <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                        Shipment #${shipment.id}
+                                    </h3>
+                                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                                        Details and information about this shipment
+                                    </p>
+                                </div>
+                                <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                                    <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Batch</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.batch ? shipment.batch.name : 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Origin</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.origin || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Destination</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.destination || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Vehicle Type</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.vehicle_type || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Mode</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.mode || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Fuel Type</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.fuel_type || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Route Distance (km)</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.route_distance || 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">CO2 Estimate</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.co2_estimate ? shipment.co2_estimate.toFixed(2) : 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Departure Time</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.departure_time ? new Date(shipment.departure_time).toLocaleString() : 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <dt class="text-sm font-medium text-gray-500">Arrival Time</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">${shipment.arrival_time ? new Date(shipment.arrival_time).toLocaleString() : 'N/A'}</dd>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">${shipment.notes || 'No notes available'}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Show the drawer
+                        this.showViewDrawer = true;
+                        
+                    } catch (error) {
+                        console.error('Error fetching shipment:', error);
+                        this.shipmentDetails = `
+                            <div class="rounded-md bg-red-50 p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">Error loading shipment details</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            <p>${error.message || 'An unknown error occurred while loading the shipment details.'}</p>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button @click="viewShipment(${shipmentId})" class="rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50">
+                                                Try again
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        this.showViewDrawer = true;
+                    }
+                },
+                
                 resetForm() {
                     const form = document.getElementById('shipment-form');
                     if (form) {

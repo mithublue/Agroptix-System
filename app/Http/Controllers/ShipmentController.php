@@ -106,12 +106,20 @@ class ShipmentController extends Controller
         }
     }
 
-    public function show(Shipment $shipment)
+    public function show(Request $request, Shipment $shipment)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $shipment->load('batch')
-        ]);
+        $this->authorize('view_shipment', $shipment);
+
+        $shipment->load('batch');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $shipment
+            ]);
+        }
+
+        return view('shipment.show', compact('shipment'));
     }
 
     public function edit(Request $request, Shipment $shipment): Response
