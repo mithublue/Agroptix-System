@@ -72,11 +72,13 @@ class ShipmentController extends Controller
 
     public function create(Request $request): Response
     {
+        $this->authorize('create_shipment');
         return view('shipment.create');
     }
 
     public function store(ShipmentStoreRequest $request)
     {
+        $this->authorize('create_shipment');
         try {
             $shipment = Shipment::create($request->validated());
 
@@ -151,6 +153,7 @@ class ShipmentController extends Controller
 
     public function edit(Request $request, Shipment $shipment): Response
     {
+        $this->authorize('edit_shipment', $shipment);
         return view('shipment.edit', [
             'shipment' => $shipment,
         ]);
@@ -158,6 +161,9 @@ class ShipmentController extends Controller
 
     public function update(ShipmentUpdateRequest $request, Shipment $shipment): RedirectResponse
     {
+
+        $this->authorize('edit_shipment', $shipment);
+
         $shipment->update($request->validated());
 
         $request->session()->flash('shipment.id', $shipment->id);
@@ -167,6 +173,7 @@ class ShipmentController extends Controller
 
     public function destroy(Request $request, Shipment $shipment): RedirectResponse
     {
+        $this->authorize('delete_shipment', $shipment);
         try {
             // Get the associated batch before deletion
             $batch = $shipment->batch;
