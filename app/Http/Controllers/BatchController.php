@@ -257,14 +257,14 @@ class BatchController extends Controller
                 try {
                     $this->traceabilityService->logEvent(
                         batch: $batch,
-                        eventType: TraceEvent::TYPE_BATCH_UPDATED,
+                        eventType: TraceEvent::TYPE_PROCESSING, // Using PROCESSING as the event type for batch updates
                         actor: Auth::user(),
                         data: [
                             'changes' => $changes,
-                            'reason' => $request->input('update_reason', 'No reason provided')
-                        ],
-                        location: 'System',
-                        ipAddress: $request->ip()
+                            'reason' => $request->input('update_reason', 'No reason provided'),
+                            'location' => 'System',
+                            'ip_address' => $request->ip()
+                        ]
                     );
                 } catch (\Exception $e) {
                     Log::error('Failed to log batch update event: ' . $e->getMessage(), [
