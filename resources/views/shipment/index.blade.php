@@ -153,15 +153,36 @@
                                                     </button>
                                                 @endcan
                                                 @can('delete_shipment')
-                                                    <form action="{{ route('shipments.destroy', $shipment) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this shipment?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900">
+                                                    <div class="inline-flex items-center" x-data="{ showConfirm: false }">
+                                                        <button x-show="!showConfirm" 
+                                                                @click="showConfirm = true" 
+                                                                class="text-red-600 hover:text-red-900"
+                                                                type="button">
                                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                             </svg>
                                                         </button>
-                                                    </form>
+                                                        <div x-show="showConfirm" 
+                                                             x-transition:enter="transition ease-out duration-100"
+                                                             x-transition:enter-start="opacity-0 scale-95"
+                                                             x-transition:enter-end="opacity-100 scale-100"
+                                                             x-transition:leave="transition ease-in duration-75"
+                                                             x-transition:leave-start="opacity-100 scale-100"
+                                                             x-transition:leave-end="opacity-0 scale-95"
+                                                             class="inline-flex items-center space-x-1">
+                                                            <span class="text-xs text-gray-600">Are you sure?</span>
+                                                            <form action="{{ route('shipments.destroy', $shipment) }}" method="POST" class="inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="text-red-600 hover:text-red-900 text-xs font-medium">
+                                                                    Yes
+                                                                </button>
+                                                            </form>
+                                                            <button @click="showConfirm = false" class="text-gray-600 hover:text-gray-900 text-xs font-medium">
+                                                                No
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 @endcan
                                             </div>
                                         </td>
