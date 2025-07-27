@@ -137,16 +137,15 @@ class BatchController extends Controller
             try {
                 $this->traceabilityService->logEvent(
                     batch: $batch,
-                    eventType: TraceEvent::TYPE_BATCH_CREATED,
+                    eventType: TraceEvent::TYPE_HARVEST, // Using HARVEST as the initial event type for batch creation
                     actor: Auth::user(),
                     data: [
                         'source_id' => $batch->source_id,
                         'product_id' => $batch->product_id,
                         'weight' => $batch->weight,
                         'grade' => $batch->grade,
-                    ],
-                    location: 'System',
-                    ipAddress: $request->ip()
+                        'location' => 'System'
+                    ]
                 );
 
                 // If batch has a harvest time, log a harvest event
@@ -158,9 +157,8 @@ class BatchController extends Controller
                         data: [
                             'harvest_time' => $batch->harvest_time->toDateTimeString(),
                             'source_id' => $batch->source_id,
-                        ],
-                        location: 'Field',
-                        ipAddress: $request->ip()
+                            'location' => 'Field'
+                        ]
                     );
 
                     // Update batch status to harvested
