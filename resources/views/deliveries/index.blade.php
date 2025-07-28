@@ -6,16 +6,23 @@
             </h2>
             <div class="flex space-x-2">
                 @can('create_deliveries')
-                    <a href="{{ route('deliveries.create') }}"
-                       class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <button @click="openNewDeliveryForm()"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Delivery') }}
-                    </a>
+                    </button>
                 @endcan
             </div>
         </div>
     </x-slot>
 
     <div class="py-12" x-data="deliveryIndex()">
+        <!-- Delivery Form Drawer -->
+        <x-delivery.form-drawer>
+            <x-slot name="form">
+                <x-delivery.form :batches="\App\Models\Batch::all()" />
+            </x-slot>
+        </x-delivery.form-drawer>
+        
         <!-- Delivery Show Drawer -->
         <div x-show="showViewDrawer"
              class="fixed inset-0 overflow-hidden z-50"
@@ -246,6 +253,21 @@
     <script>
         function deliveryIndex() {
             return {
+                openNewDeliveryForm() {
+                    window.dispatchEvent(new CustomEvent('open-delivery-drawer', {
+                        detail: {
+                            title: 'Add New Delivery',
+                            url: '{{ route('deliveries.store') }}',
+                            method: 'POST'
+                        }
+                    }));
+                },
+                
+                // Handle successful form submission
+                onDeliveryCreated(event) {
+                    // Refresh the page to show the new delivery
+                    window.location.reload();
+                },
                 showViewDrawer: false,
                 isLoading: false,
                 deliveryDetails: '',
