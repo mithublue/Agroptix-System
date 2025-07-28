@@ -6,8 +6,8 @@
             </h2>
             <div class="flex space-x-2">
                 @can('create_deliveries')
-                    <button @click="openNewDeliveryForm()"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <button @click="$dispatch('delivery-form-drawer:show')"
+                            class="add-delivery-btn inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         {{ __('Add New Delivery') }}
                     </button>
                 @endcan
@@ -15,14 +15,12 @@
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="deliveryIndex()">
+    <div class="py-12" x-data="deliveryIndex()" x-init="init()">
         <!-- Delivery Form Drawer -->
         <x-delivery.form-drawer>
-            <x-slot name="form">
-                <x-delivery.form :batches="\App\Models\Batch::all()" />
-            </x-slot>
+            <x-delivery.form :batches="\App\Models\Batch::latest()->take(50)->get()" />
         </x-delivery.form-drawer>
-        
+
         <!-- Delivery Show Drawer -->
         <div x-show="showViewDrawer"
              class="fixed inset-0 overflow-hidden z-50"
@@ -184,7 +182,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-2">
                                                 @can('view_deliveries')
-                                                    <button @click="viewDelivery({{ $delivery->id }})" class="text-indigo-600 hover:text-indigo-900">
+                                                    <button data-id="{{ $delivery->id }}" class="view-delivery text-indigo-600 hover:text-indigo-900">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -193,11 +191,11 @@
                                                 @endcan
 
                                                 @can('edit_deliveries')
-                                                    <a href="{{ route('deliveries.edit', $delivery->id) }}" class="text-yellow-600 hover:text-yellow-900">
+                                                    <button data-id="{{ $delivery->id }}" class="edit-delivery text-yellow-600 hover:text-yellow-900">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                 @endcan
 
                                                 @can('delete_deliveries')
@@ -253,20 +251,242 @@
     <script>
         function deliveryIndex() {
             return {
-                openNewDeliveryForm() {
-                    window.dispatchEvent(new CustomEvent('open-delivery-drawer', {
-                        detail: {
-                            title: 'Add New Delivery',
-                            url: '{{ route('deliveries.store') }}',
-                            method: 'POST'
+                showViewDrawer: false,
+                isLoading: false,
+                deliveryDetails: '',
+                currentDelivery: null,
+                formDrawerOpen: false,
+
+                async viewDelivery(deliveryId) {
+                    try {
+                        // Reset state
+                        this.isLoading = true;
+                        this.deliveryDetails = '';
+                        this.currentDelivery = null;
+
+                        // Show the drawer immediately
+                        this.showViewDrawer = true;
+
+                        // Fetch delivery data
+                        const response = await fetch(`{{ route('deliveries.show', '') }}/${deliveryId}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch delivery details');
                         }
-                    }));
+
+                        const { data: delivery } = await response.json();
+                        this.currentDelivery = delivery;
+
+                        // Render the delivery details using the Blade component
+                        const responseHtml = await fetch('{{ route("deliveries.render-details") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ delivery })
+                        });
+
+                        if (!responseHtml.ok) {
+                            throw new Error('Failed to render delivery details');
+                        }
+
+                        this.deliveryDetails = await responseHtml.text();
+
+                    } catch (error) {
+                        console.error('Error fetching delivery:', error);
+                        this.deliveryDetails = `
+                            <div class="rounded-md bg-red-50 p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">Error loading delivery details</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            <p>${error.message || 'An unknown error occurred while loading the delivery details.'}</p>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button @click="viewDelivery(${deliveryId})" class="rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50">
+                                                Try again
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
-                
-                // Handle successful form submission
-                onDeliveryCreated(event) {
-                    // Refresh the page to show the new delivery
-                    window.location.reload();
+
+                resetForm() {
+                    const form = document.getElementById('delivery-form');
+                    if (form) {
+                        // Reset form fields
+                        form.reset();
+
+                        // Remove _method field if it exists
+                        const methodInput = form.querySelector('input[name="_method"]');
+                        if (methodInput) {
+                            methodInput.remove();
+                        }
+
+                        // Reset form action to create route
+                        form.action = '{{ route('deliveries.store') }}';
+                    }
+                },
+
+                init() {
+                    console.log('Delivery index component initialized');
+
+                    // Handle Add New Delivery button click
+                    const addButtons = document.querySelectorAll('.add-delivery-btn');
+                    console.log('Found add buttons:', addButtons.length);
+
+                    addButtons.forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            console.log('Add delivery button clicked');
+                            this.resetForm();
+                            window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
+                                detail: {
+                                    title: 'Add New Delivery'
+                                }
+                            }));
+                        });
+                    });
+
+                    // Handle view button clicks
+                    document.querySelectorAll('.view-delivery').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const deliveryId = button.dataset.id;
+                            console.log('View delivery clicked:', deliveryId);
+                            this.viewDelivery(deliveryId);
+                        });
+                    });
+
+                    // Handle edit button clicks
+                    document.querySelectorAll('.edit-delivery').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const deliveryId = button.dataset.id;
+                            console.log('Edit delivery clicked:', deliveryId);
+                            this.editDelivery(deliveryId);
+                        });
+                    });
+
+                    // Listen for the delivery-created event
+                    window.addEventListener('delivery-created', (event) => {
+                        console.log('Delivery created event received', event.detail);
+                        // Show success message
+                        const successEvent = new CustomEvent('notify', {
+                            detail: {
+                                type: 'success',
+                                message: event.detail.message || 'Delivery created successfully!'
+                            }
+                        });
+                        window.dispatchEvent(successEvent);
+
+                        // Reload the page to show the new delivery
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    });
+                },
+
+                async editDelivery(deliveryId) {
+                    try {
+                        // Show loading state
+                        const response = await fetch(`{{ route('deliveries.show', '') }}/${deliveryId}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch delivery data');
+                        }
+
+                        const { data: delivery } = await response.json();
+
+                        // Update form action and method
+                        const form = document.getElementById('delivery-form');
+                        form.action = `{{ route('deliveries.update', '') }}/${deliveryId}`;
+
+                        // Add or update _method field for PUT
+                        let methodInput = form.querySelector('input[name="_method"]');
+                        if (!methodInput) {
+                            methodInput = document.createElement('input');
+                            methodInput.type = 'hidden';
+                            methodInput.name = '_method';
+                            form.appendChild(methodInput);
+                        }
+                        methodInput.value = 'PUT';
+
+                        // Set form values
+                        if (form) {
+                            // Set basic fields
+                            const fields = [
+                                'batch_id', 'delivery_person', 'delivery_contact', 'delivery_address',
+                                'delivery_status', 'delivery_notes', 'signature_recipient_name',
+                                'delivery_confirmation', 'temperature_check', 'quality_check',
+                                'additional_notes', 'customer_rating', 'customer_comments',
+                                'customer_complaints', 'feedback_status', 'admin_notes'
+                            ];
+
+                            fields.forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    if (input.type === 'checkbox') {
+                                        input.checked = delivery[field];
+                                    } else if (input.type === 'select-one' && input.multiple) {
+                                        // Handle multi-select if needed
+                                    } else {
+                                        input.value = delivery[field] || '';
+                                    }
+                                }
+                            });
+
+                            // Set datetime fields
+                            const dateFields = ['delivery_date', 'feedback_submitted_at'];
+                            dateFields.forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input && delivery[field]) {
+                                    const date = new Date(delivery[field]);
+                                    input.value = date.toISOString().slice(0, 16);
+                                }
+                            });
+                        }
+
+                        // Show the drawer
+                        window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
+                            detail: {
+                                title: 'Edit Delivery',
+                                deliveryId: deliveryId
+                            }
+                        }));
+
+                    } catch (error) {
+                        console.error('Error fetching delivery data:', error);
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: {
+                                type: 'error',
+                                message: 'Failed to load delivery data. Please try again.'
+                            }
+                        }));
+                    }
                 },
                 showViewDrawer: false,
                 isLoading: false,

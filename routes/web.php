@@ -358,6 +358,10 @@ Route::middleware(['auth'])->group(function () {
     // Resource routes for Deliveries
     Route::resource('deliveries', \App\Http\Controllers\DeliveryController::class)->except(['show']);
     
+    // AJAX route for rendering delivery details
+    Route::post('deliveries/render-details', [\App\Http\Controllers\DeliveryController::class, 'renderDetails'])
+        ->name('deliveries.render-details');
+    
     // Custom delivery routes
     Route::prefix('deliveries')->group(function () {
         // Update delivery status

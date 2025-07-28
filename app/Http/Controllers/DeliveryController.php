@@ -22,7 +22,7 @@ class DeliveryController extends Controller
         $this->middleware('auth');
         
         // Use can: middleware instead of permission:
-        $this->middleware('can:view_deliveries')->only(['index', 'show']);
+        $this->middleware('can:view_deliveries')->only(['index', 'show', 'renderDetails']);
         $this->middleware('can:create_deliveries')->only(['create', 'store']);
         $this->middleware('can:edit_deliveries')->only(['edit', 'update']);
         $this->middleware('can:delete_deliveries')->only(['destroy']);
@@ -79,8 +79,31 @@ class DeliveryController extends Controller
     public function create()
     {
         $this->authorize('create', Delivery::class);
-        $batches = Batch::whereDoesntHave('delivery')->pluck('name', 'id');
+        $batches = Batch::latest()->take(50)->get();
         return view('deliveries.create', compact('batches'));
+    }
+    
+    /**
+     * Render delivery details for AJAX requests
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function renderDetails(Request $request)
+    {
+        $delivery = $request->input('delivery');
+        
+        if (empty($delivery) || !is_array($delivery)) {
+            return response('<div class="p-4 text-red-600">Invalid delivery data</div>');
+        }
+        
+        // Convert the delivery array to an object for the view
+        $delivery = (object) $delivery;
+        
+        // Render the delivery details view
+        $html = view('deliveries.partials.delivery-details', compact('delivery'))->render();
+        
+        return response($html);
     }
 
     /**
@@ -132,14 +155,15 @@ class DeliveryController extends Controller
      */
     public function show(Delivery $delivery)
     {
-        // Authorization is handled by middleware and policy
-
-        $delivery->load(['batch']);
-
+        $this->authorize('view', $delivery);
+        
+        // For API requests, return JSON
         if (request()->wantsJson()) {
-            return response()->json($elivery);
+            return response()->json([
+                'data' => $delivery->load('batch')
+            ]);
         }
-
+        
         return view('deliveries.show', compact('delivery'));
     }
 

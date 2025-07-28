@@ -1,10 +1,11 @@
-<div x-data="deliveryDrawer()"
+<div x-data="deliveryFormDrawer()"
      x-init="init()"
-     @keydown.escape.window="if(open) close()"
+     @keydown.escape.window="if(isOpen) close()"
+     x-show="isOpen"
      class="fixed inset-0 overflow-hidden z-50"
      style="display: none;"
-     x-show="open"
-     x-transition:opacity.300ms>
+     x-transition:opacity.300ms
+     @delivery-form-drawer:show.window="open($event.detail)">
     <div class="absolute inset-0 overflow-hidden">
         <!-- Overlay -->
         <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -20,7 +21,7 @@
         <!-- Drawer Panel -->
         <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
             <div class="w-screen max-w-md"
-                 x-show="open"
+                 x-show="isOpen"
                  x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
                  x-transition:enter-start="translate-x-full"
                  x-transition:enter-end="translate-x-0"
@@ -30,8 +31,8 @@
                 <div class="h-full flex flex-col bg-white shadow-xl">
                     <!-- Header -->
                     <div class="px-4 py-6 bg-indigo-700 sm:px-6 flex justify-between items-center">
-                        <h2 class="text-lg font-medium text-white" x-text="title">
-                            {{ isset($delivery) ? 'Edit Delivery' : 'Add New Delivery' }}
+                        <h2 class="text-lg font-medium text-white" x-text="title || 'Add New Delivery'">
+                            Add New Delivery
                         </h2>
                         <div class="ml-3 h-7 flex items-center">
                             <button type="button"
@@ -50,8 +51,8 @@
                         <div x-show="loading" class="flex justify-center py-8">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                         </div>
-                        
-                        <div x-show="!loading">
+
+                        <div x-show="!loading" x-ref="formContainer">
                             {{ $slot }}
                         </div>
                     </div>
@@ -63,88 +64,129 @@
 
 @push('scripts')
 <script>
-    function deliveryDrawer() {
+    function deliveryFormDrawer() {
         return {
-            open: false,
+            isOpen: false,
             loading: false,
             title: 'Add New Delivery',
-            url: '',
-            method: 'POST',
             form: null,
-            
+
             init() {
-                // Listen for the open-delivery-drawer event
-                window.addEventListener('open-delivery-drawer', (event) => {
-                    this.openDrawer(event.detail);
-                });
-                
-                // Set up the form reference
                 this.$nextTick(() => {
-                    this.form = this.$refs.deliveryForm;
+                    this.form = this.$el.querySelector('form');
+                    if (this.form) {
+                        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                    }
+                });
+
+                // Listen for close event
+                this.$el.addEventListener('close', () => this.close());
+            },
+
+            open(detail = {}) {
+                this.title = detail.title || 'Add New Delivery';
+                this.isOpen = true;
+
+                // Reset form if no delivery ID is provided (new delivery)
+                if (!detail.deliveryId) {
+                    this.resetForm();
+                }
+
+                // Focus the first input when drawer opens
+                this.$nextTick(() => {
+                    const firstInput = this.$el.querySelector('input, select, textarea');
+                    if (firstInput) firstInput.focus();
                 });
             },
-            
-            openDrawer(detail) {
-                this.title = detail.title || 'Add New Delivery';
-                this.url = detail.url || '';
-                this.method = detail.method || 'POST';
-                
-                // If we have a delivery ID, fetch the data
-                if (detail.deliveryId) {
-                    this.fetchDelivery(detail.deliveryId);
-                } else {
+
+            close() {
+                this.isOpen = false;
+                this.loading = false;
+
+                // Small delay to allow the close animation to complete
+                setTimeout(() => {
                     this.resetForm();
-                    this.open = true;
-                }
+                }, 300);
             },
-            
-            async fetchDelivery(deliveryId) {
-                this.loading = true;
-                this.open = true;
-                
-                try {
-                    const response = await fetch(`/deliveries/${deliveryId}/edit`);
-                    if (!response.ok) throw new Error('Failed to fetch delivery');
-                    
-                    const data = await response.json();
-                    this.populateForm(data);
-                } catch (error) {
-                    console.error('Error fetching delivery:', error);
-                    // Show error to user
-                    this.$dispatch('notify', {
-                        type: 'error',
-                        message: 'Failed to load delivery details.'
-                    });
-                    this.close();
-                } finally {
-                    this.loading = false;
-                }
-            },
-            
-            populateForm(data) {
-                // This will be handled by the form component
-                this.$dispatch('populate-form', { delivery: data });
-            },
-            
+
             resetForm() {
                 if (this.form) {
                     this.form.reset();
-                    // Reset any file inputs
+                    // Reset form action to create route
+                    this.form.action = '{{ route('deliveries.store') }}';
+
+                    // Remove _method field if it exists
+                    const methodInput = this.form.querySelector('input[name="_method"]');
+                    if (methodInput) {
+                        methodInput.remove();
+                    }
+
+                    // Reset file inputs
                     this.form.querySelectorAll('input[type="file"]').forEach(input => {
                         input.value = '';
                     });
                 }
             },
-            
-            close() {
-                this.open = false;
-                this.loading = false;
-                this.$dispatch('delivery-drawer-closed');
+
+            async handleSubmit(e) {
+                e.preventDefault();
+
+                if (!this.form) return;
+
+                this.loading = true;
+
+                try {
+                    const formData = new FormData(this.form);
+                    const url = this.form.action;
+                    const method = this.form.method;
+
+                    const response = await fetch(url, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Failed to save delivery');
+                    }
+
+                    const data = await response.json();
+
+                    // Dispatch success event
+                    this.$dispatch('notify', {
+                        type: 'success',
+                        message: data.message || 'Delivery saved successfully!'
+                    });
+
+                    // Dispatch delivery-created event
+                    this.$dispatch('delivery-created', {
+                        delivery: data.data || {},
+                        message: data.message || 'Delivery saved successfully!'
+                    });
+
+                    // Close the drawer
+                    this.close();
+
+                } catch (error) {
+                    console.error('Error saving delivery:', error);
+                    this.$dispatch('notify', {
+                        type: 'error',
+                        message: error.message || 'Failed to save delivery. Please try again.'
+                    });
+                } finally {
+                    this.loading = false;
+                }
             },
-            
-            handleSubmit() {
-                if (this.form) {
-                    this.form.submit();
+
+            onDeliveryCreated(event) {
+                // Close the drawer when a delivery is created successfully
+                if (event.detail && event.detail.delivery) {
+                    this.close();
                 }
             }
         };
