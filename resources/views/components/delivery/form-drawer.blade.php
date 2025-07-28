@@ -129,7 +129,7 @@
             },
 
             async handleSubmit(e) {
-                e.preventDefault();
+                //e.preventDefault();
 
                 if (!this.form) return;
 

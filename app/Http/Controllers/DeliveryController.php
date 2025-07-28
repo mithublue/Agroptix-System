@@ -20,7 +20,7 @@ class DeliveryController extends Controller
     public function __construct(TraceabilityService $traceabilityService)
     {
         $this->middleware('auth');
-        
+
         // Use can: middleware instead of permission:
         $this->middleware('can:view_deliveries')->only(['index', 'show', 'renderDetails']);
         $this->middleware('can:create_deliveries')->only(['create', 'store']);
@@ -82,7 +82,7 @@ class DeliveryController extends Controller
         $batches = Batch::latest()->take(50)->get();
         return view('deliveries.create', compact('batches'));
     }
-    
+
     /**
      * Render delivery details for AJAX requests
      *
@@ -92,17 +92,17 @@ class DeliveryController extends Controller
     public function renderDetails(Request $request)
     {
         $delivery = $request->input('delivery');
-        
+
         if (empty($delivery) || !is_array($delivery)) {
             return response('<div class="p-4 text-red-600">Invalid delivery data</div>');
         }
-        
+
         // Convert the delivery array to an object for the view
         $delivery = (object) $delivery;
-        
+
         // Render the delivery details view
         $html = view('deliveries.partials.delivery-details', compact('delivery'))->render();
-        
+
         return response($html);
     }
 
@@ -127,11 +127,13 @@ class DeliveryController extends Controller
 
             // Log the delivery creation
             $this->traceabilityService->logEvent(
-                'delivery_created',
-                'Delivery created for batch ' . $delivery->batch->name,
-                $delivery->batch_id,
-                'App\\Models\\Batch',
-                ['delivery_id' => $delivery->id]
+                $delivery->batch,  // Batch instance
+                'delivery_created',  // Event type
+                auth()->user(),  // Current authenticated user as actor
+                [
+                    'message' => 'Delivery created for batch ' . $delivery->batch->name,
+                    'delivery_id' => $delivery->id
+                ]  // Additional data
             );
 
             DB::commit();
@@ -155,15 +157,16 @@ class DeliveryController extends Controller
      */
     public function show(Delivery $delivery)
     {
-        $this->authorize('view', $delivery);
-        
+        $this->authorize('view_delivery', $delivery);
+
         // For API requests, return JSON
         if (request()->wantsJson()) {
             return response()->json([
+                'success' => true,
                 'data' => $delivery->load('batch')
             ]);
         }
-        
+
         return view('deliveries.show', compact('delivery'));
     }
 
@@ -214,11 +217,13 @@ class DeliveryController extends Controller
 
             // Log the delivery update
             $this->traceabilityService->logEvent(
-                'delivery_updated',
-                'Delivery updated for batch ' . $delivery->batch->name,
-                $delivery->batch_id,
-                'App\\Models\\Batch',
-                ['delivery_id' => $delivery->id]
+                $delivery->batch,  // Batch instance
+                'delivery_updated',  // Event type
+                auth()->user(),  // Current authenticated user as actor
+                [
+                    'message' => 'Delivery updated for batch ' . $delivery->batch->name,
+                    'delivery_id' => $delivery->id
+                ]  // Additional data
             );
 
             DB::commit();
@@ -252,11 +257,13 @@ class DeliveryController extends Controller
 
             // Log the delivery deletion
             $this->traceabilityService->logEvent(
-                'delivery_deleted',
-                'Delivery deleted for batch ' . $delivery->batch->name,
-                $batchId,
-                'App\\Models\\Batch',
-                ['delivery_id' => $delivery->id]
+                $delivery->batch,  // Batch instance
+                'delivery_deleted',  // Event type
+                auth()->user(),  // Current authenticated user as actor
+                [
+                    'message' => 'Delivery deleted for batch ' . $delivery->batch->name,
+                    'delivery_id' => $delivery->id
+                ]  // Additional data
             );
 
             DB::commit();
@@ -310,15 +317,15 @@ class DeliveryController extends Controller
 
         // Log the status change
         $this->traceabilityService->logEvent(
-            'delivery_status_updated',
-            "Delivery status changed from {$oldStatus} to {$newStatus}",
-            $delivery->batch_id,
-            'App\\Models\\Batch',
+            $delivery->batch,  // Batch instance
+            'delivery_status_updated',  // Event type
+            auth()->user(),  // Current authenticated user as actor
             [
+                'message' => "Delivery status changed from {$oldStatus} to {$newStatus}",
                 'delivery_id' => $delivery->id,
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
-            ]
+            ]  // Additional data
         );
 
         return response()->json([

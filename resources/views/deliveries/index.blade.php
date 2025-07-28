@@ -299,6 +299,7 @@
                         }
 
                         this.deliveryDetails = await responseHtml.text();
+                        
 
                     } catch (error) {
                         console.error('Error fetching delivery:', error);
@@ -499,7 +500,7 @@
                     this.currentDelivery = deliveryId;
 
                     try {
-                        const response = await fetch(`/deliveries/${deliveryId}/show`);
+                        const response = await fetch(`{{ route('deliveries.show', '') }}/${deliveryId}`);
                         if (!response.ok) throw new Error('Failed to load delivery details');
 
                         const data = await response.text();

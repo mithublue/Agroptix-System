@@ -184,11 +184,11 @@ Route::middleware('auth')->group(function () {
         // Timeline routes
         Route::get('/timeline', [\App\Http\Controllers\BatchController::class, 'showTimeline'])
              ->name('batches.timeline');
-             
+
         // QR Code route
         Route::get('/qrcode', [\App\Http\Controllers\BatchController::class, 'showQrCode'])
              ->name('batches.qr-code');
-        
+
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
              ->name('batches.eco-processes.index');
 
@@ -303,20 +303,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
             // Batch Timeline
             Route::get('timeline', [\App\Http\Controllers\BatchController::class, 'showTimeline'])
                 ->name('batches.timeline');
-                
+
             // Batch QR Code
             Route::get('qrcode', [\App\Http\Controllers\BatchController::class, 'showQrCode'])
                 ->name('batches.qr-code');
-                
+
             // Batch Trace Events
             Route::get('trace-events', [\App\Http\Controllers\BatchController::class, 'listTraceEvents'])
                 ->name('batches.trace-events');
         });
-        
+
         // QR Code Scanner
         Route::get('/qr-scanner', [\App\Http\Controllers\QrCodeController::class, 'showScanner'])
             ->name('qr-scanner');
-            
+
         // Handle QR Code Scan
         Route::post('/qr-scan', [\App\Http\Controllers\QrCodeController::class, 'handleScan'])
             ->name('qr-scan');
@@ -357,19 +357,19 @@ Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::c
 Route::middleware(['auth'])->group(function () {
     // Resource routes for Deliveries
     Route::resource('deliveries', \App\Http\Controllers\DeliveryController::class)->except(['show']);
-    
+
     // AJAX route for rendering delivery details
     Route::post('deliveries/render-details', [\App\Http\Controllers\DeliveryController::class, 'renderDetails'])
         ->name('deliveries.render-details');
-    
+
     // Custom delivery routes
     Route::prefix('deliveries')->group(function () {
         // Update delivery status
         Route::patch('{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])
              ->name('deliveries.status.update');
-        
+
         // Show delivery details (using GET for better readability in URLs)
-        Route::get('{delivery}/show', [\App\Http\Controllers\DeliveryController::class, 'show'])
+        Route::get('show/{delivery}', [\App\Http\Controllers\DeliveryController::class, 'show'])
              ->name('deliveries.show');
     });
 });
