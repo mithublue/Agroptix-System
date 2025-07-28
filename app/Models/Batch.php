@@ -224,9 +224,17 @@ class Batch extends Model
     /**
      * Get the packaging records for the batch.
      */
-    public function packaging(): HasMany
+    public function packaging()
     {
-        return $this->hasMany(Packaging::class);
+        return $this->hasOne(Packaging::class);
+    }
+
+    /**
+     * Get the delivery associated with the batch.
+     */
+    public function delivery()
+    {
+        return $this->hasOne(Delivery::class);
     }
 
     /**
