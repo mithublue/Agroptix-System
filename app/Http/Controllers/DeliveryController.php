@@ -20,6 +20,12 @@ class DeliveryController extends Controller
     public function __construct(TraceabilityService $traceabilityService)
     {
         $this->middleware('auth');
+        $this->middleware('permission:view_deliveries')->only(['index', 'show']);
+        $this->middleware('permission:create_deliveries')->only(['create', 'store']);
+        $this->middleware('permission:edit_deliveries')->only(['edit', 'update']);
+        $this->middleware('permission:delete_deliveries')->only(['destroy']);
+        $this->middleware('permission:update_delivery_status')->only(['updateStatus']);
+        
         $this->traceabilityService = $traceabilityService;
     }
 
@@ -30,7 +36,15 @@ class DeliveryController extends Controller
     {
         $this->authorize('viewAny', Delivery::class);
 
+        $user = auth()->user();
         $query = Delivery::with(['batch']);
+        
+        // If user doesn't have permission to view all deliveries, show only their own
+        if (!$user->hasRole(['admin', 'logistics_manager'])) {
+            $query->whereHas('batch', function($q) use ($user) {
+                $q->where('created_by', $user->id);
+            });
+        }
 
         // Apply filters
         if ($request->has('status')) {
@@ -72,7 +86,7 @@ class DeliveryController extends Controller
      */
     public function store(DeliveryStoreRequest $request)
     {
-        $this->authorize('create', Delivery::class);
+        // Authorization is handled by middleware and policy
 
         try {
             DB::beginTransaction();
@@ -116,7 +130,7 @@ class DeliveryController extends Controller
      */
     public function show(Delivery $delivery)
     {
-        $this->authorize('view', $delivery);
+        // Authorization is handled by middleware and policy
         
         $delivery->load(['batch']);
         
@@ -132,7 +146,7 @@ class DeliveryController extends Controller
      */
     public function edit(Delivery $delivery)
     {
-        $this->authorize('update', $delivery);
+        // Authorization is handled by middleware and policy
         
         $batches = Batch::whereDoesntHave('delivery')
             ->orWhere('id', $delivery->batch_id)
@@ -146,7 +160,7 @@ class DeliveryController extends Controller
      */
     public function update(DeliveryUpdateRequest $request, Delivery $delivery)
     {
-        $this->authorize('update', $delivery);
+        // Authorization is handled by middleware and policy
 
         try {
             DB::beginTransaction();
@@ -202,7 +216,7 @@ class DeliveryController extends Controller
      */
     public function destroy(Delivery $delivery)
     {
-        $this->authorize('delete', $delivery);
+        // Authorization is handled by middleware and policy
 
         try {
             DB::beginTransaction();
@@ -253,7 +267,7 @@ class DeliveryController extends Controller
      */
     public function updateStatus(Request $request, Delivery $delivery): JsonResponse
     {
-        $this->authorize('update', $delivery);
+        $this->authorize('updateStatus', $delivery);
 
         $request->validate([
             'status' => 'required|in:pending,in_transit,delivered,failed',
