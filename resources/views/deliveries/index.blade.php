@@ -77,7 +77,7 @@
             <div class="mb-6 bg-white p-4 rounded-lg shadow">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
                 <form method="GET" action="{{ route('deliveries.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <!-- Status Filter -->
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -95,7 +95,7 @@
                             <label for="batch_id" class="block text-sm font-medium text-gray-700 mb-1">Batch</label>
                             <select id="batch_id" name="batch_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                 <option value="">All Batches</option>
-                                @foreach(\App\Models\Batch::pluck('name', 'id') as $id => $name)
+                                @foreach(\App\Models\Batch::pluck('batch_code', 'id') as $id => $name)
                                     <option value="{{ $id }}" {{ request('batch_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
                                 @endforeach
                             </select>
@@ -113,15 +113,14 @@
                             <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}"
                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         </div>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 pt-2">
-                        <a href="{{ route('deliveries.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Reset
-                        </a>
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Apply Filters
-                        </button>
+                        <div class="flex space-x-2">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Apply Filters
+                            </button>
+                            <a href="{{ route('deliveries.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Reset
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -260,7 +259,7 @@
                     try {
                         const response = await fetch(`/deliveries/${deliveryId}/show`);
                         if (!response.ok) throw new Error('Failed to load delivery details');
-                        
+
                         const data = await response.text();
                         this.deliveryDetails = data;
                     } catch (error) {

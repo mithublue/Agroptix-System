@@ -20,11 +20,13 @@ class DeliveryController extends Controller
     public function __construct(TraceabilityService $traceabilityService)
     {
         $this->middleware('auth');
-        $this->middleware('permission:view_deliveries')->only(['index', 'show']);
-        $this->middleware('permission:create_deliveries')->only(['create', 'store']);
-        $this->middleware('permission:edit_deliveries')->only(['edit', 'update']);
-        $this->middleware('permission:delete_deliveries')->only(['destroy']);
-        $this->middleware('permission:update_delivery_status')->only(['updateStatus']);
+        
+        // Use can: middleware instead of permission:
+        $this->middleware('can:view_deliveries')->only(['index', 'show']);
+        $this->middleware('can:create_deliveries')->only(['create', 'store']);
+        $this->middleware('can:edit_deliveries')->only(['edit', 'update']);
+        $this->middleware('can:delete_deliveries')->only(['destroy']);
+        $this->middleware('can:update_delivery_status')->only(['updateStatus']);
 
         $this->traceabilityService = $traceabilityService;
     }
