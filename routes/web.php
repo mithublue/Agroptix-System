@@ -352,3 +352,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::class, 'updateStatus'])
      ->name('batches.status.update')
      ->middleware(['auth', 'can:manage_batch']);
+
+// Delivery Routes
+Route::middleware(['auth'])->group(function () {
+    // Resource routes for Deliveries
+    Route::resource('deliveries', \App\Http\Controllers\DeliveryController::class)->except(['show']);
+    
+    // Custom delivery routes
+    Route::prefix('deliveries')->group(function () {
+        // Update delivery status
+        Route::patch('{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])
+             ->name('deliveries.status.update');
+        
+        // Show delivery details (using GET for better readability in URLs)
+        Route::get('{delivery}/show', [\App\Http\Controllers\DeliveryController::class, 'show'])
+             ->name('deliveries.show');
+    });
+});
