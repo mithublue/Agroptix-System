@@ -9,7 +9,7 @@
     <div class="absolute inset-0 overflow-hidden">
         <!-- Overlay -->
         <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-             x-show="open"
+             x-show="isOpen"
              x-transition:enter="ease-in-out duration-500"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
