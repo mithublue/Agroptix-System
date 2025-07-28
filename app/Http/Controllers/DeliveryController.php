@@ -25,7 +25,7 @@ class DeliveryController extends Controller
         $this->middleware('permission:edit_deliveries')->only(['edit', 'update']);
         $this->middleware('permission:delete_deliveries')->only(['destroy']);
         $this->middleware('permission:update_delivery_status')->only(['updateStatus']);
-        
+
         $this->traceabilityService = $traceabilityService;
     }
 
@@ -38,7 +38,7 @@ class DeliveryController extends Controller
 
         $user = auth()->user();
         $query = Delivery::with(['batch']);
-        
+
         // If user doesn't have permission to view all deliveries, show only their own
         if (!$user->hasRole(['admin', 'logistics_manager'])) {
             $query->whereHas('batch', function($q) use ($user) {
@@ -92,7 +92,7 @@ class DeliveryController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
-            
+
             // Handle file uploads
             if ($request->hasFile('delivery_photos')) {
                 $data['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
@@ -118,7 +118,7 @@ class DeliveryController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating delivery: ' . $e->getMessage());
-            
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create delivery. Please try again.');
@@ -131,13 +131,13 @@ class DeliveryController extends Controller
     public function show(Delivery $delivery)
     {
         // Authorization is handled by middleware and policy
-        
+
         $delivery->load(['batch']);
-        
+
         if (request()->wantsJson()) {
             return response()->json($elivery);
         }
-        
+
         return view('deliveries.show', compact('delivery'));
     }
 
@@ -147,11 +147,11 @@ class DeliveryController extends Controller
     public function edit(Delivery $delivery)
     {
         // Authorization is handled by middleware and policy
-        
+
         $batches = Batch::whereDoesntHave('delivery')
             ->orWhere('id', $delivery->batch_id)
             ->pluck('name', 'id');
-            
+
         return view('deliveries.edit', compact('delivery', 'batches'));
     }
 
@@ -166,7 +166,7 @@ class DeliveryController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
-            
+
             // Handle file uploads
             if ($request->hasFile('delivery_photos')) {
                 // Delete old photos if needed
@@ -204,7 +204,7 @@ class DeliveryController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating delivery: ' . $e->getMessage());
-            
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update delivery. Please try again.');
@@ -220,7 +220,7 @@ class DeliveryController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $batchId = $delivery->batch_id;
             $delivery->delete();
 
@@ -242,7 +242,7 @@ class DeliveryController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error deleting delivery: ' . $e->getMessage());
-            
+
             return back()
                 ->with('error', 'Failed to delete delivery. Please try again.');
         }
@@ -254,11 +254,11 @@ class DeliveryController extends Controller
     protected function uploadFiles($files): array
     {
         $paths = [];
-        
+
         foreach ($files as $file) {
             $paths[] = $file->store('delivery-photos', 'public');
         }
-        
+
         return $paths;
     }
 
@@ -276,7 +276,7 @@ class DeliveryController extends Controller
 
         $oldStatus = $delivery->delivery_status;
         $newStatus = $request->input('status');
-        
+
         $delivery->update([
             'delivery_status' => $newStatus,
             'delivery_notes' => $request->input('notes') ?: $delivery->delivery_notes,
