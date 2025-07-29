@@ -12,7 +12,7 @@ class DeliveryStoreRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return auth()->user()->can('create_delivery', Delivery::class);
+        return auth()->user()->can('create', Delivery::class);
     }
 
     /**
@@ -28,7 +28,7 @@ class DeliveryStoreRequest extends BaseFormRequest
             'delivery_notes' => ['nullable', 'string'],
             'delivery_person' => ['nullable', 'string', 'max:255'],
             'delivery_contact' => ['nullable', 'string', 'max:255'],
-            'delivery_address' => ['nullable', 'string'],
+            'delivery_address' => ['required', 'string'],
             'delivery_status' => ['nullable', 'string', 'in:pending,in_transit,delivered,failed'],
             'signature_recipient_name' => ['nullable', 'string', 'max:255'],
             'signature_data' => ['nullable', 'string'],
@@ -43,7 +43,7 @@ class DeliveryStoreRequest extends BaseFormRequest
             'customer_complaints' => ['nullable', 'string'],
             'feedback_photos' => ['nullable', 'array'],
             'feedback_photos.*' => ['image', 'max:5120'], // 5MB max per file
-            'feedback_status' => ['nullable', 'string', 'in:pending,submitted,reviewed,resolved'],
+            'feedback_status' => ['nullable', 'string', 'in:pending,submitted,reviewed,resolved,dismissed'],
             'admin_notes' => ['nullable', 'string'],
         ];
     }

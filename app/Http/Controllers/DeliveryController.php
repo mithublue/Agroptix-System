@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class DeliveryController extends Controller
 {
@@ -111,33 +112,48 @@ class DeliveryController extends Controller
      */
     public function store(Request $request)
     {
-        // Authorization is handled by middleware and policy
 
+        $this->authorize('create', Delivery::class);
+
+        // Define validation rules
+        //    to get access to its rules and authorization logic.
+        $formRequest = new DeliveryStoreRequest();
+
+        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        $rules = $formRequest->rules();
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate the request
+        if ($validator->fails()) {
+
+            // 6. Manually handle the failure.
+            //    To make it work with Hotwired Turbo, we must set the 422 status code.
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+        
+        // 7. If validation passes, get the validated data.
+        $validatedData = $validator->validated();
+
+        // Create the Source record
         try {
-            $delivery = Delivery::create($request->all());
-
-            // Log the delivery creation
-            /*$this->traceabilityService->logEvent(
-                $delivery->batch,  // Batch instance
-                'delivery_created',  // Event type
-                auth()->user(),  // Current authenticated user as actor
-                [
-                    'message' => 'Delivery created for batch ' . $delivery->batch->name,
-                    'delivery_id' => $delivery->id
-                ]  // Additional data
-            );*/
-
+            Delivery::create($validatedData);
             return redirect()
-                ->route('deliveries.show', $delivery)
+                ->route('deliveries.index')
                 ->with('success', 'Delivery created successfully.');
-
         } catch (\Exception $e) {
-            //Log::error('Error creating delivery: ' . $e->getMessage());
-
             return back()
                 ->withInput()
-                ->with('error', 'Failed to create delivery. Please try again.');
+                ->with('error', 'Failed to create delivery. ' . $e->getMessage());
         }
+        ///
+        // Handle file uploads if any
+        /*if ($request->hasFile('delivery_photos')) {
+            $data['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
+        }*/
     }
 
     /**

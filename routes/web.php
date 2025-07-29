@@ -46,6 +46,27 @@ Route::get('/debug-permissions', function () {
     ]);
 })->middleware('auth');
 
+Route::get('/debug/permissions', function () {
+    $user = auth()->check() ? auth()->user() : User::first();
+    
+    if (!$user) {
+        return 'No user found';
+    }
+    
+    return [
+        'user_id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'roles' => $user->getRoleNames(),
+        'permissions' => $user->getAllPermissions()->pluck('name'),
+        'can_create_delivery' => $user->can('create', \App\Models\Delivery::class),
+        'policies' => [
+            'create' => $user->can('create', \App\Models\Delivery::class),
+            'view' => $user->can('view', \App\Models\Delivery::class),
+        ]
+    ];
+})->middleware('web');
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
