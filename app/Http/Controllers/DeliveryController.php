@@ -134,7 +134,7 @@ class DeliveryController extends Controller
             //    To make it work with Hotwired Turbo, we must set the 422 status code.
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
-        
+
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
 
