@@ -1,4 +1,4 @@
-<form id="delivery-form" method="POST" action="{{ isset($delivery) ? route('deliveries.update', $delivery) : route('deliveries.store') }}" enctype="multipart/form-data" class="space-y-6">
+<form x-data="deliveryForm" id="delivery-form" method="POST" action="{{ isset($delivery) ? route('deliveries.update', $delivery) : route('deliveries.store') }}" enctype="multipart/form-data" class="space-y-6">
     @csrf
     @if(isset($delivery))
         @method('PUT')
@@ -101,7 +101,7 @@
 
     <!-- Form Actions -->
     <div class="flex justify-end space-x-3 pt-4">
-        <button type="button" @click="close()" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <button type="button" @click="$dispatch('close-drawer')" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             Cancel
         </button>
         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -109,3 +109,9 @@
         </button>
     </div>
 </form>
+<script>
+    function deliveryForm() {
+        return {
+        }
+    }
+</script>

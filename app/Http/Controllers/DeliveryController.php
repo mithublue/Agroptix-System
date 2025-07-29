@@ -109,24 +109,15 @@ class DeliveryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(DeliveryStoreRequest $request)
+    public function store(Request $request)
     {
         // Authorization is handled by middleware and policy
 
         try {
-            DB::beginTransaction();
-
-            $data = $request->validated();
-
-            // Handle file uploads
-            if ($request->hasFile('delivery_photos')) {
-                $data['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
-            }
-
-            $delivery = Delivery::create($data);
+            $delivery = Delivery::create($request->all());
 
             // Log the delivery creation
-            $this->traceabilityService->logEvent(
+            /*$this->traceabilityService->logEvent(
                 $delivery->batch,  // Batch instance
                 'delivery_created',  // Event type
                 auth()->user(),  // Current authenticated user as actor
@@ -134,17 +125,14 @@ class DeliveryController extends Controller
                     'message' => 'Delivery created for batch ' . $delivery->batch->name,
                     'delivery_id' => $delivery->id
                 ]  // Additional data
-            );
-
-            DB::commit();
+            );*/
 
             return redirect()
                 ->route('deliveries.show', $delivery)
                 ->with('success', 'Delivery created successfully.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating delivery: ' . $e->getMessage());
+            //Log::error('Error creating delivery: ' . $e->getMessage());
 
             return back()
                 ->withInput()

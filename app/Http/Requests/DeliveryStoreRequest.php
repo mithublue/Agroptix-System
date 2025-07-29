@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Delivery;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DeliveryStoreRequest extends BaseFormRequest
@@ -11,7 +12,7 @@ class DeliveryStoreRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', Delivery::class);
+        return auth()->user()->can('create_delivery', Delivery::class);
     }
 
     /**
@@ -22,13 +23,13 @@ class DeliveryStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['required', 'exists:batches,id'],
-            'delivery_date' => ['required', 'date'],
+            'batch_id' => ['nullable', 'exists:batches,id'],
+            'delivery_date' => ['nullable', 'date'],
             'delivery_notes' => ['nullable', 'string'],
-            'delivery_person' => ['required', 'string', 'max:255'],
-            'delivery_contact' => ['required', 'string', 'max:255'],
-            'delivery_address' => ['required', 'string'],
-            'delivery_status' => ['required', 'string', 'in:pending,in_transit,delivered,failed'],
+            'delivery_person' => ['nullable', 'string', 'max:255'],
+            'delivery_contact' => ['nullable', 'string', 'max:255'],
+            'delivery_address' => ['nullable', 'string'],
+            'delivery_status' => ['nullable', 'string', 'in:pending,in_transit,delivered,failed'],
             'signature_recipient_name' => ['nullable', 'string', 'max:255'],
             'signature_data' => ['nullable', 'string'],
             'delivery_confirmation' => ['boolean'],

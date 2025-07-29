@@ -1,4 +1,5 @@
 <div x-data="deliveryFormDrawer()"
+     @close-drawer.window="isOpen = false"
      x-init="init()"
      @keydown.escape.window="if(isOpen) close()"
      x-show="isOpen"
