@@ -23,13 +23,13 @@ class DeliveryStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['nullable', 'exists:batches,id'],
-            'delivery_date' => ['nullable', 'date'],
+            'batch_id' => ['required', 'exists:batches,id'],
+            'delivery_date' => ['required', 'date'],
             'delivery_notes' => ['nullable', 'string'],
-            'delivery_person' => ['nullable', 'string', 'max:255'],
+            'delivery_person' => ['required', 'string', 'max:255'],
             'delivery_contact' => ['nullable', 'string', 'max:255'],
             'delivery_address' => ['required', 'string'],
-            'delivery_status' => ['nullable', 'string', 'in:pending,in_transit,delivered,failed'],
+            'delivery_status' => ['required', 'string', 'in:pending,in_transit,delivered,failed'],
             'signature_recipient_name' => ['nullable', 'string', 'max:255'],
             'signature_data' => ['nullable', 'string'],
             'delivery_confirmation' => ['boolean'],
