@@ -1,0 +1,265 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Edit Delivery') }}
+            </h2>
+            <a href="{{ route('deliveries.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
+                &larr; Back to Deliveries
+            </a>
+        </div>
+    </x-slot>
+<div class="py-12">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6 bg-white border-b border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">Edit Delivery #{{ $delivery->id }}</h2>
+                    @if(app()->environment('local'))
+                        <button type="button" id="fillTestData"
+                                class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                            Fill with Test Data
+                        </button>
+                    @endif
+                </div>
+
+                <form action="{{ route('deliveries.update', $delivery) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Batch Selection -->
+                        <div class="col-span-2">
+                            <label for="batch_id" class="block text-sm font-medium text-gray-700">Batch</label>
+                            <select id="batch_id" name="batch_id" required
+                                    class="mt-1 block w-full rounded-md @error('batch_id') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                                <option value="">Select a batch</option>
+                                @foreach($batches as $batch)
+                                    <option value="{{ $batch->id }}" @if(old('batch_id', $delivery->batch_id) == $batch->id) selected @endif>
+                                        Batch #{{ $batch->id }} - {{ $batch->name ?? 'Unnamed Batch' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('batch_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Date -->
+                        <div>
+                            <label for="delivery_date" class="block text-sm font-medium text-gray-700">Delivery Date</label>
+                            <input type="datetime-local" id="delivery_date" name="delivery_date" required
+                                   value="{{ old('delivery_date', $delivery->delivery_date ? $delivery->delivery_date->format('Y-m-d\TH:i') : '') }}"
+                                   class="mt-1 block w-full rounded-md @error('delivery_date') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                            @error('delivery_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Status -->
+                        <div>
+                            <label for="delivery_status" class="block text-sm font-medium text-gray-700">Delivery Status</label>
+                            <select id="delivery_status" name="delivery_status" required
+                                    class="mt-1 block w-full rounded-md @error('delivery_status') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                                <option value="">Select status</option>
+                                <option value="pending" @if(old('delivery_status', $delivery->delivery_status) == 'pending') selected @endif>Pending</option>
+                                <option value="in_transit" @if(old('delivery_status', $delivery->delivery_status) == 'in_transit') selected @endif>In Transit</option>
+                                <option value="delivered" @if(old('delivery_status', $delivery->delivery_status) == 'delivered') selected @endif>Delivered</option>
+                                <option value="failed" @if(old('delivery_status', $delivery->delivery_status) == 'failed') selected @endif>Failed</option>
+                            </select>
+                            @error('delivery_status')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Person -->
+                        <div>
+                            <label for="delivery_person" class="block text-sm font-medium text-gray-700">Delivery Person</label>
+                            <input type="text" id="delivery_person" name="delivery_person" required
+                                   value="{{ old('delivery_person', $delivery->delivery_person) }}"
+                                   class="mt-1 block w-full rounded-md @error('delivery_person') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                            @error('delivery_person')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Contact -->
+                        <div>
+                            <label for="delivery_contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
+                            <input type="text" id="delivery_contact" name="delivery_contact"
+                                   value="{{ old('delivery_contact', $delivery->delivery_contact) }}"
+                                   class="mt-1 block w-full rounded-md @error('delivery_contact') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                            @error('delivery_contact')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Address -->
+                        <div class="col-span-2">
+                            <label for="delivery_address" class="block text-sm font-medium text-gray-700">Delivery Address</label>
+                            <textarea id="delivery_address" name="delivery_address" rows="3" required
+                                      class="mt-1 block w-full rounded-md @error('delivery_address') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">{{ old('delivery_address', $delivery->delivery_address) }}</textarea>
+                            @error('delivery_address')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Delivery Notes -->
+                        <div class="col-span-2">
+                            <label for="delivery_notes" class="block text-sm font-medium text-gray-700">Delivery Notes</label>
+                            <textarea id="delivery_notes" name="delivery_notes" rows="3"
+                                      class="mt-1 block w-full rounded-md @error('delivery_notes') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">{{ old('delivery_notes', $delivery->delivery_notes) }}</textarea>
+                            @error('delivery_notes')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Signature Section -->
+                        <div class="col-span-2">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Signature & Confirmation</h3>
+                        </div>
+
+                        <!-- Recipient Name -->
+                        <div>
+                            <label for="signature_recipient_name" class="block text-sm font-medium text-gray-700">Recipient Name</label>
+                            <input type="text" id="signature_recipient_name" name="signature_recipient_name"
+                                   value="{{ old('signature_recipient_name', $delivery->signature_recipient_name) }}"
+                                   class="mt-1 block w-full rounded-md @error('signature_recipient_name') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                            @error('signature_recipient_name')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Signature Data -->
+                        <div>
+                            <label for="signature_data" class="block text-sm font-medium text-gray-700">Signature Data</label>
+                            <textarea id="signature_data" name="signature_data" rows="2"
+                                      class="mt-1 block w-full rounded-md @error('signature_data') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">{{ old('signature_data', $delivery->signature_data) }}</textarea>
+                            @error('signature_data')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Checkboxes -->
+                        <div class="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="delivery_confirmation" name="delivery_confirmation" value="1"
+                                       @if(old('delivery_confirmation', $delivery->delivery_confirmation)) checked @endif
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="delivery_confirmation" class="ml-2 block text-sm text-gray-900">
+                                    Delivery Confirmed
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="temperature_check" name="temperature_check" value="1"
+                                       @if(old('temperature_check', $delivery->temperature_check)) checked @endif
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="temperature_check" class="ml-2 block text-sm text-gray-900">
+                                    Temperature Check
+                                </label>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="quality_check" name="quality_check" value="1"
+                                       @if(old('quality_check', $delivery->quality_check)) checked @endif
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="quality_check" class="ml-2 block text-sm text-gray-900">
+                                    Quality Check
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Current Delivery Photos -->
+                        @if($delivery->delivery_photos && count($delivery->delivery_photos) > 0)
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Delivery Photos</label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    @foreach($delivery->delivery_photos as $photo)
+                                        <div class="relative">
+                                            <img src="{{ Storage::url($photo) }}" alt="Delivery Photo" class="w-full h-24 object-cover rounded-lg">
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Upload new photos below to replace current ones</p>
+                            </div>
+                        @endif
+
+                        <!-- Delivery Photos -->
+                        <div class="col-span-2">
+                            <label for="delivery_photos" class="block text-sm font-medium text-gray-700">Delivery Photos</label>
+                            <input type="file" name="delivery_photos[]" id="delivery_photos" multiple
+                                   class="mt-1 block w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-md file:border-0
+                                          file:text-sm file:font-semibold
+                                          @error('delivery_photos') file:bg-red-50 file:text-red-700 @else file:bg-indigo-50 file:text-indigo-700 @enderror
+                                          hover:file:bg-indigo-100">
+                            @error('delivery_photos')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @else
+                                <p class="mt-1 text-xs text-gray-500">Upload multiple photos if needed (will replace existing photos)</p>
+                            @enderror
+                        </div>
+
+                        <!-- Additional Notes -->
+                        <div class="col-span-2">
+                            <label for="additional_notes" class="block text-sm font-medium text-gray-700">Additional Notes</label>
+                            <textarea id="additional_notes" name="additional_notes" rows="3"
+                                      class="mt-1 block w-full rounded-md @error('additional_notes') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">{{ old('additional_notes', $delivery->additional_notes) }}</textarea>
+                            @error('additional_notes')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <a href="{{ route('deliveries.index') }}" 
+                           class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Update Delivery
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(app()->environment('local'))
+<script>
+    document.getElementById('fillTestData').addEventListener('click', function() {
+        // Get current date and format it for datetime-local input
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        // Basic info
+        document.getElementById('delivery_date').value = formattedDate;
+        document.getElementById('delivery_status').value = 'in_transit';
+        document.getElementById('delivery_person').value = 'John Doe';
+        document.getElementById('delivery_contact').value = '+1 (555) 123-4567';
+        document.getElementById('delivery_address').value = '123 Main St, Anytown, AN 12345';
+
+        // Signature and checks
+        document.getElementById('signature_recipient_name').value = 'Jane Smith';
+        document.getElementById('delivery_confirmation').checked = true;
+        document.getElementById('temperature_check').checked = true;
+        document.getElementById('quality_check').checked = true;
+
+        // Notes
+        document.getElementById('delivery_notes').value = 'Package delivered successfully to front door.';
+        document.getElementById('additional_notes').value = 'Customer was very satisfied with the delivery.';
+        document.getElementById('signature_data').value = 'Digital signature captured on mobile device.';
+    });
+</script>
+@endif
+</x-app-layout>

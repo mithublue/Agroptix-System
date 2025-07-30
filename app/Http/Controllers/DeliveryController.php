@@ -138,7 +138,12 @@ class DeliveryController extends Controller
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
 
-        // Create the Source record
+        // Handle file uploads for delivery photos
+        if ($request->hasFile('delivery_photos')) {
+            $validatedData['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
+        }
+
+        // Create the Delivery record
         try {
             Delivery::create($validatedData);
             return redirect()
@@ -149,11 +154,6 @@ class DeliveryController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to create delivery. ' . $e->getMessage());
         }
-        ///
-        // Handle file uploads if any
-        /*if ($request->hasFile('delivery_photos')) {
-            $data['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
-        }*/
     }
 
     /**
@@ -161,7 +161,7 @@ class DeliveryController extends Controller
      */
     public function show(Delivery $delivery)
     {
-        $this->authorize('view_delivery', $delivery);
+        $this->authorize('view_deliveries', $delivery);
 
         // For API requests, return JSON
         if (request()->wantsJson()) {
@@ -179,11 +179,10 @@ class DeliveryController extends Controller
      */
     public function edit(Delivery $delivery)
     {
-        // Authorization is handled by middleware and policy
+        $this->authorize('edit_deliveries', $delivery);
 
-        $batches = Batch::whereDoesntHave('delivery')
-            ->orWhere('id', $delivery->batch_id)
-            ->pluck('name', 'id');
+        // Get all batches for the dropdown, including the current one
+        $batches = Batch::latest()->take(50)->get();
 
         return view('deliveries.edit', compact('delivery', 'batches'));
     }
@@ -193,18 +192,20 @@ class DeliveryController extends Controller
      */
     public function update(DeliveryUpdateRequest $request, Delivery $delivery)
     {
-        // Authorization is handled by middleware and policy
+        $this->authorize('edit_deliveries', $delivery);
 
         try {
             DB::beginTransaction();
 
             $data = $request->validated();
 
-            // Handle file uploads
+            // Handle file uploads for delivery photos
             if ($request->hasFile('delivery_photos')) {
-                // Delete old photos if needed
+                // Delete old photos if they exist
                 if (!empty($delivery->delivery_photos)) {
-                    Storage::delete($delivery->delivery_photos);
+                    foreach ($delivery->delivery_photos as $oldPhoto) {
+                        Storage::disk('public')->delete($oldPhoto);
+                    }
                 }
                 $data['delivery_photos'] = $this->uploadFiles($request->file('delivery_photos'));
             }
