@@ -82,6 +82,24 @@
 
                 // Listen for close event
                 this.$el.addEventListener('close', () => this.close());
+
+                // Check for validation errors on page load
+                this.checkForErrors();
+            },
+
+            checkForErrors() {
+                // Check if there are validation errors and URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const action = urlParams.get('action');
+                const hasErrors = document.querySelector('.text-red-600'); // Check for error messages
+
+                if (hasErrors && action) {
+                    // Open drawer if there are errors and action parameter
+                    this.open({
+                        title: action === 'create' ? 'Add New Delivery' : 'Edit Delivery',
+                        mode: action
+                    });
+                }
             },
 
             open(detail = {}) {

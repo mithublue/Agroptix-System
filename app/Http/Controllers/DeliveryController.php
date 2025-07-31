@@ -129,10 +129,19 @@ class DeliveryController extends Controller
 
         // Validate the request
         if ($validator->fails()) {
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
 
-            // 6. Manually handle the failure.
-            //    To make it work with Hotwired Turbo, we must set the 422 status code.
-            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+            // For regular requests, redirect with query parameter to keep drawer open
+            return redirect()->route('deliveries.index', ['action' => 'create'])
+                ->withErrors($validator)
+                ->withInput()
+                ->setStatusCode(422);
         }
 
         // 7. If validation passes, get the validated data.
@@ -145,12 +154,30 @@ class DeliveryController extends Controller
 
         // Create the Delivery record
         try {
-            Delivery::create($validatedData);
+            $delivery = Delivery::create($validatedData);
+
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Delivery created successfully.',
+                    'data' => $delivery->load('batch')
+                ]);
+            }
+
             return redirect()
                 ->route('deliveries.index')
                 ->with('success', 'Delivery created successfully.');
         } catch (\Exception $e) {
-            return back()
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create delivery. ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('deliveries.index', ['action' => 'create'])
                 ->withInput()
                 ->with('error', 'Failed to create delivery. ' . $e->getMessage());
         }
@@ -233,6 +260,15 @@ class DeliveryController extends Controller
 
             DB::commit();
 
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Delivery updated successfully.',
+                    'data' => $delivery->load('batch')
+                ]);
+            }
+
             return redirect()
                 ->route('deliveries.show', $delivery)
                 ->with('success', 'Delivery updated successfully.');
@@ -241,9 +277,19 @@ class DeliveryController extends Controller
             DB::rollBack();
             Log::error('Error updating delivery: ' . $e->getMessage());
 
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to update delivery. Please try again.');
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update delivery. Please try again.'
+                ], 500);
+            }
+
+            return redirect()->route('deliveries.index', [
+                'action' => 'edit',
+                'delivery_id' => $delivery->id
+            ])->withInput()
+              ->with('error', 'Failed to update delivery. Please try again.');
         }
     }
 

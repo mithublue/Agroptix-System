@@ -17,7 +17,6 @@
 
     <div class="py-12" x-data="deliveryIndex()" x-init="init()">
         <!-- Delivery Form Drawer -->
-        {{--listen to closedrawer event herer--}}
         <x-delivery.form-drawer>
             <x-delivery.form :batches="\App\Models\Batch::latest()->take(50)->get()" />
         </x-delivery.form-drawer>
@@ -142,11 +141,11 @@
                                                 @endcan
 
                                                 @can('edit_deliveries')
-                                                    <a href="{{ route('deliveries.edit', $delivery) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit Delivery">
+                                                    <button data-id="{{ $delivery->id }}" class="edit-delivery-btn text-yellow-600 hover:text-yellow-900" title="Edit Delivery">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                 @endcan
 
                                                 @can('delete_deliveries')
@@ -202,25 +201,117 @@
     <script>
         function deliveryIndex() {
             return {
-                resetForm() {
+                init() {
+                    // Check URL parameters on page load
+                    this.checkUrlParams();
 
+                    // Listen for popstate events (back/forward navigation)
+                    window.addEventListener('popstate', () => {
+                        this.checkUrlParams();
+                    });
+
+                    // Listen for edit button clicks
+                    document.querySelectorAll('.edit-delivery-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const deliveryId = button.dataset.id;
+                            this.openEditDrawer(deliveryId);
+                        });
+                    });
+
+                    // Listen for successful form submissions
+                    window.addEventListener('delivery-created', () => {
+                        this.closeDrawer();
+                        // Refresh the page or update the list
+                        window.location.reload();
+                    });
+
+                    window.addEventListener('delivery-updated', () => {
+                        this.closeDrawer();
+                        // Refresh the page or update the list
+                        window.location.reload();
+                    });
+
+                    // Listen for toast notifications
+                    window.addEventListener('show-toast', (event) => {
+                        const { message, type } = event.detail;
+                        window.Toast.fire({
+                            icon: type === 'success' ? 'success' : 'error',
+                            title: message
+                        });
+                    });
                 },
 
-                closeViewDrawer() {
+                checkUrlParams() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const action = urlParams.get('action');
+                    const deliveryId = urlParams.get('delivery_id');
+
+                    if (action === 'create') {
+                        this.openCreateDrawer();
+                    } else if (action === 'edit' && deliveryId) {
+                        this.openEditDrawer(deliveryId);
+                    }
+                },
+
+                openCreateDrawer() {
+                    // Update URL without page reload
+                    const url = new URL(window.location);
+                    url.searchParams.set('action', 'create');
+                    window.history.pushState({}, '', url);
+
+                    // Dispatch event to open drawer
+                    window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
+                        detail: {
+                            title: 'Add New Delivery',
+                            mode: 'create'
+                        }
+                    }));
+                },
+
+                async openEditDrawer(deliveryId) {
+                    try {
+                        // Update URL without page reload
+                        const url = new URL(window.location);
+                        url.searchParams.set('action', 'edit');
+                        url.searchParams.set('delivery_id', deliveryId);
+                        window.history.pushState({}, '', url);
+
+                        // Fetch delivery data
+                        const response = await axios.get(`/deliveries/${deliveryId}`, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.data.success) {
+                            // Dispatch event to open drawer with data
+                            window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
+                                detail: {
+                                    title: 'Edit Delivery',
+                                    mode: 'edit',
+                                    deliveryId: deliveryId,
+                                    deliveryData: response.data.data
+                                }
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('Error fetching delivery data:', error);
+                        alert('Error loading delivery data. Please try again.');
+                    }
+                },
+
+                closeDrawer() {
+                    // Remove URL parameters
+                    const url = new URL(window.location);
+                    url.searchParams.delete('action');
+                    url.searchParams.delete('delivery_id');
+                    window.history.pushState({}, '', url);
+
+                    // Close the drawer
+                    window.dispatchEvent(new CustomEvent('close-drawer'));
                 }
             };
-        }
-        function init() {
-
-
-            // Handle view button clicks
-
-
-            // Handle edit button clicks
-
-
-            // Listen for the delivery-created event
-
         }
     </script>
 </x-app-layout>
