@@ -278,7 +278,7 @@
                         window.history.pushState({}, '', url);
 
                         // Fetch delivery data
-                        const response = await axios.get(`/deliveries/${deliveryId}`, {
+                        const response = await axios.get(`/deliveries/show/${deliveryId}`, {
                             headers: {
                                 'Accept': 'application/json'
                             }
