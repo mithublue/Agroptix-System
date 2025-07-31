@@ -76,7 +76,7 @@
                 this.$nextTick(() => {
                     this.form = this.$el.querySelector('form');
                     if (this.form) {
-                        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                        this.form.addEventListener('submit', (e) => {});
                     }
                 });
 
@@ -144,61 +144,6 @@
                     this.form.querySelectorAll('input[type="file"]').forEach(input => {
                         input.value = '';
                     });
-                }
-            },
-
-            async handleSubmit(e) {
-                //e.preventDefault();
-
-                if (!this.form) return;
-
-                this.loading = true;
-
-                try {
-                    const formData = new FormData(this.form);
-                    const url = this.form.action;
-                    const method = this.form.method;
-
-                    const response = await fetch(url, {
-                        method: method,
-                        body: formData,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.message || 'Failed to save delivery');
-                    }
-
-                    const data = await response.json();
-
-                    // Dispatch success event
-                    this.$dispatch('notify', {
-                        type: 'success',
-                        message: data.message || 'Delivery saved successfully!'
-                    });
-
-                    // Dispatch delivery-created event
-                    this.$dispatch('delivery-created', {
-                        delivery: data.data || {},
-                        message: data.message || 'Delivery saved successfully!'
-                    });
-
-                    // Close the drawer
-                    this.close();
-
-                } catch (error) {
-                    console.error('Error saving delivery:', error);
-                    this.$dispatch('notify', {
-                        type: 'error',
-                        message: error.message || 'Failed to save delivery. Please try again.'
-                    });
-                } finally {
-                    this.loading = false;
                 }
             },
 
