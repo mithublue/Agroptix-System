@@ -18,7 +18,11 @@
     <div class="py-12" x-data="deliveryIndex()" x-init="init()">
         <!-- Delivery Form Drawer -->
         <x-delivery.form-drawer>
-            <x-delivery.form :batches="\App\Models\Batch::latest()->take(50)->get()" />
+            @php
+            $batches = \App\Models\Batch::latest()->take(50)->get();
+            @endphp
+            <x-delivery.form :batches="$batches" />
+            {{--<x-delivery.form-edit :batches="$batches" />--}}
         </x-delivery.form-drawer>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
