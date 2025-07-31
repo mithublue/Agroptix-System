@@ -22,7 +22,7 @@
             $batches = \App\Models\Batch::latest()->take(50)->get();
             @endphp
             <x-delivery.form :batches="$batches" />
-            {{--<x-delivery.form-edit :batches="$batches" />--}}
+            <x-delivery.form-edit :batches="$batches" />
         </x-delivery.form-drawer>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -144,10 +144,10 @@
                                                     </a>
                                                 @endcan
 
-                                                @can('edit_deliveries')
-                                                    <button data-id="{{ $delivery->id }}" class="edit-delivery-btn text-yellow-600 hover:text-yellow-900" title="Edit Delivery">
+                                                @can('update', $delivery)
+                                                    <button @click="openEditDrawer({{ $delivery->id }}); return false;" class="text-indigo-600 hover:text-indigo-900 edit-delivery-btn" data-id="{{ $delivery->id }}" title="Edit Delivery">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                         </svg>
                                                     </button>
                                                 @endcan
@@ -215,12 +215,13 @@
                     });
 
                     // Listen for edit button clicks
-                    document.querySelectorAll('.edit-delivery-btn').forEach(button => {
-                        button.addEventListener('click', (e) => {
+                    document.addEventListener('click', (e) => {
+                        const editButton = e.target.closest('.edit-delivery-btn');
+                        if (editButton) {
                             e.preventDefault();
-                            const deliveryId = button.dataset.id;
+                            const deliveryId = editButton.dataset.id;
                             this.openEditDrawer(deliveryId);
-                        });
+                        }
                     });
 
                     // Listen for successful form submissions
@@ -275,33 +276,53 @@
 
                 async openEditDrawer(deliveryId) {
                     try {
+                        // Show loading state
+                        this.$dispatch('show-toast', {
+                            type: 'info',
+                            message: 'Loading delivery data...'
+                        });
+
                         // Update URL without page reload
                         const url = new URL(window.location);
                         url.searchParams.set('action', 'edit');
                         url.searchParams.set('delivery_id', deliveryId);
                         window.history.pushState({}, '', url);
 
+                        // Dispatch event to open drawer in loading state
+                        window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
+                            detail: {
+                                title: 'Edit Delivery',
+                                mode: 'edit',
+                                deliveryId: deliveryId,
+                                isLoading: true
+                            }
+                        }));
+
                         // Fetch delivery data
-                        const response = await axios.get(`/deliveries/show/${deliveryId}`, {
+                        const response = await axios.get(`/deliveries/${deliveryId}/edit`, {
                             headers: {
-                                'Accept': 'application/json'
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
 
-                        if (response.data.success) {
-                            // Dispatch event to open drawer with data
-                            window.dispatchEvent(new CustomEvent('delivery-form-drawer:show', {
-                                detail: {
-                                    title: 'Edit Delivery',
-                                    mode: 'edit',
-                                    deliveryId: deliveryId,
-                                    deliveryData: response.data.data
-                                }
-                            }));
-                        }
+                        // Dispatch event with delivery data
+                        window.dispatchEvent(new CustomEvent('edit-delivery', {
+                            detail: {
+                                deliveryId: deliveryId,
+                                delivery: response.data.delivery
+                            }
+                        }));
+
                     } catch (error) {
                         console.error('Error fetching delivery data:', error);
-                        alert('Error loading delivery data. Please try again.');
+                        this.$dispatch('show-toast', {
+                            type: 'error',
+                            message: error.response?.data?.message || 'Error loading delivery data. Please try again.'
+                        });
+                        
+                        // Close the drawer on error
+                        window.dispatchEvent(new CustomEvent('close-drawer'));
                     }
                 },
 
