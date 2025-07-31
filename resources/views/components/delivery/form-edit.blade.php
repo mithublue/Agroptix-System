@@ -1,4 +1,4 @@
-<div x-data="deliveryForm()" x-init="init()" class="space-y-6">
+<div x-data="deliveryForm({{ $delivery ? json_encode($delivery) : 'null' }})" x-init="init()" class="space-y-6">
     <form @submit.prevent="submitForm" enctype="multipart/form-data">
         <input type="hidden" name="_method" x-bind:value="deliveryId ? 'PUT' : 'POST'">
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
@@ -207,32 +207,46 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('deliveryForm', () => ({
+    Alpine.data('deliveryForm', (deliveryData) => ({
         loading: false,
-        deliveryId: null,
+        deliveryId: deliveryData ? deliveryData.id : null,
         formData: {
-            batch_id: '',
-            delivery_date: '',
-            delivery_status: '',
-            delivery_person: '',
-            delivery_contact: '',
-            delivery_address: '',
-            delivery_notes: '',
-            signature_recipient_name: '',
-            signature_data: '',
-            delivery_confirmation: false,
-            temperature_check: false,
-            quality_check: false,
-            delivery_photos: []
+            batch_id: deliveryData ? deliveryData.batch_id : '',
+            delivery_date: deliveryData ? deliveryData.delivery_date : '',
+            delivery_status: deliveryData ? deliveryData.delivery_status : '',
+            delivery_person: deliveryData ? deliveryData.delivery_person : '',
+            delivery_contact: deliveryData ? deliveryData.delivery_contact : '',
+            delivery_address: deliveryData ? deliveryData.delivery_address : '',
+            delivery_notes: deliveryData ? deliveryData.delivery_notes : '',
+            signature_recipient_name: deliveryData ? deliveryData.signature_recipient_name : '',
+            signature_data: deliveryData ? deliveryData.signature_data : '',
+            delivery_confirmation: deliveryData ? Boolean(deliveryData.delivery_confirmation) : false,
+            temperature_check: deliveryData ? Boolean(deliveryData.temperature_check) : false,
+            quality_check: deliveryData ? Boolean(deliveryData.quality_check) : false,
+            additional_notes: deliveryData ? deliveryData.additional_notes : ''
         },
         
         init() {
-            // Listen for edit-delivery event to load delivery data
+            // If we have a delivery ID, we're in edit mode
+            if (this.deliveryId) {
+                this.isEdit = true;
+                
+                // Format the delivery date for datetime-local input
+                if (this.formData.delivery_date) {
+                    const date = new Date(this.formData.delivery_date);
+                    const formattedDate = date.toISOString().slice(0, 16);
+                    this.formData.delivery_date = formattedDate;
+                }
+                
+                console.log('Initialized form with data:', this.formData);
+            }
+            
+            // Listen for edit-delivery event to load delivery data (for drawer mode)
             this.$el.addEventListener('edit-delivery', (event) => {
                 this.loadDelivery(event.detail.deliveryId);
             });
             
-            // Reset form when drawer is closed
+            // Reset form when drawer is closed (for drawer mode)
             this.$el.addEventListener('drawer-closed', () => {
                 this.resetForm();
             });
