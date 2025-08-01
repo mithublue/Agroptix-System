@@ -276,7 +276,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 <span class="text-sm font-medium text-green-800">
-                                                    <span x-text="uploadedFile.original_name"></span>
+                                                    <span x-text="uploadedFile ? uploadedFile.original_name : ''"></span>
                                                     <span class="text-green-600 text-xs block">Successfully uploaded</span>
                                                 </span>
                                             </div>
@@ -286,7 +286,7 @@
                                                 </svg>
                                             </button>
                                         </div>
-                                        <input type="hidden" name="test_certificate_path" x-model="uploadedFile.path">
+                                        <input type="hidden" name="test_certificate_path" :value="uploadedFile ? uploadedFile.path : ''">
                                     </div>
                                 </div>
 
