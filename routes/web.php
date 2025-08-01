@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
         // Create routes
         Route::middleware(['can:create_quality_test'])->group(function () {
             Route::get('quality-tests/create', [\App\Http\Controllers\QualityTestController::class, 'create'])->name('quality-tests.create');
+            Route::post('quality-tests/upload-certificate', [\App\Http\Controllers\QualityTestController::class, 'uploadCertificate'])->name('quality-tests.upload-certificate');
             Route::post('quality-tests', [\App\Http\Controllers\QualityTestController::class, 'store'])->name('quality-tests.store');
         });
 

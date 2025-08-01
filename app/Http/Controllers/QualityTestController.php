@@ -10,6 +10,7 @@ use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class QualityTestController extends Controller
@@ -147,6 +148,51 @@ class QualityTestController extends Controller
             // Error response is already handled above
         }
 
+    /**
+     * Handle AJAX file upload for test certificates
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadCertificate(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'test_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            ]);
+
+            if (!$request->hasFile('test_certificate')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file uploaded.',
+                ], 400);
+            }
+
+            $file = $request->file('test_certificate');
+            $path = $file->store('test-certificates', 'public');
+
+            return response()->json([
+                'success' => true,
+                'path' => $path,
+                'url' => Storage::disk('public')->url($path),
+                'original_name' => $file->getClientOriginalName(),
+                'message' => 'File uploaded successfully.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('File upload error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading file: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View
+     */
     public function create(Batch $batch): View
     {
         return view('qualityTest.create', compact('batch'));
@@ -173,7 +219,7 @@ class QualityTestController extends Controller
             'lab_name' => $request['lab_name'] ?? null,
             'parameter_tested' => json_encode($request['parameters_tested'] ?? [] ),
             'result' => $request['final_pass_fail'] ?? null,
-            'test_certificate' => $request['test_certificate'] ?? null,
+            'test_certificate' => $request['test_certificate_path'] ?? null, // Use the path from AJAX upload
             'remarks' => $request['remarks'] ?? null,
         ];
 
@@ -336,7 +382,7 @@ class QualityTestController extends Controller
                 'rejection_date' => 'required|date',
                 'corrective_action' => 'nullable|string|max:1000'
             ]);
-            
+
             // Update the test status
             $qualityTest->update([
                 'status' => 'rejected',
@@ -345,10 +391,10 @@ class QualityTestController extends Controller
                 'rejection_reason' => $request->input('rejection_reason'),
                 'corrective_action' => $request->input('corrective_action')
             ]);
-            
+
             // Get the associated batch
             $batch = $qualityTest->batch;
-            
+
             // Log the test rejection event
             try {
                 if ($batch) {
@@ -366,12 +412,12 @@ class QualityTestController extends Controller
                         location: 'Lab',
                         ipAddress: $request->ip()
                     );
-                    
+
                     // Update batch status to QC rejected
                     $batch->status = Batch::STATUS_QC_REJECTED;
                     $batch->save();
                 }
-                
+
             } catch (\Exception $e) {
                 Log::error('Failed to log test rejection event: ' . $e->getMessage(), [
                     'test_id' => $qualityTest->id,
@@ -387,13 +433,13 @@ class QualityTestController extends Controller
                 'data' => $qualityTest,
                 'batch_status' => $batch->status ?? null
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to reject test: ' . $e->getMessage(), [
                 'test_id' => $qualityTest->id ?? null,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to reject test: ' . $e->getMessage()
