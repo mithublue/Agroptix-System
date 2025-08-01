@@ -22,7 +22,7 @@
             $batches = \App\Models\Batch::latest()->take(50)->get();
             @endphp
             <x-delivery.form :batches="$batches" />
-            <x-delivery.form-edit :batches="$batches" />
+{{--            <x-delivery.form-edit :batches="$batches" />--}}
         </x-delivery.form-drawer>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -325,7 +325,7 @@
                             type: 'error',
                             message: error.response?.data?.message || 'Error loading delivery data. Please try again.'
                         });
-                        
+
                         // Close the drawer on error
                         window.dispatchEvent(new CustomEvent('close-drawer'));
                     }

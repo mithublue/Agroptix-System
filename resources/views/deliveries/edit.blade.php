@@ -48,7 +48,7 @@
                     @endif
 
                     <!-- Form Component -->
-                    <div x-data="deliveryForm()" x-init="init()">
+                    <div x-data="deliveryForm(@js($delivery))" x-init="init()">
                         <x-delivery.form-edit :delivery="$delivery" :batches="$batches" />
                     </div>
                 </div>

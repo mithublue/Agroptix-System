@@ -207,7 +207,6 @@ class DeliveryController extends Controller
     public function edit(Delivery $delivery)
     {
         $this->authorize('edit_deliveries', $delivery);
-
         // Get all batches for the dropdown, including the current one
         $batches = Batch::latest()->take(50)->get();
 

@@ -183,6 +183,71 @@
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
+
+        <!-- Customer Rating -->
+        <div>
+            <label for="customer_rating" class="block text-sm font-medium text-gray-700">Customer Rating</label>
+            <select id="customer_rating" name="customer_rating" x-model="formData.customer_rating"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Select rating</option>
+                <option value="1">1 - Poor</option>
+                <option value="2">2 - Fair</option>
+                <option value="3">3 - Good</option>
+                <option value="4">4 - Very Good</option>
+                <option value="5">5 - Excellent</option>
+            </select>
+            @error('customer_rating')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Customer Comments -->
+        <div class="col-span-2">
+            <label for="customer_comments" class="block text-sm font-medium text-gray-700">Customer Comments</label>
+            <textarea id="customer_comments" name="customer_comments" rows="2" x-model="formData.customer_comments"
+                      class="mt-1 block w-full rounded-md @error('customer_comments') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror"></textarea>
+            @error('customer_comments')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Customer Complaints -->
+        <div class="col-span-2">
+            <label for="customer_complaints" class="block text-sm font-medium text-gray-700">Customer Complaints</label>
+            <textarea id="customer_complaints" name="customer_complaints" rows="2" x-model="formData.customer_complaints"
+                      class="mt-1 block w-full rounded-md @error('customer_complaints') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror"></textarea>
+            @error('customer_complaints')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Feedback Status -->
+        <div>
+            <label for="feedback_status" class="block text-sm font-medium text-gray-700">Feedback Status</label>
+            <select id="feedback_status" name="feedback_status" x-model="formData.feedback_status"
+                    class="mt-1 block w-full rounded-md @error('feedback_status') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+                <option value="">Select status</option>
+                <option value="pending">Pending</option>
+                <option value="submitted">Submitted</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+            </select>
+            @error('feedback_status')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Feedback Submitted At -->
+        <div>
+            <label for="feedback_submitted_at" class="block text-sm font-medium text-gray-700">Feedback Date</label>
+            <input type="datetime-local" id="feedback_submitted_at" name="feedback_submitted_at" 
+                   x-model="formData.feedback_submitted_at"
+                   class="mt-1 block w-full rounded-md @error('feedback_submitted_at') border-red-300 focus:border-red-500 focus:ring-red-500 @else border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @enderror">
+            @error('feedback_submitted_at')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
     </div>
 
     <!-- Form Actions -->
@@ -223,22 +288,50 @@ document.addEventListener('alpine:init', () => {
             delivery_confirmation: deliveryData ? Boolean(deliveryData.delivery_confirmation) : false,
             temperature_check: deliveryData ? Boolean(deliveryData.temperature_check) : false,
             quality_check: deliveryData ? Boolean(deliveryData.quality_check) : false,
-            additional_notes: deliveryData ? deliveryData.additional_notes : ''
+            additional_notes: deliveryData ? deliveryData.additional_notes : '',
+            customer_rating: deliveryData ? deliveryData.customer_rating : '',
+            customer_comments: deliveryData ? deliveryData.customer_comments : '',
+            customer_complaints: deliveryData ? deliveryData.customer_complaints : '',
+            feedback_status: deliveryData ? deliveryData.feedback_status : '',
+            feedback_submitted_at: deliveryData ? deliveryData.feedback_submitted_at : ''
         },
         
         init() {
-            // If we have a delivery ID, we're in edit mode
+            // If we have delivery data, we're in edit mode
             if (this.deliveryId) {
                 this.isEdit = true;
                 
-                // Format the delivery date for datetime-local input
+                // Format dates for datetime-local input
                 if (this.formData.delivery_date) {
                     const date = new Date(this.formData.delivery_date);
-                    const formattedDate = date.toISOString().slice(0, 16);
-                    this.formData.delivery_date = formattedDate;
+                    this.formData.delivery_date = date.toISOString().slice(0, 16);
+                }
+                
+                if (this.formData.feedback_submitted_at) {
+                    const feedbackDate = new Date(this.formData.feedback_submitted_at);
+                    this.formData.feedback_submitted_at = feedbackDate.toISOString().slice(0, 16);
                 }
                 
                 console.log('Initialized form with data:', this.formData);
+            } else if (deliveryData) {
+                // If we have delivery data but no ID, we might be creating a new delivery
+                // with some pre-filled data
+                Object.keys(this.formData).forEach(key => {
+                    if (deliveryData[key] !== undefined) {
+                        this.formData[key] = deliveryData[key];
+                    }
+                });
+                
+                // Format dates if they exist
+                if (this.formData.delivery_date) {
+                    const date = new Date(this.formData.delivery_date);
+                    this.formData.delivery_date = date.toISOString().slice(0, 16);
+                }
+                
+                if (this.formData.feedback_submitted_at) {
+                    const feedbackDate = new Date(this.formData.feedback_submitted_at);
+                    this.formData.feedback_submitted_at = feedbackDate.toISOString().slice(0, 16);
+                }
             }
             
             // Listen for edit-delivery event to load delivery data (for drawer mode)
@@ -382,53 +475,7 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
-<script>
-    function deliveryForm() {
-        return {
-            loading: false,
-            isEdit: false,
-            deliveryId: null,
-            errors: {},
-            currentPhotos: [],
-            formData: {
-                batch_id: '',
-                delivery_date: '',
-                delivery_person: '',
-                delivery_contact: '',
-                delivery_address: '',
-                delivery_status: 'pending',
-                delivery_notes: '',
-                signature_recipient_name: '',
-                signature_data: '',
-                delivery_confirmation: false,
-                temperature_check: false,
-                quality_check: false,
-                delivery_photos: []
-            },
 
-            init() {
-                // Listen for drawer open events
-                window.addEventListener('delivery-form-drawer:show', (event) => {
-                    this.handleDrawerOpen(event.detail);
-                });
-
-                // Listen for close drawer events
-                window.addEventListener('close-drawer', () => {
-                    this.resetForm();
-                });
-            },
-
-            handleDrawerOpen(detail) {
-                this.resetForm();
-
-                if (detail.mode === 'edit' && detail.deliveryData) {
-                    this.isEdit = true;
-                    this.deliveryId = detail.deliveryId;
-                    this.loadDeliveryData(detail.deliveryData);
-                } else {
-                    this.isEdit = false;
-                    this.deliveryId = null;
-                }
             },
 
             loadDeliveryData(delivery) {
