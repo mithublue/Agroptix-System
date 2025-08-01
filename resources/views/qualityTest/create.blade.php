@@ -171,7 +171,11 @@
                                     isUploading: false,
                                     uploadProgress: 0,
                                     uploadError: null,
-                                    uploadedFile: null,
+                                    uploadedFile: isEdit && formData.test_certificate ? {
+                                        path: formData.test_certificate,
+                                        url: formData.test_certificate.startsWith('http') ? formData.test_certificate : '/storage/' + formData.test_certificate,
+                                        original_name: formData.test_certificate.split('/').pop()
+                                    } : null,
 
                                     async handleFileUpload(event) {
                                         const file = event.target.files[0];
@@ -273,11 +277,11 @@
                                         <div class="flex justify-between items-start">
                                             <div class="flex items-center">
                                                 <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
                                                 <span class="text-sm font-medium text-green-800">
                                                     <span x-text="uploadedFile ? uploadedFile.original_name : ''"></span>
-                                                    <span class="text-green-600 text-xs block">Successfully uploaded</span>
+                                                    <span class="text-green-600 text-xs block" x-text="isEdit ? 'Previously uploaded' : 'Successfully uploaded'"></span>
                                                 </span>
                                             </div>
                                             <button type="button" @click="removeFile()" class="text-gray-400 hover:text-red-500">
@@ -286,6 +290,14 @@
                                                 </svg>
                                             </button>
                                         </div>
+                                        <template x-if="uploadedFile">
+                                            <template x-if="uploadedFile.url.match(/\\.(jpg|jpeg|png)$/i)">
+                                                <img :src="uploadedFile.url" alt="Test Certificate Preview" class="mt-2 max-h-48 rounded border" />
+                                            </template>
+                                            <template x-if="uploadedFile.url.match(/\\.pdf$/i)">
+                                                <iframe :src="uploadedFile.url" class="mt-2 w-full h-60 border rounded" frameborder="0"></iframe>
+                                            </template>
+                                        </template>
                                         <input type="hidden" name="test_certificate_path" :value="uploadedFile ? uploadedFile.path : ''">
                                     </div>
                                 </div>
