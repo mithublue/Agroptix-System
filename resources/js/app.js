@@ -1,5 +1,7 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
+Alpine.plugin(collapse);
 import { Turbo } from '@hotwired/turbo-rails';
 import Swal from 'sweetalert2';
 import './country-state';
@@ -24,9 +26,9 @@ Alpine.directive('click-outside', (el, { expression }, { evaluateLater, effect }
 // Make Swal available globally
 window.Swal = Swal;
 
-
 // Initialize Alpine.js
 window.Alpine = Alpine;
+Alpine.start();
 
 // Configure Toast
 window.Toast = Swal.mixin({
@@ -43,9 +45,6 @@ window.Toast = Swal.mixin({
 
 // Start Alpine.js when Turbo has loaded the page
 document.addEventListener('turbo:load', () => {
-    // Initialize Alpine.js
-    Alpine.start();
-    
     // Initialize any Alpine.js plugins or custom directives here
 });
 

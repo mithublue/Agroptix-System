@@ -16,6 +16,7 @@
         "vite": "^5.0"
     },
     "dependencies": {
+        "@alpinejs/collapse": "^3.14.9",
         "@google/gemini-cli": "^0.1.4",
         "@hotwired/turbo": "^8.0.13",
         "@hotwired/turbo-rails": "^8.0.16",
