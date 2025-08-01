@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class QualityTestController extends Controller
@@ -46,7 +47,7 @@ class QualityTestController extends Controller
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
-        \Log::info('Fetching quality tests for batch:', [
+        Log::info('Fetching quality tests for batch:', [
             'batch_id' => $batch->id,
             'batch_code' => $batch->batch_code,
             'exists' => $batch->exists,
@@ -65,7 +66,7 @@ class QualityTestController extends Controller
 
             // Log the relationship query
             $query = $batch->qualityTests();
-            \Log::debug('Quality tests query:', [
+            Log::debug('Quality tests query:', [
                 'sql' => $query->toSql(),
                 'bindings' => $query->getBindings()
             ]);
@@ -84,7 +85,7 @@ class QualityTestController extends Controller
                 ->orderBy('id', 'desc')
                 ->get();
 
-            \Log::debug('Raw tests from database:', $tests->toArray());
+            Log::debug('Raw tests from database:', $tests->toArray());
 
             $formattedTests = $tests->map(function($test) {
                 return [
@@ -109,7 +110,7 @@ class QualityTestController extends Controller
                 'message' => $formattedTests->isEmpty() ? 'No tests found' : 'Tests retrieved successfully'
             ];
 
-            \Log::info('Returning response:', $response);
+            Log::info('Returning response:', $response);
 
             // Return response with proper headers
             return response()->json(
@@ -124,7 +125,7 @@ class QualityTestController extends Controller
 
         } catch (\Exception $e) {
             $errorMessage = 'Error fetching quality tests: ' . $e->getMessage();
-            \Log::error($errorMessage, [
+            Log::error($errorMessage, [
                 'batch_id' => $batch->id ?? null,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -179,7 +180,7 @@ class QualityTestController extends Controller
                 'message' => 'File uploaded successfully.'
             ]);
         } catch (\Exception $e) {
-            \Log::error('File upload error: ' . $e->getMessage());
+            Log::error('File upload error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error uploading file: ' . $e->getMessage(),
