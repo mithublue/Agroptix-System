@@ -172,32 +172,32 @@
                                     uploadProgress: 0,
                                     uploadError: null,
                                     uploadedFile: null,
-                                    
+
                                     async handleFileUpload(event) {
                                         const file = event.target.files[0];
                                         if (!file) return;
-                                        
+
                                         // Validate file type
                                         const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
                                         if (!validTypes.includes(file.type)) {
                                             this.uploadError = 'Invalid file type. Please upload a PDF, JPG, or PNG file.';
                                             return;
                                         }
-                                        
+
                                         // Validate file size (10MB max)
                                         const maxSize = 10 * 1024 * 1024; // 10MB
                                         if (file.size > maxSize) {
                                             this.uploadError = 'File size exceeds 10MB limit.';
                                             return;
                                         }
-                                        
+
                                         const formData = new FormData();
                                         formData.append('test_certificate', file);
-                                        
+
                                         this.isUploading = true;
                                         this.uploadError = null;
                                         this.uploadProgress = 0;
-                                        
+
                                         try {
                                             const response = await fetch('{{ route('quality-tests.upload-certificate', $batch) }}', {
                                                 method: 'POST',
@@ -212,22 +212,22 @@
                                                     );
                                                 },
                                             });
-                                            
+
                                             const data = await response.json();
-                                            
+
                                             if (!response.ok) {
                                                 throw new Error(data.message || 'Upload failed');
                                             }
-                                            
+
                                             this.uploadedFile = data;
                                             this.formData.test_certificate = data.path; // Store the server path in the form
                                             this.uploadProgress = 100;
-                                            
+
                                             // Show success message
                                             setTimeout(() => {
                                                 this.uploadProgress = 0;
                                             }, 1500);
-                                            
+
                                         } catch (error) {
                                             console.error('Upload error:', error);
                                             this.uploadError = error.message || 'An error occurred while uploading the file.';
@@ -235,7 +235,7 @@
                                             this.isUploading = false;
                                         }
                                     },
-                                    
+
                                     removeFile() {
                                         this.uploadedFile = null;
                                         this.formData.test_certificate = '';
@@ -262,12 +262,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, JPEG, PNG (Max 10MB)</p>
-                                    
+
                                     <!-- Upload Error -->
                                     <div x-show="uploadError" class="mt-2 text-sm text-red-600" x-text="uploadError"></div>
-                                    
+
                                     <!-- File Preview -->
                                     <div x-show="uploadedFile" class="mt-3 p-3 border border-green-200 bg-green-50 rounded-md">
                                         <div class="flex justify-between items-start">
@@ -719,7 +719,7 @@
                         }
                     })
                     .then(response => {
-                        console.log('Response:', response);
+                        console.log('Response:', response);return;
                         if (response.data.success) {
                             // Get the redirect URL
                             const redirectUrl = response.data.redirect || '{{ route("quality-tests.batchList") }}';

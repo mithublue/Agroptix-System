@@ -200,6 +200,7 @@ class QualityTestController extends Controller
 
     public function store(Request $request)
     {
+
         // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new QualityTestStoreRequest();
@@ -219,7 +220,7 @@ class QualityTestController extends Controller
             'lab_name' => $request['lab_name'] ?? null,
             'parameter_tested' => json_encode($request['parameters_tested'] ?? [] ),
             'result' => $request['final_pass_fail'] ?? null,
-            'test_certificate' => $request['test_certificate_path'] ?? null, // Use the path from AJAX upload
+            'test_certificate' => $request['test_certificate'] ?? null, // Use the path from AJAX upload
             'remarks' => $request['remarks'] ?? null,
         ];
 
@@ -250,6 +251,10 @@ class QualityTestController extends Controller
 
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
+        return response()->json([
+            'success' => true,
+            'request' => $validatedData,
+        ]);
         QualityTest::create($validatedData);
 
 
