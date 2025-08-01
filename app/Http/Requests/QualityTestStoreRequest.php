@@ -28,5 +28,5 @@ class QualityTestStoreRequest extends BaseFormRequest
             'test_date' => ['nullable', 'date'],
             'lab_name' => ['nullable', 'string', 'max:255']
         ];
-    }
+    } 
 }
