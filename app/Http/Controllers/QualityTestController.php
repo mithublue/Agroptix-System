@@ -251,12 +251,7 @@ class QualityTestController extends Controller
 
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
-        return response()->json([
-            'success' => true,
-            'request' => $validatedData,
-        ]);
         QualityTest::create($validatedData);
-
 
         // If this is an AJAX request, return JSON response
         if ($request->wantsJson() || $request->ajax()) {

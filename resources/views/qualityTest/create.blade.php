@@ -719,7 +719,7 @@
                         }
                     })
                     .then(response => {
-                        console.log('Response:', response);return;
+                        console.log('Response:', response);
                         if (response.data.success) {
                             // Get the redirect URL
                             const redirectUrl = response.data.redirect || '{{ route("quality-tests.batchList") }}';
