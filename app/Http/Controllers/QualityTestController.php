@@ -321,6 +321,7 @@ class QualityTestController extends Controller
             'lab_name' => $request['lab_name'] ?? $qualityTest->lab_name,
             'parameter_tested' => json_encode($request['parameters_tested'] ?? []),
             'result' => $request['final_pass_fail'] ?? $qualityTest->result,
+            'test_certificate' => $request['test_certificate'] ?? null, // Use the path from AJAX upload
             'remarks' => $request['remarks'] ?? $qualityTest->remarks,
         ];
         $result_status = [];
