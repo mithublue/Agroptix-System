@@ -335,6 +335,8 @@ class QualityTestController extends Controller
         // Handle test_certificate via AJAX or fallback
         if (!empty($request['test_certificate'])) {
             $updateData['test_certificate'] = $request['test_certificate'];
+        } elseif (!empty($request['test_certificate_path'])) {
+            $updateData['test_certificate'] = $request['test_certificate_path'];
         }
         // Validate
         $validator = Validator::make($updateData, $rules);
