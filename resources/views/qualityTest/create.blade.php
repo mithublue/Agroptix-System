@@ -308,7 +308,7 @@
                                     },
                                 }">
                                     <label for="test_certificate" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Test Certificate Upload
+                                        Test Certificate Upload (Informal Certificate)
                                     </label>
                                     <div class="relative">
                                         <input
