@@ -175,7 +175,7 @@ class QualityTestController extends Controller
             return response()->json([
                 'success' => true,
                 'path' => $path,
-                'url' => Storage::disk('public')->url($path),
+                'url' => url('storage/' . $path),
                 'original_name' => $file->getClientOriginalName(),
                 'message' => 'File uploaded successfully.'
             ]);

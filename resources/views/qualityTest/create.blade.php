@@ -173,7 +173,7 @@
                                     uploadError: null,
                                     uploadedFile: isEdit && formData.test_certificate ? {
                                         path: formData.test_certificate,
-                                        url: formData.test_certificate.startsWith('http') ? formData.test_certificate : '/storage/' + formData.test_certificate,
+                                        url: (window.APP_URL ? window.APP_URL : '') + '/storage/' + formData.test_certificate,
                                         original_name: formData.test_certificate.split('/').pop()
                                     } : null,
 
@@ -292,32 +292,32 @@
                                     <!-- Upload Error -->
                                     <div x-show="uploadError" class="mt-2 text-sm text-red-600" x-text="uploadError"></div>
 
-                                    <!-- File Preview -->
-                                    <div x-show="uploadedFile" class="mt-3 p-3 border border-green-200 bg-green-50 rounded-md">
-                                        <div class="flex justify-between items-start">
-                                            <div class="flex items-center">
-                                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                <span class="text-sm font-medium text-green-800">
-                                                    <span x-text="uploadedFile ? uploadedFile.original_name : ''"></span>
-                                                    <span class="text-green-600 text-xs block" x-text="isEdit ? 'Previously uploaded' : 'Successfully uploaded'"></span>
-                                                </span>
-                                            </div>
-                                            <button type="button" @click="removeFileAndDeleteOnServer()" class="text-gray-400 hover:text-red-500 ml-2" x-show="uploadedFile">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                                    <!-- File Preview (Thumbnail) -->
+                                    <div x-show="uploadedFile" class="mt-3 p-3 border border-green-200 bg-green-50 rounded-md flex items-center space-x-4">
                                         <template x-if="uploadedFile">
-                                            <template x-if="uploadedFile.url.match(/\\.(jpg|jpeg|png)$/i)">
-                                                <img :src="uploadedFile.url" alt="Test Certificate Preview" class="mt-2 max-h-48 rounded border" />
+                                            <template x-if="uploadedFile.url.match(/\.(jpg|jpeg|png)$/i)">
+                                                <img :src="uploadedFile.url" alt="Test Certificate Thumbnail" class="w-16 h-16 object-cover rounded border shadow" />
                                             </template>
-                                            <template x-if="uploadedFile.url.match(/\\.pdf$/i)">
-                                                <iframe :src="uploadedFile.url" class="mt-2 w-full h-60 border rounded" frameborder="0"></iframe>
+                                            <template x-if="uploadedFile.url.match(/\.pdf$/i)">
+                                                <iframe :src="uploadedFile.url" class="w-16 h-16 border rounded bg-white" frameborder="0"></iframe>
+                                            </template>
+                                            <template x-if="!uploadedFile.url.match(/\.(jpg|jpeg|png|pdf)$/i)">
+                                                <div class="w-16 h-16 flex items-center justify-center bg-gray-200 rounded border">
+                                                    <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17V7a2 2 0 012-2h6a2 2 0 012 2v10M7 17h10M7 17l-2 2m12-2l2 2" />
+                                                    </svg>
+                                                </div>
                                             </template>
                                         </template>
+                                        <div class="flex-1 min-w-0">
+                                            <span class="block text-sm font-medium text-green-800 truncate" :title="uploadedFile ? uploadedFile.original_name : ''" x-text="uploadedFile ? uploadedFile.original_name : ''"></span>
+                                            <span class="text-green-600 text-xs block" x-text="isEdit ? 'Previously uploaded' : 'Successfully uploaded'"></span>
+                                        </div>
+                                        <button type="button" @click="removeFileAndDeleteOnServer()" class="text-gray-400 hover:text-red-500 ml-2" x-show="uploadedFile">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                         <input type="hidden" name="test_certificate_path" :value="uploadedFile ? uploadedFile.path : ''">
                                     </div>
                                 </div>
@@ -429,6 +429,10 @@
         </div>
     </div>
     </form>
+
+    <script>
+        window.APP_URL = "{{ url('/') }}";
+    </script>
 
     <script>
         // Initialize Alpine.js component
