@@ -176,6 +176,7 @@
                                         url: (window.APP_URL ? window.APP_URL : '') + '/storage/' + formData.test_certificate,
                                         original_name: formData.test_certificate.split('/').pop()
                                     } : null,
+                                    tempFiles: [], // Track all temp files uploaded in this tab
 
                                     async handleFileUpload(event) {
                                         const file = event.target.files[0];
@@ -195,6 +196,11 @@
                                             return;
                                         }
 
+                                        // Delete previous temp file if exists
+                                        if (this.uploadedFile && this.uploadedFile.path && this.uploadedFile.path.startsWith('temp-certificates/')) {
+                                            await this.deleteTempFile(this.uploadedFile.path);
+                                        }
+
                                         const formData = new FormData();
                                         formData.append('test_certificate', file);
 
@@ -209,12 +215,7 @@
                                                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                                     'Accept': 'application/json',
                                                 },
-                                                body: formData,
-                                                onUploadProgress: (progressEvent) => {
-                                                    this.uploadProgress = Math.round(
-                                                        (progressEvent.loaded * 100) / progressEvent.total
-                                                    );
-                                                },
+                                                body: formData
                                             });
 
                                             const data = await response.json();
@@ -226,6 +227,11 @@
                                             this.uploadedFile = data;
                                             this.formData.test_certificate = data.path; // Store the server path in the form
                                             this.uploadProgress = 100;
+
+                                            // Track temp file
+                                            if (data.path && data.path.startsWith('temp-certificates/')) {
+                                                this.tempFiles.push(data.path);
+                                            }
 
                                             // Show success message
                                             setTimeout(() => {
@@ -240,7 +246,25 @@
                                         }
                                     },
 
+                                    async deleteTempFile(path) {
+                                        if (!path) return;
+                                        try {
+                                            await fetch(`{{ route('quality-tests.delete-certificate', $batch) }}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({ path })
+                                            });
+                                        } catch (e) {}
+                                    },
+
                                     removeFile() {
+                                        if (this.uploadedFile && this.uploadedFile.path && this.uploadedFile.path.startsWith('temp-certificates/')) {
+                                            this.deleteTempFile(this.uploadedFile.path);
+                                        }
                                         this.uploadedFile = null;
                                         this.formData.test_certificate = '';
                                         const fileInput = document.getElementById('test_certificate');
@@ -249,23 +273,39 @@
 
                                     async removeFileAndDeleteOnServer() {
                                         if (this.uploadedFile && this.uploadedFile.path) {
-                                            try {
-                                                await fetch(`{{ route('quality-tests.delete-certificate', $batch) }}`, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                                        'Accept': 'application/json',
-                                                        'Content-Type': 'application/json',
-                                                    },
-                                                    body: JSON.stringify({ path: this.uploadedFile.path })
-                                                });
-                                            } catch (e) { /* Optionally show error */ }
+                                            await this.deleteTempFile(this.uploadedFile.path);
                                         }
                                         this.uploadedFile = null;
                                         this.formData.test_certificate = '';
                                         const fileInput = document.getElementById('test_certificate');
                                         if (fileInput) fileInput.value = '';
-                                    }
+                                    },
+
+                                    // On form submit, delete all temp files except the one being saved
+                                    async cleanUpTempFilesOnSubmit() {
+                                        const keep = this.formData.test_certificate;
+                                        for (const path of this.tempFiles) {
+                                            if (path !== keep) {
+                                                await this.deleteTempFile(path);
+                                            }
+                                        }
+                                        this.tempFiles = keep ? [keep] : [];
+                                    },
+
+                                    // On tab close/cancel, delete all temp files
+                                    async cleanUpAllTempFiles() {
+                                        for (const path of this.tempFiles) {
+                                            await this.deleteTempFile(path);
+                                        }
+                                        this.tempFiles = [];
+                                    },
+
+                                    $init() {
+                                        // Clean up temp files on tab close
+                                        window.addEventListener('beforeunload', async (e) => {
+                                            await this.cleanUpAllTempFiles();
+                                        });
+                                    },
                                 }">
                                     <label for="test_certificate" class="block text-sm font-medium text-gray-700 mb-2">
                                         Test Certificate Upload

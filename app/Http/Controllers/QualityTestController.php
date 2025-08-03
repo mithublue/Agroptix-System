@@ -159,32 +159,23 @@ class QualityTestController extends Controller
     {
         try {
             $request->validate([
-                'test_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+                'test_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             ]);
-
             if (!$request->hasFile('test_certificate')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No file uploaded.',
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
             }
-
             $file = $request->file('test_certificate');
-            $path = $file->store('test-certificates', 'public');
-
+            $path = $file->store('temp-certificates', 'public'); // store as temp
             return response()->json([
                 'success' => true,
                 'path' => $path,
                 'url' => url('storage/' . $path),
                 'original_name' => $file->getClientOriginalName(),
-                'message' => 'File uploaded successfully.'
+                'message' => 'File uploaded temporarily.'
             ]);
         } catch (\Exception $e) {
-            Log::error('File upload error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error uploading file: ' . $e->getMessage(),
-            ], 500);
+            \Log::error('File upload error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error uploading file: ' . $e->getMessage()], 500);
         }
     }
 
@@ -268,6 +259,17 @@ class QualityTestController extends Controller
 
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
+
+        // Move temp file to permanent location if present
+        if (!empty($validatedData['test_certificate']) && str_starts_with($validatedData['test_certificate'], 'temp-certificates/')) {
+            $tempPath = $validatedData['test_certificate'];
+            $finalPath = 'test-certificates/' . basename($tempPath);
+            if (\Storage::disk('public')->exists($tempPath)) {
+                \Storage::disk('public')->move($tempPath, $finalPath);
+                $validatedData['test_certificate'] = $finalPath;
+            }
+        }
+
         QualityTest::create($validatedData);
 
         // If this is an AJAX request, return JSON response
@@ -365,6 +367,17 @@ class QualityTestController extends Controller
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
         $validatedData = $validator->validated();
+
+        // Move temp file to permanent location if present
+        if (!empty($validatedData['test_certificate']) && str_starts_with($validatedData['test_certificate'], 'temp-certificates/')) {
+            $tempPath = $validatedData['test_certificate'];
+            $finalPath = 'test-certificates/' . basename($tempPath);
+            if (\Storage::disk('public')->exists($tempPath)) {
+                \Storage::disk('public')->move($tempPath, $finalPath);
+                $validatedData['test_certificate'] = $finalPath;
+            }
+        }
+
         $qualityTest->update($validatedData);
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

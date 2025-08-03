@@ -48,11 +48,11 @@ Route::get('/debug-permissions', function () {
 
 Route::get('/debug/permissions', function () {
     $user = auth()->check() ? auth()->user() : User::first();
-    
+
     if (!$user) {
         return 'No user found';
     }
-    
+
     return [
         'user_id' => $user->id,
         'name' => $user->name,
@@ -166,9 +166,12 @@ Route::middleware('auth')->group(function () {
             Route::put('quality-tests/{qualityTest}', [App\Http\Controllers\QualityTestController::class, 'update'])->name('quality-tests.update');
         });
 
-        Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
-        
-        Route::post('quality-tests/delete-certificate', [App\Http\Controllers\QualityTestController::class, 'deleteCertificate'])->name('quality-tests.delete-certificate');
+        Route::middleware(['can:delete_quality_test'])->group(function () {
+            Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
+
+            Route::post('quality-tests/delete-certificate', [App\Http\Controllers\QualityTestController::class, 'deleteCertificate'])->name('quality-tests.delete-certificate');
+        });
+
     });
 
     // Shipments
