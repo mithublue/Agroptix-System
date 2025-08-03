@@ -189,6 +189,22 @@ class QualityTestController extends Controller
     }
 
     /**
+     * AJAX endpoint to delete a test certificate file from storage
+     */
+    public function deleteCertificate(Request $request)
+    {
+        $request->validate([
+            'path' => ['required', 'string'],
+        ]);
+        $path = $request->input('path');
+        if (\Storage::disk('public')->exists($path)) {
+            \Storage::disk('public')->delete($path);
+            return response()->json(['success' => true, 'message' => 'File deleted.']);
+        }
+        return response()->json(['success' => false, 'message' => 'File not found.'], 404);
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @param  \App\Models\Batch  $batch

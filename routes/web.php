@@ -146,6 +146,8 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware(['can:delete_quality_test'])->delete('quality-tests/{quality_test}', [App\Http\Controllers\QualityTestController::class, 'destroy'])->name('quality-tests.destroy');
+        
+        Route::post('quality-tests/delete-certificate', [App\Http\Controllers\QualityTestController::class, 'deleteCertificate'])->name('quality-tests.delete-certificate');
     });
 
     // Shipments

@@ -245,6 +245,26 @@
                                         this.formData.test_certificate = '';
                                         const fileInput = document.getElementById('test_certificate');
                                         if (fileInput) fileInput.value = '';
+                                    },
+
+                                    async removeFileAndDeleteOnServer() {
+                                        if (this.uploadedFile && this.uploadedFile.path) {
+                                            try {
+                                                await fetch(`{{ route('quality-tests.delete-certificate', $batch) }}`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                        'Accept': 'application/json',
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    body: JSON.stringify({ path: this.uploadedFile.path })
+                                                });
+                                            } catch (e) { /* Optionally show error */ }
+                                        }
+                                        this.uploadedFile = null;
+                                        this.formData.test_certificate = '';
+                                        const fileInput = document.getElementById('test_certificate');
+                                        if (fileInput) fileInput.value = '';
                                     }
                                 }">
                                     <label for="test_certificate" class="block text-sm font-medium text-gray-700 mb-2">
@@ -284,7 +304,7 @@
                                                     <span class="text-green-600 text-xs block" x-text="isEdit ? 'Previously uploaded' : 'Successfully uploaded'"></span>
                                                 </span>
                                             </div>
-                                            <button type="button" @click="removeFile()" class="text-gray-400 hover:text-red-500">
+                                            <button type="button" @click="removeFileAndDeleteOnServer()" class="text-gray-400 hover:text-red-500 ml-2" x-show="uploadedFile">
                                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
