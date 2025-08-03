@@ -50,22 +50,18 @@
                             </div>
 
                             <!-- Harvest Time with Custom Datepicker -->
-                            <div class="datepicker-container">
+                            <div>
                                 <x-label for="harvest_time" :value="__('Harvest Time')" required />
-                                <div class="datepicker-input relative mt-1">
-                                    <input type="text" 
-                                           id="harvest_time_display" 
-                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white cursor-pointer"
-                                           readonly
-                                           placeholder="Select harvest date"
-                                           value="{{ old('harvest_time') ? \Carbon\Carbon::parse(old('harvest_time'))->format('d/m/Y') : '' }}">
-                                    <input type="hidden" 
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <input type="date" 
                                            id="harvest_time" 
                                            name="harvest_time" 
-                                           value="{{ old('harvest_time') }}"
-                                           required>
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                           value="{{ old('harvest_time') ? \Carbon\Carbon::parse(old('harvest_time'))->format('Y-m-d') : '' }}"
+                                           required
+                                           max="{{ now()->format('Y-m-d') }}">
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
                                     </div>

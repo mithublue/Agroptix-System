@@ -130,10 +130,12 @@ class TestDataSeeder extends Seeder
             // Generate a random harvest date within the last 30 days
             $harvestTime = now()->subDays(rand(1, 30))->toDateString();
             
+            $batchCode = 'B' . now()->format('Ymd') . str_pad($i + 1, 3, '0', STR_PAD_LEFT);
             $batches[] = [
                 'source_id' => $source->id,
                 'product_id' => $product->id,
-                'batch_code' => 'B' . now()->format('Ymd') . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
+                'batch_code' => $batchCode,
+                'trace_code' => 'TRC-' . strtoupper(\Illuminate\Support\Str::random(8)),
                 'harvest_time' => $harvestTime,
                 'status' => $statuses[array_rand($statuses)],
                 'created_at' => now(),

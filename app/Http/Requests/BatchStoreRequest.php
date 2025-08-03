@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class BatchStoreRequest extends FormRequest
+class BatchStoreRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

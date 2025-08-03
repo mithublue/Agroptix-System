@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SourceStoreRequest extends FormRequest
+class SourceStoreRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,7 @@ class SourceStoreRequest extends FormRequest
         $rules = [
             'type' => ['nullable', 'string', 'max:20'],
             'gps_lat' => ['required', 'string'],
-            'gps_long' => ['nullable', 'string'],
+            'gps_long' => ['required', 'string'],
             'production_method' => ['required', 'in:' . implode(',', array_keys(config('at.production_methods')))],
             'area' => ['nullable', 'string'],
             'address_line1' => ['required', 'string', 'max:255'],
@@ -38,7 +38,7 @@ class SourceStoreRequest extends FormRequest
         } else {
             // For regular users, set default status and owner_id
             $this->merge([
-                'status' => 'active',
+                'status' => 'pending',
                 'owner_id' => auth()->user()->id
             ]);
         }

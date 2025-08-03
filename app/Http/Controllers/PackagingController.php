@@ -168,27 +168,72 @@ class PackagingController extends Controller
      * @param  \App\Models\Packaging  $packaging
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Packaging $packaging)
+    public function destroy(Packaging $packaging, Request $request)
     {
         $this->authorize('delete_packaging', $packaging);
 
         try {
-            $packaging->delete();
+            // Get the associated batch before deletion
+            $batch = $packaging->batch;
+            $packageId = $packaging->id;
 
-            if (request()->wantsJson()) {
-                return response()->json([
-                    'message' => 'Packaging deleted successfully'
-                ]);
+            // Log the packaging deletion event
+            try {
+                if ($batch) {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: TraceEvent::TYPE_PACKAGING_DELETED,
+                        actor: Auth::user(),
+                        data: [
+                            'package_id' => $packageId,
+                            'package_type' => $packaging->package_type,
+                            'material_type' => $packaging->material_type,
+                            'weight' => $packaging->weight . ' ' . $packaging->weight_unit,
+                            'quantity' => $packaging->quantity_of_units,
+                            'packaging_date' => $packaging->packaging_date,
+                            'expiry_date' => $packaging->expiry_date,
+                        ],
+                        location: 'Packaging Facility',
+                        ipAddress: request()->ip()
+                    );
+
+                    // If this was the last package, update batch status
+                    $remainingPackages = $batch->packages()->count();
+                    if ($remainingPackages === 0) {
+                        $batch->status = Batch::STATUS_QC_APPROVED; // Revert to QC approved if no packages left
+                        $batch->save();
+                    }
+                }
+            } catch (\Exception $e) {
+                /*Log::error('Failed to log packaging deletion event: ' . $e->getMessage(), [
+                    'package_id' => $packageId,
+                    'batch_id' => $batch->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);*/
+                // Continue with deletion even if logging fails
             }
 
+            // Delete the packaging record
+            $packaging->delete();
             return redirect()->route('admin.packaging.index')
-                ->with('success', 'Packaging deleted successfully');
+                             ->with('success', 'Packaging record deleted successfully');
+            /*return response()->json([
+                'success' => true,
+                'message' => 'Packaging record deleted successfully',
+                'batch_status' => $batch->status ?? null
+            ]);*/
+
 
         } catch (\Exception $e) {
-            if (request()->wantsJson()) {
+            /*Log::error('Failed to delete packaging record: ' . $e->getMessage(), [
+                'package_id' => $packaging->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);*/
+
+            if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Error deleting packaging',
-                    'error' => $e->getMessage()
+                    'success' => false,
+                    'message' => 'Failed to delete packaging record: ' . $e->getMessage()
                 ], 500);
             }
 

@@ -79,8 +79,15 @@ class ProductController extends Controller
         }
     }
 
-    public function show(Request $request, Product $product): View
+    public function show(Request $request, Product $product)
     {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $product
+            ]);
+        }
+
         return view('product.show', [
             'product' => $product,
         ]);

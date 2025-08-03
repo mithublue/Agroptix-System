@@ -23,7 +23,10 @@ class Shipment extends Model
         'co2_estimate',
         'departure_time',
         'arrival_time',
-        'batch_as_batch_id',
+        'fuel_type',
+        'temperature',
+        'mode',
+        'route_distance',
     ];
 
     /**
@@ -37,7 +40,6 @@ class Shipment extends Model
             'id' => 'integer',
             'batch_id' => 'integer',
             'co2_estimate' => 'decimal:2',
-            'batch_as_batch_id' => 'integer',
         ];
     }
 

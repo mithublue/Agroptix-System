@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ShipmentUpdateRequest extends FormRequest
+class ShipmentUpdateRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,14 +20,21 @@ class ShipmentUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['nullable', 'integer', 'exists:batches,,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'origin' => ['nullable', 'string'],
             'destination' => ['nullable', 'string'],
             'vehicle_type' => ['nullable', 'string'],
             'co2_estimate' => ['nullable', 'numeric', 'between:-999999.99,999999.99'],
             'departure_time' => ['nullable', 'string'],
             'arrival_time' => ['nullable', 'string'],
-            'batch_as_batch_id' => ['required', 'integer', 'exists:batch_as_batches,id'],
         ];
+    }
+
+    public function validated($key = null, $default = null)
+    {
+        $validated = parent::validated();
+
+        // Merge with all input data
+        return array_merge($validated, $this->except(array_keys($validated)));
     }
 }

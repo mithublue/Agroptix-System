@@ -3,20 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BatchStoreRequest;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\BatchUpdateRequest;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\SourceUpdateRequest;
 use App\Models\Batch;
 use App\Models\Source;
 use App\Models\Product;
+use App\Models\TraceEvent;
+use App\Services\TraceabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class BatchController extends Controller
 {
+    /**
+     * The traceability service instance.
+     */
+    protected $traceabilityService;
+
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(TraceabilityService $traceabilityService)
+    {
+        $this->traceabilityService = $traceabilityService;
+
+        // Apply middleware to specific methods
+        $this->middleware('can:view_batch')->only(['show', 'showTimeline', 'showQrCode', 'listTraceEvents']);
+    }
 
     public function index(Request $request): View
     {
@@ -90,37 +110,79 @@ class BatchController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // Define validation rules
-        //    to get access to its rules and authorization logic.
         $formRequest = new BatchStoreRequest();
 
-        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        // Manually check authorization
         if (!$formRequest->authorize()) {
             abort(403, 'This action is unauthorized.');
         }
 
-        // 3. Get the validation rules from your Form Request class.
+        // Get the validation rules from the Form Request class
         $rules = $formRequest->rules();
-
-        // 4. Create a new validator instance manually.
         $validator = Validator::make($request->all(), $rules);
 
         // Validate the request
         if ($validator->fails()) {
-            // 6. Manually handle the failure.
-            //    To make it work with Hotwired Turbo, we must set the 422 status code.
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
 
-        // 7. If validation passes, get the validated data.
+        // Get the validated data
         $validatedData = $validator->validated();
 
-        // Create the Source record
         try {
-            Batch::create($validatedData);
+            // Create the batch
+            $batch = Batch::create($validatedData);
+
+            // Log the batch creation event
+            try {
+                $this->traceabilityService->logEvent(
+                    batch: $batch,
+                    eventType: TraceEvent::TYPE_HARVEST, // Using HARVEST as the initial event type for batch creation
+                    actor: Auth::user(),
+                    data: [
+                        'source_id' => $batch->source_id,
+                        'product_id' => $batch->product_id,
+                        'weight' => $batch->weight,
+                        'grade' => $batch->grade,
+                        'location' => 'System'
+                    ]
+                );
+
+                // If batch has a harvest time, log a harvest event
+                if ($batch->harvest_time) {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: TraceEvent::TYPE_HARVEST,
+                        actor: Auth::user(),
+                        data: [
+                            'harvest_time' => $batch->harvest_time->toDateTimeString(),
+                            'source_id' => $batch->source_id,
+                            'location' => 'Field'
+                        ]
+                    );
+
+                    // Update batch status to harvested
+                    $batch->status = Batch::STATUS_HARVESTED;
+                    $batch->save();
+                }
+
+            } catch (\Exception $e) {
+                Log::error('Failed to log batch creation event: ' . $e->getMessage(), [
+                    'batch_id' => $batch->id,
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch created successfully.');
+
         } catch (\Exception $e) {
+            Log::error('Failed to create batch: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->except(['_token'])
+            ]);
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create batch. ' . $e->getMessage());
@@ -129,8 +191,13 @@ class BatchController extends Controller
 
     public function show(Batch $batch): View
     {
-        $batch->load(['source', 'product']);
-        return view('batch.show', compact('batch'));
+        $batch->load(['source', 'product', 'traceEvents.actor']);
+        $timeline = $batch->traceEvents()->with('actor')->latest()->paginate(10);
+        
+        return view('batch.show', [
+            'batch' => $batch,
+            'timeline' => $timeline
+        ]);
     }
 
     public function edit(Batch $batch): View
@@ -148,36 +215,76 @@ class BatchController extends Controller
 
     public function update(Request $request, Batch $batch): RedirectResponse
     {
-        //    to get access to its rules and authorization logic.
+        // Get the original data before update
+        $originalData = $batch->getOriginal();
+
+        // Get the form request for validation and authorization
         $formRequest = new BatchUpdateRequest();
 
-        // 2. Manually check authorization (IMPORTANT: This is NOT done automatically now)
+        // Manually check authorization
         if (!$formRequest->authorize()) {
             abort(403, 'This action is unauthorized.');
         }
 
-        // 3. Get the validation rules from your Form Request class.
+        // Get the validation rules and validate
         $rules = $formRequest->rules();
-
-        // 4. Create a new validator instance manually.
         $validator = Validator::make($request->all(), $rules);
 
         // Validate the request
         if ($validator->fails()) {
-            // 6. Manually handle the failure.
-            //    To make it work with Hotwired Turbo, we must set the 422 status code.
             return back()->withErrors($validator)->withInput()->setStatusCode(422);
         }
 
-        // 7. If validation passes, get the validated data.
+        // Get the validated data
         $validatedData = $validator->validated();
 
         try {
+            // Update the batch
             $batch->update($validatedData);
+
+            // Log the batch update event if there are changes
+            $changes = [];
+            foreach ($validatedData as $key => $value) {
+                if (array_key_exists($key, $originalData) && $originalData[$key] != $value) {
+                    $changes[$key] = [
+                        'old' => $originalData[$key],
+                        'new' => $value
+                    ];
+                }
+            }
+
+            if (!empty($changes)) {
+                try {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: TraceEvent::TYPE_PROCESSING, // Using PROCESSING as the event type for batch updates
+                        actor: Auth::user(),
+                        data: [
+                            'changes' => $changes,
+                            'reason' => $request->input('update_reason', 'No reason provided'),
+                            'location' => 'System',
+                            'ip_address' => $request->ip()
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to log batch update event: ' . $e->getMessage(), [
+                        'batch_id' => $batch->id,
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
             return redirect()
                 ->route('batches.index')
                 ->with('success', 'Batch updated successfully.');
+
         } catch (\Exception $e) {
+            Log::error('Failed to update batch: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->except(['_token', '_method'])
+            ]);
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update batch. ' . $e->getMessage());
@@ -186,10 +293,42 @@ class BatchController extends Controller
 
     public function destroy(Batch $batch)
     {
-        $batch->delete();
+        try {
+            // Log the batch deletion event
+            try {
+                $this->traceabilityService->logEvent(
+                    batch: $batch,
+                    eventType: TraceEvent::TYPE_DISPOSED, // Using DISPOSED as the closest match for deletion
+                    actor: Auth::user(),
+                    data: [
+                        'batch_code' => $batch->batch_code,
+                        'source_id' => $batch->source_id,
+                        'product_id' => $batch->product_id,
+                        'action' => 'deleted', // Adding action to clarify this is a deletion
+                        'ip_address' => request()->ip()
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to log batch deletion event: ' . $e->getMessage(), [
+                    'batch_id' => $batch->id,
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
 
-        return redirect()->route('batches.index')
-            ->with('success', 'Batch deleted successfully');
+            // Delete the batch
+            $batch->delete();
+
+            return redirect()->route('batches.index')
+                ->with('success', 'Batch deleted successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to delete batch: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Failed to delete batch: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -229,5 +368,81 @@ class BatchController extends Controller
 
             return back()->with('error', 'Error updating batch status.');
         }
+    }
+
+    /**
+     * Display the batch timeline.
+     */
+    public function showTimeline(Batch $batch)
+    {
+        try {
+            $timeline = $batch->traceEvents()
+                ->with('actor')
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return view('batch.timeline', [
+                'batch' => $batch,
+                'timeline' => $timeline,
+                'title' => 'Timeline: ' . $batch->batch_code
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to load batch timeline: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to load batch timeline. Please try again.');
+        }
+    }
+
+    /**
+     * Display the QR code for the batch.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View
+     */
+    public function showQrCode(Batch $batch)
+    {
+        try {
+            // Generate the QR code URL for this batch's timeline
+            $qrCodeUrl = route('batches.timeline', $batch->trace_code);
+            
+            // Generate the QR code as an SVG string
+            $qrCode = QrCode::format('svg')
+                ->size(300)
+                ->generate($qrCodeUrl);
+            
+            return view('batch.qr-code', [
+                'batch' => $batch,
+                'qrCode' => $qrCode,
+                'title' => 'QR Code: ' . $batch->batch_code
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to generate QR code: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to generate QR code. Please try again.');
+        }
+    }
+
+    /**
+     * List all trace events for the batch.
+     */
+    public function listTraceEvents(Batch $batch)
+    {
+        $events = $this->traceabilityService->getTraceEvents($batch->trace_code);
+
+        return view('batch.trace-events', [
+            'batch' => $batch,
+            'events' => $events,
+            'title' => 'Trace Events: ' . $batch->batch_code
+        ]);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class QualityTestStoreRequest extends FormRequest
+class QualityTestStoreRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,6 +27,8 @@ class QualityTestStoreRequest extends FormRequest
             'result_status' => ['nullable', 'json'],
             'test_date' => ['nullable', 'date'],
             'lab_name' => ['nullable', 'string', 'max:255'],
+            'test_certificate' => ['nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
         ];
     }
 }

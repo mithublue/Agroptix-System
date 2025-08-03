@@ -21,11 +21,13 @@ class DatabaseSeeder extends Seeder
             TestUsersSeeder::class,
         ]);
         
-        // Seed RPC Units and Packaging
+        // Seed RPC Units, Packaging, and Test Data
         $this->call([
             RpcUnitSeeder::class,
             PackagingSeeder::class,
             PackagingPermissionsSeeder::class,
+            TestDataSeeder::class,  // This includes test batches, products, etc.
+            TraceEventsSeeder::class,  // Seed trace events for all batches
         ]);
 
         // Create admin user

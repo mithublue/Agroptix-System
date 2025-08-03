@@ -10,6 +10,8 @@ use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class QualityTestController extends Controller
@@ -45,7 +47,7 @@ class QualityTestController extends Controller
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
-        \Log::info('Fetching quality tests for batch:', [
+        Log::info('Fetching quality tests for batch:', [
             'batch_id' => $batch->id,
             'batch_code' => $batch->batch_code,
             'exists' => $batch->exists,
@@ -64,7 +66,7 @@ class QualityTestController extends Controller
 
             // Log the relationship query
             $query = $batch->qualityTests();
-            \Log::debug('Quality tests query:', [
+            Log::debug('Quality tests query:', [
                 'sql' => $query->toSql(),
                 'bindings' => $query->getBindings()
             ]);
@@ -83,7 +85,7 @@ class QualityTestController extends Controller
                 ->orderBy('id', 'desc')
                 ->get();
 
-            \Log::debug('Raw tests from database:', $tests->toArray());
+            Log::debug('Raw tests from database:', $tests->toArray());
 
             $formattedTests = $tests->map(function($test) {
                 return [
@@ -108,7 +110,7 @@ class QualityTestController extends Controller
                 'message' => $formattedTests->isEmpty() ? 'No tests found' : 'Tests retrieved successfully'
             ];
 
-            \Log::info('Returning response:', $response);
+            Log::info('Returning response:', $response);
 
             // Return response with proper headers
             return response()->json(
@@ -123,7 +125,7 @@ class QualityTestController extends Controller
 
         } catch (\Exception $e) {
             $errorMessage = 'Error fetching quality tests: ' . $e->getMessage();
-            \Log::error($errorMessage, [
+            Log::error($errorMessage, [
                 'batch_id' => $batch->id ?? null,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -147,6 +149,67 @@ class QualityTestController extends Controller
             // Error response is already handled above
         }
 
+    /**
+     * Handle AJAX file upload for test certificates
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadCertificate(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'test_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            ]);
+
+            if (!$request->hasFile('test_certificate')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file uploaded.',
+                ], 400);
+            }
+
+            $file = $request->file('test_certificate');
+            $path = $file->store('test-certificates', 'public');
+
+            return response()->json([
+                'success' => true,
+                'path' => $path,
+                'url' => Storage::disk('public')->url($path),
+                'original_name' => $file->getClientOriginalName(),
+                'message' => 'File uploaded successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('File upload error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading file: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * AJAX endpoint to delete a test certificate file from storage
+     */
+    public function deleteCertificate(Request $request)
+    {
+        $request->validate([
+            'path' => ['required', 'string'],
+        ]);
+        $path = $request->input('path');
+        if (\Storage::disk('public')->exists($path)) {
+            \Storage::disk('public')->delete($path);
+            return response()->json(['success' => true, 'message' => 'File deleted.']);
+        }
+        return response()->json(['success' => false, 'message' => 'File not found.'], 404);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @param  \App\Models\Batch  $batch
+     * @return \Illuminate\View\View
+     */
     public function create(Batch $batch): View
     {
         return view('qualityTest.create', compact('batch'));
@@ -154,6 +217,7 @@ class QualityTestController extends Controller
 
     public function store(Request $request)
     {
+
         // Define validation rules
         //    to get access to its rules and authorization logic.
         $formRequest = new QualityTestStoreRequest();
@@ -173,7 +237,7 @@ class QualityTestController extends Controller
             'lab_name' => $request['lab_name'] ?? null,
             'parameter_tested' => json_encode($request['parameters_tested'] ?? [] ),
             'result' => $request['final_pass_fail'] ?? null,
-            'test_certificate' => $request['test_certificate'] ?? null,
+            'test_certificate' => $request['test_certificate'] ?? null, // Use the path from AJAX upload
             'remarks' => $request['remarks'] ?? null,
         ];
 
@@ -205,7 +269,6 @@ class QualityTestController extends Controller
         // 7. If validation passes, get the validated data.
         $validatedData = $validator->validated();
         QualityTest::create($validatedData);
-
 
         // If this is an AJAX request, return JSON response
         if ($request->wantsJson() || $request->ajax()) {
@@ -261,48 +324,127 @@ class QualityTestController extends Controller
 
     public function update(Request $request, $batch, QualityTest $qualityTest)
     {
-        try {
-            // Get and deduplicate parameters_tested array from the request
-            $parametersTested = array_unique($request->input('parameters_tested', []));
+        // Use the same validation and assignment logic as in store()
+        $formRequest = new QualityTestStoreRequest();
+        if (!$formRequest->authorize()) {
+            abort(403, 'This action is unauthorized.');
+        }
+        $rules = $formRequest->rules();
 
-            // Prepare the data for update
-            $updateData = [
-                'test_date' => $request->input('test_date'),
-                'lab_name' => $request->input('lab_name'),
-                'parameter_tested' => json_encode(array_values($parametersTested)), // Ensure sequential array
-                'result' => $request->input('final_pass_fail'),
-                'remarks' => $request->input('remarks'),
-            ];
-
-            // Process result_status for different parameters
-            $result_status = [];
-            foreach ($parametersTested as $param) {
-                $resultKey = $param . '_result';
-                if ($request->has($resultKey)) {
-                    $result_status[$resultKey] = $request->input($resultKey);
-                }
+        $updateData = [
+            'batch_id' => $request['batch_id'] ?? $qualityTest->batch_id,
+            'test_date' => $request['test_date'] ?? $qualityTest->test_date,
+            'lab_name' => $request['lab_name'] ?? $qualityTest->lab_name,
+            'parameter_tested' => json_encode($request['parameters_tested'] ?? []),
+            'result' => $request['final_pass_fail'] ?? $qualityTest->result,
+            'test_certificate' => $request['test_certificate'] ?? null, // Use the path from AJAX upload
+            'remarks' => $request['remarks'] ?? $qualityTest->remarks,
+        ];
+        $result_status = [];
+        foreach (($request['parameters_tested'] ?? []) as $param) {
+            $resultKey = $param . '_result';
+            if (isset($request[$resultKey])) {
+                $result_status[$resultKey] = $request[$resultKey];
             }
-            $updateData['result_status'] = json_encode($result_status);
-
-            // Handle file upload if present
-            if ($request->hasFile('test_certificate')) {
-                $path = $request->file('test_certificate')->store('test-certificates', 'public');
-                $updateData['test_certificate'] = $path;
+        }
+        $updateData['result_status'] = json_encode($result_status);
+        // Handle test_certificate via AJAX or fallback
+        if (!empty($request['test_certificate'])) {
+            $updateData['test_certificate'] = $request['test_certificate'];
+        } elseif (!empty($request['test_certificate_path'])) {
+            $updateData['test_certificate'] = $request['test_certificate_path'];
+        }
+        // Validate
+        $validator = Validator::make($updateData, $rules);
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'errors' => $validator->errors(),
+                ], 500);
             }
-
-            // Update the quality test
-            $qualityTest->update($updateData);
-
+            return back()->withErrors($validator)->withInput()->setStatusCode(422);
+        }
+        $validatedData = $validator->validated();
+        $qualityTest->update($validatedData);
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Test updated successfully',
-                'redirect' => route('quality-tests.batchList', $batch)
+            ]);
+        }
+        return redirect()->route('quality-tests.batchList', $batch)->with('success', 'Test updated successfully');
+    }
+
+    public function rejectTest(Request $request, QualityTest $qualityTest)
+    {
+        try {
+            // Validate the request
+            $request->validate([
+                'rejection_reason' => 'required|string|max:1000',
+                'rejection_date' => 'required|date',
+                'corrective_action' => 'nullable|string|max:1000'
+            ]);
+
+            // Update the test status
+            $qualityTest->update([
+                'status' => 'rejected',
+                'rejected_by' => Auth::id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $request->input('rejection_reason'),
+                'corrective_action' => $request->input('corrective_action')
+            ]);
+
+            // Get the associated batch
+            $batch = $qualityTest->batch;
+
+            // Log the test rejection event
+            try {
+                if ($batch) {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: TraceEvent::TYPE_QC_REJECTION,
+                        actor: Auth::user(),
+                        data: [
+                            'test_id' => $qualityTest->id,
+                            'test_type' => $qualityTest->test_type,
+                            'rejection_reason' => $request->input('rejection_reason'),
+                            'corrective_action' => $request->input('corrective_action'),
+                            'rejection_date' => $request->input('rejection_date')
+                        ],
+                        location: 'Lab',
+                        ipAddress: $request->ip()
+                    );
+
+                    // Update batch status to QC rejected
+                    $batch->status = Batch::STATUS_QC_REJECTED;
+                    $batch->save();
+                }
+
+            } catch (\Exception $e) {
+                Log::error('Failed to log test rejection event: ' . $e->getMessage(), [
+                    'test_id' => $qualityTest->id,
+                    'batch_id' => $batch->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue with the response even if logging fails
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test rejected successfully',
+                'data' => $qualityTest,
+                'batch_status' => $batch->status ?? null
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to reject test: ' . $e->getMessage(), [
+                'test_id' => $qualityTest->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating test: ' . $e->getMessage()
+                'message' => 'Failed to reject test: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -167,20 +167,158 @@
 
                             <div class="space-y-4">
                                 <!-- File Upload -->
-                                <div>
+                                <div x-data="{
+                                    isUploading: false,
+                                    uploadProgress: 0,
+                                    uploadError: null,
+                                    uploadedFile: isEdit && formData.test_certificate ? {
+                                        path: formData.test_certificate,
+                                        url: formData.test_certificate.startsWith('http') ? formData.test_certificate : '/storage/' + formData.test_certificate,
+                                        original_name: formData.test_certificate.split('/').pop()
+                                    } : null,
+
+                                    async handleFileUpload(event) {
+                                        const file = event.target.files[0];
+                                        if (!file) return;
+
+                                        // Validate file type
+                                        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                                        if (!validTypes.includes(file.type)) {
+                                            this.uploadError = 'Invalid file type. Please upload a PDF, JPG, or PNG file.';
+                                            return;
+                                        }
+
+                                        // Validate file size (10MB max)
+                                        const maxSize = 10 * 1024 * 1024; // 10MB
+                                        if (file.size > maxSize) {
+                                            this.uploadError = 'File size exceeds 10MB limit.';
+                                            return;
+                                        }
+
+                                        const formData = new FormData();
+                                        formData.append('test_certificate', file);
+
+                                        this.isUploading = true;
+                                        this.uploadError = null;
+                                        this.uploadProgress = 0;
+
+                                        try {
+                                            const response = await fetch('{{ route('quality-tests.upload-certificate', $batch) }}', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                    'Accept': 'application/json',
+                                                },
+                                                body: formData,
+                                                onUploadProgress: (progressEvent) => {
+                                                    this.uploadProgress = Math.round(
+                                                        (progressEvent.loaded * 100) / progressEvent.total
+                                                    );
+                                                },
+                                            });
+
+                                            const data = await response.json();
+
+                                            if (!response.ok) {
+                                                throw new Error(data.message || 'Upload failed');
+                                            }
+
+                                            this.uploadedFile = data;
+                                            this.formData.test_certificate = data.path; // Store the server path in the form
+                                            this.uploadProgress = 100;
+
+                                            // Show success message
+                                            setTimeout(() => {
+                                                this.uploadProgress = 0;
+                                            }, 1500);
+
+                                        } catch (error) {
+                                            console.error('Upload error:', error);
+                                            this.uploadError = error.message || 'An error occurred while uploading the file.';
+                                        } finally {
+                                            this.isUploading = false;
+                                        }
+                                    },
+
+                                    removeFile() {
+                                        this.uploadedFile = null;
+                                        this.formData.test_certificate = '';
+                                        const fileInput = document.getElementById('test_certificate');
+                                        if (fileInput) fileInput.value = '';
+                                    },
+
+                                    async removeFileAndDeleteOnServer() {
+                                        if (this.uploadedFile && this.uploadedFile.path) {
+                                            try {
+                                                await fetch(`{{ route('quality-tests.delete-certificate', $batch) }}`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                        'Accept': 'application/json',
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    body: JSON.stringify({ path: this.uploadedFile.path })
+                                                });
+                                            } catch (e) { /* Optionally show error */ }
+                                        }
+                                        this.uploadedFile = null;
+                                        this.formData.test_certificate = '';
+                                        const fileInput = document.getElementById('test_certificate');
+                                        if (fileInput) fileInput.value = '';
+                                    }
+                                }">
                                     <label for="test_certificate" class="block text-sm font-medium text-gray-700 mb-2">
                                         Test Certificate Upload
                                     </label>
-                                    <input
-                                        id="test_certificate"
-                                        type="file"
-                                        @change="handleFileUpload($event)"
-                                        accept=".pdf,.jpg,.jpeg,.png"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                    />
-                                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, JPEG, PNG</p>
-                                    <div x-show="formData.test_certificate" class="mt-2 text-sm text-green-600">
-                                        File selected: <span x-text="formData.test_certificate"></span>
+                                    <div class="relative">
+                                        <input
+                                            id="test_certificate"
+                                            name="test_certificate"
+                                            type="file"
+                                            @change="handleFileUpload($event)"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                            :disabled="isUploading"
+                                        />
+                                        <div x-show="isUploading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                                            <div class="w-full bg-gray-200 rounded-full h-2.5 max-w-xs mx-4">
+                                                <div class="bg-green-600 h-2.5 rounded-full" :style="`width: ${uploadProgress}%`"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, JPEG, PNG (Max 10MB)</p>
+
+                                    <!-- Upload Error -->
+                                    <div x-show="uploadError" class="mt-2 text-sm text-red-600" x-text="uploadError"></div>
+
+                                    <!-- File Preview -->
+                                    <div x-show="uploadedFile" class="mt-3 p-3 border border-green-200 bg-green-50 rounded-md">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex items-center">
+                                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <span class="text-sm font-medium text-green-800">
+                                                    <span x-text="uploadedFile ? uploadedFile.original_name : ''"></span>
+                                                    <span class="text-green-600 text-xs block" x-text="isEdit ? 'Previously uploaded' : 'Successfully uploaded'"></span>
+                                                </span>
+                                            </div>
+                                            <button type="button" @click="removeFileAndDeleteOnServer()" class="text-gray-400 hover:text-red-500 ml-2" x-show="uploadedFile">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <template x-if="uploadedFile">
+                                            <template x-if="uploadedFile.url.match(/\\.(jpg|jpeg|png)$/i)">
+                                                <img :src="uploadedFile.url" alt="Test Certificate Preview" class="mt-2 max-h-48 rounded border" />
+                                            </template>
+                                            <template x-if="uploadedFile.url.match(/\\.pdf$/i)">
+                                                <iframe :src="uploadedFile.url" class="mt-2 w-full h-60 border rounded" frameborder="0"></iframe>
+                                            </template>
+                                        </template>
+                                        <input type="hidden" name="test_certificate_path" :value="uploadedFile ? uploadedFile.path : ''">
                                     </div>
                                 </div>
 
