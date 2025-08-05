@@ -35,4 +35,19 @@ class OptionController extends Controller
         $option->save();
         return redirect()->route('admin.options.index')->with('success', 'Option updated.');
     }
+
+    public function saveUserOptions(Request $request)
+    {
+        $validated = $request->validate([
+            'users_need_activation' => 'required|in:yes,no',
+            'users_activation_method' => 'nullable|in:email,phone',
+            'users_need_admin_approval' => 'required|in:yes,no',
+        ]);
+
+        Option::set('users_need_activation', $validated['users_need_activation']);
+        Option::set('users_activation_method', $validated['users_need_activation'] === 'yes' ? ($validated['users_activation_method'] ?? 'email') : '');
+        Option::set('users_need_admin_approval', $validated['users_need_admin_approval']);
+
+        return redirect()->route('admin.options.index')->with('success', 'User options updated.');
+    }
 }

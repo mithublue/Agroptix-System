@@ -371,6 +371,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Options
     Route::middleware(['can:manage_options'])->group(function () {
         Route::resource('options', App\Http\Controllers\Admin\OptionController::class)->only(['index', 'edit', 'update']);
+        Route::post('options/save-user-options', [\App\Http\Controllers\Admin\OptionController::class, 'saveUserOptions'])->name('options.saveUserOptions')->middleware(['auth', 'can:manage_options']);
     });
 
     // Permissions
