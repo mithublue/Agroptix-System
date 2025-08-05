@@ -165,7 +165,7 @@
                             <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/packaging*') || request()->is('rpcunit*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 mr-3 {{ request()->is('admin/packaging*') || request()->is('rpcunit*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4"></path>
                                     </svg>
                                     Packaging
                                 </div>
@@ -312,6 +312,17 @@
                             </div>
                         </div>
                         @endcan
+                        <!-- Site Options -->
+                        <div x-data="{ open: {{ request()->is('admin/options*') ? 'true' : 'false' }} }">
+                            @can('manage_options')
+                            <a href="{{ route('admin.options.index') }}" class="flex items-center px-4 py-2 mt-1 text-sm font-medium rounded-md hover:bg-gray-100 {{ request()->is('admin/options*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                                <svg class="w-5 h-5 mr-3 {{ request()->is('admin/options*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Site Options
+                            </a>
+                            @endcan
+                        </div>
                     </div>
                     @endcanany
 
@@ -374,7 +385,7 @@
                 <div class="py-6">
 
                     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                        {{ $slot }}
+                        @yield('content')
                     </div>
                 </div>
             </main>
