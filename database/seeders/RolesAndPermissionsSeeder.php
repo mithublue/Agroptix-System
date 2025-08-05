@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use App\Models\Option;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -82,5 +83,10 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Assign admin role to the user
         $adminUser->assignRole('Admin');
+
+        // Default site options
+        Option::set('users_need_activation', 'yes'); // yes or no
+        Option::set('users_activation_method', 'email'); // email or phone
+        Option::set('users_need_admin_approval', 'no'); // yes or no
     }
 }
