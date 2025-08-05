@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_users',
             'manage_roles',
             'manage_permissions',
+            'manage_options',
         ];
         
         // Add manage_{module} permissions for each module
