@@ -368,6 +368,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
              ->middleware('can:export_packaging');
     });
 
+    // Options
+    Route::middleware(['can:manage_options'])->group(function () {
+        Route::resource('options', App\Http\Controllers\Admin\OptionController::class)->only(['index', 'edit', 'update']);
+    });
+
     // Permissions
     Route::middleware(['can:manage_permissions'])->group(function () {
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
