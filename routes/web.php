@@ -250,6 +250,12 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Phone OTP verification routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'show'])->name('auth.phone.verify.form');
+    Route::post('/verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'verify'])->name('auth.phone.verify');
+});
+
 require __DIR__.'/auth.php';
 
 // RPC Units
