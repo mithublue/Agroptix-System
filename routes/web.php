@@ -319,6 +319,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Users
     Route::middleware(['can:manage_users'])->group(function () {
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        Route::post('users/{user}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.status');
     });
 
     // Roles
