@@ -250,6 +250,12 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Phone OTP verification routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'show'])->name('auth.phone.verify.form');
+    Route::post('/verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'verify'])->name('auth.phone.verify');
+});
+
 require __DIR__.'/auth.php';
 
 // RPC Units
@@ -313,6 +319,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Users
     Route::middleware(['can:manage_users'])->group(function () {
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        Route::post('users/{user}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.status');
     });
 
     // Roles
@@ -366,6 +373,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::get('packaging/export', [\App\Http\Controllers\PackagingController::class, 'export'])
              ->name('packaging.export')
              ->middleware('can:export_packaging');
+    });
+
+    // Options
+    Route::middleware(['can:manage_options'])->group(function () {
+        Route::resource('options', App\Http\Controllers\Admin\OptionController::class)->only(['index', 'edit', 'update']);
+        Route::post('options/save-user-options', [\App\Http\Controllers\Admin\OptionController::class, 'saveUserOptions'])->name('options.saveUserOptions')->middleware(['auth', 'can:manage_options']);
     });
 
     // Permissions

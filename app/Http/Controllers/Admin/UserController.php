@@ -92,6 +92,23 @@ class UserController extends Controller
             ->with('success', 'User updated successfully');
     }
 
+    public function updateStatus(Request $request, User $user)
+    {
+        $this->authorize('update', $user);
+        if (!auth()->user()->can('manage_users')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        $request->validate([
+            'field' => 'required|in:is_active,is_approved',
+            'value' => 'required|in:0,1,null',
+        ]);
+        $field = $request->field;
+        $value = $request->value === 'null' ? null : (int)$request->value;
+        $user->$field = $value;
+        $user->save();
+        return response()->json(['success' => true, 'field' => $field, 'value' => $value]);
+    }
+
     public function destroy(User $user)
     {
         $this->authorize('delete', $user);
