@@ -89,22 +89,71 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
                                             <div x-data="{ isApproved: {{ is_null($user->is_approved) ? 'null' : ($user->is_approved ? 'true' : 'false') }}, isLoading: false }">
-                                                <button :class="isApproved === true ? 'bg-green-500' : (isApproved === false ? 'bg-red-500' : 'bg-gray-300')" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" @click="
-                                                    if (isLoading) return;
-                                                    isLoading = true;
-                                                    let newVal = isApproved === true ? 0 : (isApproved === false ? null : 1);
-                                                    axios.post('{{ route('admin.users.status', $user) }}', {
-                                                        field: 'is_approved',
-                                                        value: newVal
-                                                    }, {
-                                                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
-                                                    }).then(res => {
-                                                        isApproved = newVal === 1 ? true : (newVal === 0 ? false : null);
-                                                    }).catch(() => { alert('Failed to update approval'); }).finally(() => { isLoading = false; });
-                                                ">
-                                                    <span :class="isApproved === true ? 'translate-x-6' : (isApproved === false ? 'translate-x-1' : 'translate-x-3')" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
-                                                </button>
-                                                <span class="ml-2 text-xs" x-text="isApproved === true ? 'Approved' : (isApproved === false ? 'Rejected' : 'Pending')"></span>
+                                                <template x-if="isApproved === null">
+                                                    <div class="flex items-center justify-center space-x-2">
+                                                        <button class="bg-green-500 text-white px-3 py-1 rounded transition-colors" :disabled="isLoading" @click="
+                                                            if (isLoading) return;
+                                                            isLoading = true;
+                                                            axios.post('{{ route('admin.users.status', $user) }}', {
+                                                                field: 'is_approved',
+                                                                value: 1
+                                                            }, {
+                                                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+                                                            }).then(res => {
+                                                                isApproved = true;
+                                                            }).catch(() => { alert('Failed to approve'); }).finally(() => { isLoading = false; });
+                                                        ">Approve</button>
+                                                        <button class="bg-red-500 text-white px-3 py-1 rounded transition-colors" :disabled="isLoading" @click="
+                                                            if (isLoading) return;
+                                                            isLoading = true;
+                                                            axios.post('{{ route('admin.users.status', $user) }}', {
+                                                                field: 'is_approved',
+                                                                value: 0
+                                                            }, {
+                                                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+                                                            }).then(res => {
+                                                                isApproved = false;
+                                                            }).catch(() => { alert('Failed to reject'); }).finally(() => { isLoading = false; });
+                                                        ">Reject</button>
+                                                    </div>
+                                                </template>
+                                                <template x-if="isApproved === true">
+                                                    <button :class="'bg-green-500'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" @click="
+                                                        if (isLoading) return;
+                                                        isLoading = true;
+                                                        axios.post('{{ route('admin.users.status', $user) }}', {
+                                                            field: 'is_approved',
+                                                            value: 0
+                                                        }, {
+                                                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+                                                        }).then(res => {
+                                                            isApproved = false;
+                                                        }).catch(() => { alert('Failed to update approval'); }).finally(() => { isLoading = false; });
+                                                    ">
+                                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+                                                    </button>
+                                                    <span class="ml-2 text-xs">Approved</span>
+                                                </template>
+                                                <template x-if="isApproved === false">
+                                                    <button :class="'bg-red-500'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" @click="
+                                                        if (isLoading) return;
+                                                        isLoading = true;
+                                                        axios.post('{{ route('admin.users.status', $user) }}', {
+                                                            field: 'is_approved',
+                                                            value: 1
+                                                        }, {
+                                                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+                                                        }).then(res => {
+                                                            isApproved = true;
+                                                        }).catch(() => { alert('Failed to update approval'); }).finally(() => { isLoading = false; });
+                                                    ">
+                                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                                                    </button>
+                                                    <span class="ml-2 text-xs">Rejected</span>
+                                                </template>
+                                                <template x-if="isApproved === null">
+                                                    <span class="ml-2 text-xs">Pending</span>
+                                                </template>
                                             </div>
                                         </td>
                                         @endcan
