@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Product;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -71,5 +72,10 @@ class User extends Authenticatable implements MustVerifyEmail
             return static::withoutGlobalScope('activeApproved')->get();
         }
         return static::all(); // applies global scope
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'product_user');
     }
 }
