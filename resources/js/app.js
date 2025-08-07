@@ -6,6 +6,9 @@ import { Turbo } from '@hotwired/turbo-rails';
 import Swal from 'sweetalert2';
 import './country-state';
 import axios from 'axios';
+import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
+window.TomSelect = TomSelect;
 
 // Ensure Alpine.data is always registered after Turbo navigation
 window.Alpine = Alpine;

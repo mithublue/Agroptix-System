@@ -44,12 +44,14 @@
                     <!-- Roles available for registration -->
                     <div class="mb-6">
                         <label class="block font-medium text-gray-700 text-lg mb-2">Which roles can new users choose?</label>
-                        <select name="registration_roles[]" multiple class="w-full px-4 py-2 border rounded bg-gray-50">
+                        <select name="registration_roles[]" multiple
+                                x-init="new TomSelect($el, { plugins: ['remove_button'] })"
+                                class="w-full px-4 py-2 border rounded bg-gray-50">
                             @foreach(\Spatie\Permission\Models\Role::all() as $role)
                                 <option value="{{ $role->name }}" @if(collect(json_decode(option('registration_roles', [])))->contains($role->name)) selected @endif>{{ $role->name }}</option>
                             @endforeach
                         </select>
-                        <p class="text-gray-500 text-sm mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple roles.</p>
+                        <p class="text-gray-500 text-sm mt-1">You can search and select multiple roles.</p>
                     </div>
 
                     <!-- Registered users need admin approval -->
