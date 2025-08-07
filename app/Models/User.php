@@ -63,4 +63,13 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $query->where('is_active', 1)->where('is_approved', 1);
     }
+
+    // Static method to fetch users, with option to bypass global scope
+    public static function getUsers($mode = null)
+    {
+        if ($mode === 'all') {
+            return static::withoutGlobalScope('activeApproved')->get();
+        }
+        return static::all(); // applies global scope
+    }
 }
