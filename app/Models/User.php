@@ -47,4 +47,29 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    // Scope: Only active and approved users by default
+    protected static function booted()
+    {
+        static::addGlobalScope('activeApproved', function ($query) {
+            if (!request()->has('all')) {
+                $query->where('is_active', 1)->where('is_approved', 1);
+            }
+        });
+    }
+
+    // Optional: Local scope for clarity
+    public function scopeActiveApproved($query)
+    {
+        return $query->where('is_active', 1)->where('is_approved', 1);
+    }
+
+    // Static method to fetch users, with option to bypass global scope
+    public static function getUsers($mode = null)
+    {
+        if ($mode === 'all') {
+            return static::withoutGlobalScope('activeApproved')->get();
+        }
+        return static::all(); // applies global scope
+    }
 }

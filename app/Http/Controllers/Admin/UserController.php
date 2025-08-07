@@ -20,7 +20,8 @@ class UserController extends Controller
     public function index()
     {
         $this->authorize('viewAny', User::class);
-        $users = User::with('roles')->latest()->paginate(10);
+        // Fetch all users, bypassing the global scope, and paginate
+        $users = User::withoutGlobalScope('activeApproved')->with('roles')->latest()->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
@@ -34,7 +35,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', User::class);
-        
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -43,7 +44,7 @@ class UserController extends Controller
             'roles.*' => ['exists:roles,id']
         ]);
 
-        $user = User::create([
+        $user = User::withoutGlobalScope('activeApproved')->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -55,17 +56,18 @@ class UserController extends Controller
             ->with('success', 'User created successfully');
     }
 
-    public function edit(User $user)
+    public function edit($id)
     {
+        $user = User::withoutGlobalScope('activeApproved')->findOrFail($id);
         Gate::authorize('update', $user);
         $roles = Role::all();
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
+        $user = User::withoutGlobalScope('activeApproved')->findOrFail($id);
         $this->authorize('update', $user);
-        
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -79,21 +81,32 @@ class UserController extends Controller
             'roles' => ['required', 'array'],
             'roles.*' => ['exists:roles,id']
         ]);
-
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
         ]);
-
         $user->roles()->sync($validated['roles']);
-
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully');
     }
 
-    public function updateStatus(Request $request, User $user)
+    public function destroy($id)
     {
+        $user = User::withoutGlobalScope('activeApproved')->findOrFail($id);
+        $this->authorize('delete', $user);
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'You cannot delete your own account');
+        }
+        $user->delete();
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully');
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $user = User::withoutGlobalScope('activeApproved')->findOrFail($id);
         $this->authorize('update', $user);
         if (!auth()->user()->can('manage_users')) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -107,20 +120,5 @@ class UserController extends Controller
         $user->$field = $value;
         $user->save();
         return response()->json(['success' => true, 'field' => $field, 'value' => $value]);
-    }
-
-    public function destroy(User $user)
-    {
-        $this->authorize('delete', $user);
-        
-        if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'You cannot delete your own account');
-        }
-
-        $user->delete();
-
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully');
     }
 }
