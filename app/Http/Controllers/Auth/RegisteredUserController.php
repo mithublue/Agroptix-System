@@ -50,25 +50,22 @@ class RegisteredUserController extends Controller
             'is_active' => $isActive,
         ]);
 
-        event(new Registered($user));
+        // Mark email as verified if verification is disabled
+        if (!$needActivation) {
+            $user->markEmailAsVerified();
+        }
 
+        event(new Registered($user));
         Auth::login($user);
 
-        if ($needActivation) {
-            if ($activationMethod === 'email') {
-                $user->sendEmailVerificationNotification();
-                $msg = 'Registration successful! Please check your email for the verification link.';
-                return redirect()->route('verification.notice')->with('status', $msg);
-            } elseif ($activationMethod === 'phone') {
-                $otp = rand(100000, 999999);
-                Cache::put('otp_'.$user->id, $otp, now()->addMinutes(10));
-                Log::info('OTP for user '.$user->phone.': '.$otp);
-                $msg = 'Registration successful! Please check your phone for the verification OTP.';
-                return redirect()->route('auth.phone.verify.form')->with('status', $msg);
-            } else {
-                $msg = 'Registration successful! Activation method not supported.';
-                return redirect(route('dashboard', absolute: false))->with('status', $msg);
-            }
+        // Skip all verification steps and redirect to dashboard
+        if ($needActivation && $activationMethod === 'phone') {
+            // If phone verification is required, still handle it
+            $otp = rand(100000, 999999);
+            Cache::put('otp_'.$user->id, $otp, now()->addMinutes(10));
+            Log::info('OTP for user '.$user->phone.': '.$otp);
+            $msg = 'Registration successful! Please check your phone for the verification OTP.';
+            return redirect()->route('auth.phone.verify.form')->with('status', $msg);
         }
 
         return redirect(route('dashboard', absolute: false))->with('status', 'Registration successful!');

@@ -50,7 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     // Scope: Only active and approved users by default
     protected static function booted()
-    {
+    { return;
         static::addGlobalScope('activeApproved', function ($query) {
             if (!request()->has('all')) {
                 $query->where('is_active', 1)->where('is_approved', 1);
