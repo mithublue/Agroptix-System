@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use App\Models\Product;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, MustVerifyEmailTrait;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -52,11 +50,12 @@ class User extends Authenticatable implements MustVerifyEmail
     // Scope: Only active and approved users by default
     protected static function booted()
     {
-        static::addGlobalScope('activeApproved', function ($query) {
-            if (!request()->has('all')) {
-                $query->where('is_active', 1)->where('is_approved', 1);
-            }
-        });
+        // DISABLED: Do not restrict by is_active/is_approved for login or queries
+        // static::addGlobalScope('activeApproved', function ($query) {
+        //     if (!request()->has('all')) {
+        //         $query->where('is_active', 1)->where('is_approved', 1);
+        //     }
+        // });
     }
 
     // Optional: Local scope for clarity

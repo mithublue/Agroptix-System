@@ -54,23 +54,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        if ($needActivation) {
-            if ($activationMethod === 'email') {
-                $user->sendEmailVerificationNotification();
-                $msg = 'Registration successful! Please check your email for the verification link.';
-                return redirect()->route('verification.notice')->with('status', $msg);
-            } elseif ($activationMethod === 'phone') {
-                $otp = rand(100000, 999999);
-                Cache::put('otp_'.$user->id, $otp, now()->addMinutes(10));
-                Log::info('OTP for user '.$user->phone.': '.$otp);
-                $msg = 'Registration successful! Please check your phone for the verification OTP.';
-                return redirect()->route('auth.phone.verify.form')->with('status', $msg);
-            } else {
-                $msg = 'Registration successful! Activation method not supported.';
-                return redirect(route('dashboard', absolute: false))->with('status', $msg);
-            }
-        }
-
+        // Email/phone verification is now disabled after registration
+        // Users are logged in and redirected to dashboard immediately
         return redirect(route('dashboard', absolute: false))->with('status', 'Registration successful!');
     }
 }

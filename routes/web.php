@@ -72,7 +72,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-     ->middleware(['auth', 'verified'])
+     ->middleware(['auth'])
      ->name('dashboard');
 
 // Source status update route
@@ -259,7 +259,7 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__.'/auth.php';
 
 // RPC Units
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::resource('rpcunit', \App\Http\Controllers\RpcUnitController::class)->names('rpcunit');
 });
 
@@ -331,7 +331,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
     // Traceability Routes
-    Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['auth'])->group(function () {
         // Batch Traceability
         Route::prefix('batches/{batch}')->group(function () {
             // Batch Timeline
