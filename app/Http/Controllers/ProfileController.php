@@ -68,11 +68,12 @@ class ProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $registrationRoles = json_decode(option('registration_roles', '[]'), true);
+        $registrationRoles = collect(json_decode(option('registration_roles', '[]'), true))
+            ->map(fn($role) => strtolower($role))->toArray();
         $products = [];
 
         // Only fetch products if supplier is an option
-        if (in_array('Supplier', $registrationRoles)) {
+        if (in_array('supplier', $registrationRoles)) {
             $products = Product::where('is_active',1)->get();
         }
 
@@ -92,18 +93,23 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         // Validate the request
+        $registrationRoles = collect(json_decode(option('registration_roles', '[]'), true))
+            ->map(fn($role) => strtolower($role))->toArray();
         $validated = $request->validate([
-            'role' => 'required|string|in:' . implode(',', json_decode(option('registration_roles', '[]'), true)),
+            'role' => 'required|string|in:' . implode(',', $registrationRoles),
+            // Only require products if role is supplier
             'products' => 'sometimes|required_if:role,supplier|array',
             'products.*' => 'exists:products,id',
         ]);
 
-        // Assign the selected role
+        // Assign the selected role (ensure lowercase)
         $user->syncRoles([$validated['role']]);
 
-        // If supplier, sync products
-        if ($validated['role'] === 'Supplier' && isset($validated['products'])) {
+        // If supplier, sync products; otherwise, detach any
+        if ($validated['role'] === 'supplier' && isset($validated['products'])) {
             $user->products()->sync($validated['products']);
+        } else {
+            $user->products()->detach();
         }
 
         return response()->json([

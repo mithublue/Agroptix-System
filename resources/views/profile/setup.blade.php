@@ -31,26 +31,27 @@
                 
                 <div class="grid gap-4 md:grid-cols-2 mt-6">
                     @foreach($registrationRoles as $role)
+                        @php $roleValue = strtolower($role); @endphp
                         <div class="relative">
                             <input 
                                 type="radio" 
                                 name="role" 
-                                id="role-{{ $role }}" 
-                                value="{{ $role }}" 
+                                id="role-{{ $roleValue }}" 
+                                value="{{ $roleValue }}" 
                                 x-model="formData.role"
                                 class="hidden peer"
                                 @change="if (formData.role === 'supplier') { hasProducts = true; } else { hasProducts = false; }"
                                 required>
                             <label 
-                                for="role-{{ $role }}" 
+                                for="role-{{ $roleValue }}" 
                                 class="flex p-4 w-full bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50">
                                 <div class="flex items-center justify-between w-full">
                                     <div class="flex items-center">
                                         <div class="text-sm">
-                                            <div class="font-medium text-gray-900 capitalize">{{ ucfirst($role) }}</div>
+                                            <div class="font-medium text-gray-900 capitalize">{{ ucfirst($roleValue) }}</div>
                                         </div>
                                     </div>
-                                    <svg class="w-5 h-5 text-blue-600" x-show="formData.role === '{{ $role }}'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg class="w-5 h-5 text-blue-600" x-show="formData.role === '{{ $roleValue }}'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
@@ -72,7 +73,7 @@
             </div>
 
             <!-- Step 2: Product Selection (only for suppliers) -->
-            <div x-show="currentStep === 2" class="space-y-6">
+            <div x-show="currentStep === 2 && formData.role === 'supplier'" class="space-y-6">
                 <h3 class="text-lg font-medium text-gray-900">What products will you sell?</h3>
                 <p class="text-sm text-gray-500">Select all the products you plan to sell.</p>
                 
@@ -146,12 +147,21 @@
                 // Update total steps based on role
                 this.$watch('formData.role', (value) => {
                     this.totalSteps = (value === 'supplier') ? 2 : 1;
+                    // If not supplier, clear products
+                    if (value !== 'supplier') {
+                        this.formData.products = [];
+                    }
                 });
             },
             
             nextStep() {
                 if (this.formData.role) {
-                    this.currentStep++;
+                    // If supplier, go to next step. If not, submit immediately.
+                    if (this.formData.role === 'supplier') {
+                        this.currentStep++;
+                    } else {
+                        this.submitForm();
+                    }
                 }
             },
             
