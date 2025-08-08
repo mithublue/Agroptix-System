@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class ProfileController extends Controller
 {
@@ -102,11 +103,22 @@ class ProfileController extends Controller
             'products.*' => 'exists:products,id',
         ]);
 
-        // Assign the selected role (ensure lowercase)
-        $user->syncRoles([$validated['role']]);
+        // Resolve role model by name (case-insensitive) and assign
+        $guard = config('auth.defaults.guard') ?? 'web';
+        $roleModel = Role::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower($validated['role'])])
+            ->where('guard_name', $guard)
+            ->first();
+        if (!$roleModel) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected role is not available.'
+            ], 422);
+        }
+        $user->syncRoles([$roleModel]);
 
         // If supplier, sync products; otherwise, detach any
-        if ($validated['role'] === 'supplier' && isset($validated['products'])) {
+        if (strtolower($validated['role']) === 'supplier' && isset($validated['products'])) {
             $user->products()->sync($validated['products']);
         } else {
             $user->products()->detach();
