@@ -85,6 +85,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Profile Setup Wizard
+    Route::get('/profile/setup', [\App\Http\Controllers\ProfileController::class, 'showSetupWizard'])->name('profile.setup');
+    Route::post('/profile/setup', [\App\Http\Controllers\ProfileController::class, 'saveSetupWizard'])->name('profile.setup.save');
+
     Route::middleware(['can:create_source'])->group(function () {
         Route::post('sources', [App\Http\Controllers\SourceController::class, 'store'])->name('sources.store');
         Route::get('sources/create', [App\Http\Controllers\SourceController::class, 'create'])->name('sources.create');
