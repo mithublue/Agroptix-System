@@ -18,8 +18,27 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        $roleNames = $user->roles->pluck('name')->map(fn($n) => strtolower($n));
+        $showProductsTab = $roleNames->contains(function ($n) {
+            return in_array($n, ['supplier', 'farmer']);
+        });
+
+        $allProducts = collect();
+        $userProductIds = [];
+        if ($showProductsTab) {
+            $allProducts = Product::query()
+                ->when(\Schema::hasColumn('products', 'is_active'), fn($q) => $q->where('is_active', 1))
+                ->orderBy('name')
+                ->get(['id','name']);
+            $userProductIds = $user->products()->pluck('products.id')->toArray();
+        }
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'showProductsTab' => $showProductsTab,
+            'products' => $allProducts,
+            'userProductIds' => $userProductIds,
         ]);
     }
 
@@ -128,5 +147,37 @@ class ProfileController extends Controller
             'success' => true,
             'redirect' => route('dashboard')
         ]);
+    }
+
+    /**
+     * Update the user's products (Supplier/Farmer only).
+     */
+    public function updateProducts(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $roleNames = $user->roles->pluck('name')->map(fn($n) => strtolower($n));
+        $allowed = $roleNames->contains(function ($n) {
+            return in_array($n, ['supplier', 'farmer']);
+        });
+        if (!$allowed) {
+            abort(403, 'You are not allowed to manage products.');
+        }
+
+        $validated = $request->validate([
+            'products' => ['nullable', 'array'],
+            'products.*' => ['integer', 'exists:products,id'],
+        ]);
+
+        $ids = collect($validated['products'] ?? [])->unique()->values();
+
+        // Optionally constrain to active products if column exists
+        if (\Schema::hasColumn('products', 'is_active')) {
+            $ids = Product::whereIn('id', $ids)->where('is_active', 1)->pluck('id');
+        }
+
+        $user->products()->sync($ids);
+
+        return Redirect::route('profile.edit', ['tab' => 'products'])
+            ->with('status', 'products-updated');
     }
 }
