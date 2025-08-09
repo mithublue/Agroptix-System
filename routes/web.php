@@ -128,6 +128,17 @@ Route::middleware('auth')->group(function () {
          ->name('products.update.status')
          ->middleware('can:edit_product');
 
+    // AJAX endpoints for dynamic selects (TomSelect)
+    Route::get('ajax/products/by-owner', [\App\Http\Controllers\ProductController::class, 'listByOwner'])
+         ->name('ajax.products.by-owner')
+         ->middleware('can:view_product');
+    Route::get('ajax/sources/by-owner', [\App\Http\Controllers\SourceController::class, 'listByOwner'])
+         ->name('ajax.sources.by-owner')
+         ->middleware('can:view_source');
+    Route::get('ajax/producers', [\App\Http\Controllers\ProducerController::class, 'list'])
+         ->name('ajax.producers')
+         ->middleware('can:create_batch');
+
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
         Route::get('batches/create', [\App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
@@ -45,5 +46,13 @@ class Product extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'product_user');
+    }
+
+    /**
+     * The sources that produce this product.
+     */
+    public function sources(): BelongsToMany
+    {
+        return $this->belongsToMany(Source::class, 'product_source');
     }
 }

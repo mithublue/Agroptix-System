@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SourceStoreRequest extends BaseFormRequest
 {
@@ -42,6 +43,16 @@ class SourceStoreRequest extends BaseFormRequest
                 'owner_id' => auth()->user()->id
             ]);
         }
+
+        // Validate selected products (optional) ensuring they belong to the owner
+        $ownerId = $this->input('owner_id') ?? auth()->id();
+        $rules['product_ids'] = ['nullable', 'array'];
+        $rules['product_ids.*'] = [
+            'integer',
+            Rule::exists('product_user', 'product_id')->where(function ($q) use ($ownerId) {
+                return $q->where('user_id', $ownerId);
+            })
+        ];
 
         return $rules;
     }

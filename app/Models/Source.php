@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Source extends Model
@@ -54,5 +55,13 @@ class Source extends Model
     {
         // This is the correct way to define the relationship
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * The products associated with this source.
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_source');
     }
 }

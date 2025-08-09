@@ -188,6 +188,20 @@
                             @endcan
                         </div>
 
+                        <!-- Products (optional, filtered by Owner) -->
+                        <div class="mt-6">
+                            <label for="product_ids" class="block text-sm font-medium text-gray-700">Products (optional)</label>
+                            <select id="product_ids" name="product_ids[]" multiple
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                            <p id="product_help" class="mt-1 text-sm text-gray-500">Select one or more products owned by the selected owner.</p>
+                            @error('product_ids')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @if ($errors->has('product_ids.*'))
+                                <p class="mt-1 text-sm text-red-600">Invalid product selection.</p>
+                            @endif
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="flex justify-end space-x-3 pt-4">
                             <a href="{{ route('sources.show', $source) }}"
@@ -204,4 +218,72 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            function initProductSelectEdit() {
+                const sel = document.getElementById('product_ids');
+                if (!sel || sel.dataset.tsInit === '1') return;
+                sel.dataset.tsInit = '1';
+
+                const ownerSelect = document.getElementById('owner_id');
+                const defaultOwnerId = parseInt(ownerSelect?.value || @json($source->owner_id)) || null;
+                const productsUrl = @json(route('ajax.products.by-owner'));
+                const help = document.getElementById('product_help');
+                const preselected = @json(old('product_ids', $source->products()->pluck('products.id')));
+
+                const ts = new TomSelect(sel, {
+                    plugins: ['remove_button'],
+                    valueField: 'value',
+                    labelField: 'text',
+                    searchField: 'text',
+                    options: [],
+                    persist: false,
+                    create: false,
+                    closeAfterSelect: true,
+                    maxOptions: 100,
+                    render: {
+                        option: function(data, escape) {
+                            return '<div>' + escape(data.text) + '</div>';
+                        }
+                    }
+                });
+
+                async function reload(ownerId) {
+                    if (!ownerId) return;
+                    try {
+                        const res = await fetch(productsUrl + '?owner_id=' + ownerId);
+                        const json = await res.json();
+                        ts.clearOptions();
+                        if (json && json.success) {
+                            ts.addOptions(json.data || []);
+                            if (Array.isArray(preselected) && preselected.length) {
+                                const allowed = (json.data || []).map(i => i.value);
+                                const pre = preselected.filter(id => allowed.includes(id));
+                                if (pre.length) ts.setValue(pre, true);
+                            }
+                            help.textContent = (json.data || []).length ? 'Select one or more products owned by the selected owner.' : 'No products available for this owner.';
+                        } else {
+                            help.textContent = 'Failed to load products.';
+                        }
+                    } catch (e) {
+                        help.textContent = 'Error loading products.';
+                    }
+                }
+
+                reload(defaultOwnerId);
+                ownerSelect?.addEventListener('change', (e) => {
+                    ts.clear(true);
+                    const ownerId = parseInt(e.target.value || 0);
+                    reload(ownerId);
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initProductSelectEdit);
+            } else {
+                initProductSelectEdit();
+            }
+            document.addEventListener('turbo:load', initProductSelectEdit);
+        })();
+    </script>
 </x-app-layout>
