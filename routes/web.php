@@ -390,6 +390,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
              ->name('permissions.index');
     });
+
+    // Development: Interactive Seeder UI (local only)
+    Route::prefix('dev')->middleware(['auth', 'can:manage_options'])->group(function () {
+        Route::get('seeder', [\App\Http\Controllers\Admin\SeedController::class, 'index'])->name('dev.seeder.index');
+        Route::get('seeder/list', [\App\Http\Controllers\Admin\SeedController::class, 'list'])->name('dev.seeder.list');
+        Route::post('seeder/run', [\App\Http\Controllers\Admin\SeedController::class, 'runOne'])->name('dev.seeder.run');
+    });
 });
 
 // Batch status update route - outside admin prefix but still protected by auth and permission
