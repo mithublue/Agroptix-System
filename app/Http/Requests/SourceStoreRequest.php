@@ -45,7 +45,8 @@ class SourceStoreRequest extends BaseFormRequest
         }
 
         // Validate selected products (optional) ensuring they belong to the owner
-        $ownerId = $this->input('owner_id') ?? auth()->id();
+        // Use the current request instance to ensure correct data when controller builds a FormRequest manually
+        $ownerId = request()->input('owner_id') ?? auth()->id();
         $rules['product_ids'] = ['nullable', 'array'];
         $rules['product_ids.*'] = [
             'integer',
