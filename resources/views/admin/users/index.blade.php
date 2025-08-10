@@ -39,7 +39,7 @@
                         </div>
 
                         <!-- Row 2: Other filters with buttons -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                                 <select name="role" class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -68,6 +68,16 @@
                                     <option value="null" {{ ($filters['is_approved'] ?? '') === 'null' ? 'selected' : '' }}>Pending</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Per Page</label>
+                                @php($per = (string)($filters['per_page'] ?? $users->perPage()))
+                                <select name="per_page" id="per_page" class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="10" {{ $per === '10' ? 'selected' : '' }}>10</option>
+                                    <option value="25" {{ $per === '25' ? 'selected' : '' }}>25</option>
+                                    <option value="50" {{ $per === '50' ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ $per === '100' ? 'selected' : '' }}>100</option>
+                                </select>
+                            </div>
                             <div class="flex gap-4 md:justify-end">
                                 <button type="submit" class="inline-flex items-center px-4 h-10 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">Apply</button>
                                 <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 h-10 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">Reset</a>
@@ -79,6 +89,7 @@
                         (function() {
                             const form = document.getElementById('users-filter-form');
                             const qInput = document.getElementById('filter-q');
+                            const perPage = document.getElementById('per_page');
 
                             let debounceTimer;
                             function debounceSubmit() {
@@ -89,13 +100,31 @@
                             }
 
                             if (qInput) qInput.addEventListener('input', debounceSubmit);
+                            if (perPage) perPage.addEventListener('change', function() { form.requestSubmit ? form.requestSubmit() : form.submit(); });
                         })();
                     </script>
-
+ 
+                    @can('manage_users')
+                    <form id="bulk-delete-form" method="POST" action="{{ route('admin.users.bulk-destroy') }}" onsubmit="return confirm('Are you sure you want to delete the selected users?');">
+                        @csrf
+                        @method('DELETE')
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm text-gray-600"><span id="selected-count">0</span> selected</div>
+                            <button type="submit" id="bulk-delete-btn" class="inline-flex items-center px-4 h-10 border border-red-300 rounded-md font-semibold text-xs text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition" disabled>
+                                Delete Selected
+                            </button>
+                        </div>
+                    </form>
+                    @endcan
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    @can('manage_users')
+                                        <th scope="col" class="px-6 py-3">
+                                            <input type="checkbox" id="select-all" class="rounded border-gray-300">
+                                        </th>
+                                    @endcan
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
@@ -109,6 +138,15 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($users as $user)
                                     <tr>
+                                        @can('manage_users')
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($user->id === auth()->id())
+                                                <input type="checkbox" class="row-checkbox rounded border-gray-300" disabled>
+                                            @else
+                                                <input type="checkbox" name="ids[]" value="{{ $user->id }}" form="bulk-delete-form" class="row-checkbox rounded border-gray-300">
+                                            @endif
+                                        </td>
+                                        @endcan
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-10 w-10">
@@ -236,10 +274,43 @@
                             </tbody>
                         </table>
                     </div>
-
                     <div class="mt-4">
                         {{ $users->links() }}
                     </div>
+
+                    @can('manage_users')
+                    <script>
+                        (function () {
+                            const bulkForm = document.getElementById('bulk-delete-form');
+                            if (!bulkForm) return;
+                            const selectAll = document.getElementById('select-all');
+                            const btn = document.getElementById('bulk-delete-btn');
+                            const countEl = document.getElementById('selected-count');
+                            const getBoxes = () => Array.from(document.querySelectorAll('.row-checkbox:not(:disabled)'));
+
+                            function update() {
+                                const boxes = getBoxes();
+                                const selected = boxes.filter(cb => cb.checked).length;
+                                if (countEl) countEl.textContent = selected;
+                                if (btn) btn.disabled = selected === 0;
+                                if (selectAll) {
+                                    selectAll.checked = boxes.length > 0 && selected === boxes.length;
+                                    selectAll.indeterminate = selected > 0 && selected < boxes.length;
+                                }
+                            }
+
+                            if (selectAll) {
+                                selectAll.addEventListener('change', function() {
+                                    getBoxes().forEach(cb => cb.checked = selectAll.checked);
+                                    update();
+                                });
+                            }
+                            getBoxes().forEach(cb => cb.addEventListener('change', update));
+                            update();
+                        })();
+                    </script>
+                    @endcan
+
                 </div>
             </div>
         </div>

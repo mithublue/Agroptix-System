@@ -334,6 +334,8 @@ Route::get('/debug-permissions', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     // Users
     Route::middleware(['can:manage_users'])->group(function () {
+        // Place static routes BEFORE resource to avoid collision with users/{user}
+        Route::delete('users/bulk-destroy', [\App\Http\Controllers\Admin\UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
         Route::post('users/{user}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.status');
     });

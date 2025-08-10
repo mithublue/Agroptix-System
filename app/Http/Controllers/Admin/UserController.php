@@ -22,7 +22,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         // Collect filters
-        $filters = $request->only(['q', 'role', 'is_active', 'is_approved']);
+        $filters = $request->only(['q', 'role', 'is_active', 'is_approved', 'per_page']);
 
         // Base query: show all users (bypass global scope) with roles eager loaded
         $query = User::withoutGlobalScope('activeApproved')->with('roles');
@@ -58,7 +58,11 @@ class UserController extends Controller
             }
         }
 
-        $users = $query->latest()->paginate(10)->withQueryString();
+        $perPage = (int) ($request->input('per_page') ?? 10);
+        if (!in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+        $users = $query->latest()->paginate($perPage)->withQueryString();
         $roles = Role::all(['id', 'name']);
 
         return view('admin.users.index', compact('users', 'roles', 'filters'));
@@ -159,5 +163,48 @@ class UserController extends Controller
         $user->$field = $value;
         $user->save();
         return response()->json(['success' => true, 'field' => $field, 'value' => $value]);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        // Only allow for users with manage_users permission
+        if (!auth()->user()->can('manage_users')) {
+            return redirect()->back()->with('error', 'You are not authorized to perform bulk deletion.');
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'distinct']
+        ]);
+
+        $ids = collect($data['ids'])
+            ->filter() // remove nulls
+            ->unique()
+            ->reject(fn($id) => (int)$id === (int)auth()->id()) // don't allow deleting self
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return redirect()->back()->with('error', 'No valid users selected for deletion.');
+        }
+
+        // Fetch users without global scopes and delete
+        $users = User::withoutGlobalScope('activeApproved')
+            ->whereIn('id', $ids)
+            ->get();
+
+        // Optional: enforce policy per user
+        $deletable = 0;
+        foreach ($users as $user) {
+            if (auth()->user()->can('delete', $user)) {
+                $user->delete();
+                $deletable++;
+            }
+        }
+
+        if ($deletable === 0) {
+            return redirect()->back()->with('error', 'You do not have permission to delete the selected users.');
+        }
+
+        return redirect()->back()->with('success', $deletable . ' user' . ($deletable === 1 ? '' : 's') . ' deleted successfully');
     }
 }
