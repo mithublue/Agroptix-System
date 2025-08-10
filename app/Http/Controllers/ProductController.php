@@ -13,6 +13,68 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
+    /**
+     * AJAX: List products by owner (producer) with optional source filter.
+     * Returns data formatted for TomSelect: [{ value, text }]
+     */
+    public function listByOwner(Request $request)
+    {
+        // Basic auth protection via routes; additional checks can be added if needed
+        try {
+            $ownerId = (int) $request->query('owner_id');
+            if (!$ownerId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'owner_id is required'
+                ], 422);
+            }
+
+            $query = Product::query()
+                ->whereHas('users', function ($q) use ($ownerId) {
+                    $q->where('user_id', $ownerId);
+                });
+
+            // Optional: filter by a specific source
+            if ($request->filled('source_id')) {
+                $sourceId = (int) $request->query('source_id');
+                $query->whereHas('sources', function ($q) use ($sourceId) {
+                    $q->where('sources.id', $sourceId);
+                });
+            }
+
+            // Optional search term for TomSelect
+            if ($request->filled('q')) {
+                $search = $request->query('q');
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            $items = $query->select('id', 'name')
+                ->orderBy('name')
+                ->limit(50)
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'value' => $p->id,
+                        'text' => $p->name,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $items,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching products by owner: ' . $e->getMessage(), [
+                'owner_id' => $request->query('owner_id'),
+                'source_id' => $request->query('source_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch products.'
+            ], 500);
+        }
+    }
     public function index(Request $request): View
     {
         // Get filter values from request

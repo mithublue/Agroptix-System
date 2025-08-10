@@ -72,7 +72,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-     ->middleware(['auth', 'verified'])
+     ->middleware(['auth'])
      ->name('dashboard');
 
 // Source status update route
@@ -84,6 +84,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile/products', [ProfileController::class, 'updateProducts'])->name('profile.products.update');
+
+    // Profile Setup Wizard
+    Route::get('/profile/setup', [\App\Http\Controllers\ProfileController::class, 'showSetupWizard'])->name('profile.setup');
+    Route::post('/profile/setup', [\App\Http\Controllers\ProfileController::class, 'saveSetupWizard'])->name('profile.setup.save');
 
     Route::middleware(['can:create_source'])->group(function () {
         Route::post('sources', [App\Http\Controllers\SourceController::class, 'store'])->name('sources.store');
@@ -123,6 +128,17 @@ Route::middleware('auth')->group(function () {
     Route::patch('/products/{product}/status', [\App\Http\Controllers\ProductController::class, 'updateStatus'])
          ->name('products.update.status')
          ->middleware('can:edit_product');
+
+    // AJAX endpoints for dynamic selects (TomSelect)
+    Route::get('ajax/products/by-owner', [\App\Http\Controllers\ProductController::class, 'listByOwner'])
+         ->name('ajax.products.by-owner')
+         ->middleware('can:view_product');
+    Route::get('ajax/sources/by-owner', [\App\Http\Controllers\SourceController::class, 'listByOwner'])
+         ->name('ajax.sources.by-owner')
+         ->middleware('can:view_source');
+    Route::get('ajax/producers', [\App\Http\Controllers\ProducerController::class, 'list'])
+         ->name('ajax.producers')
+         ->middleware('can:create_batch');
 
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
@@ -259,7 +275,7 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__.'/auth.php';
 
 // RPC Units
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::resource('rpcunit', \App\Http\Controllers\RpcUnitController::class)->names('rpcunit');
 });
 
@@ -331,7 +347,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::resource('batches', \App\Http\Controllers\BatchController::class);
 
     // Traceability Routes
-    Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['auth'])->group(function () {
         // Batch Traceability
         Route::prefix('batches/{batch}')->group(function () {
             // Batch Timeline
@@ -385,6 +401,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::middleware(['can:manage_permissions'])->group(function () {
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
              ->name('permissions.index');
+    });
+
+    // Development: Interactive Seeder UI (local only)
+    Route::prefix('dev')->middleware(['auth', 'can:manage_options'])->group(function () {
+        Route::get('seeder', [\App\Http\Controllers\Admin\SeedController::class, 'index'])->name('dev.seeder.index');
+        Route::get('seeder/list', [\App\Http\Controllers\Admin\SeedController::class, 'list'])->name('dev.seeder.list');
+        Route::post('seeder/run', [\App\Http\Controllers\Admin\SeedController::class, 'runOne'])->name('dev.seeder.run');
     });
 });
 

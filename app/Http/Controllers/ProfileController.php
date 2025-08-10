@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class ProfileController extends Controller
 {
@@ -16,8 +18,27 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        $roleNames = $user->roles->pluck('name')->map(fn($n) => strtolower($n));
+        $showProductsTab = $roleNames->contains(function ($n) {
+            return in_array($n, ['supplier', 'farmer']);
+        });
+
+        $allProducts = collect();
+        $userProductIds = [];
+        if ($showProductsTab) {
+            $allProducts = Product::query()
+                ->when(\Schema::hasColumn('products', 'is_active'), fn($q) => $q->where('is_active', 1))
+                ->orderBy('name')
+                ->get(['id','name']);
+            $userProductIds = $user->products()->pluck('products.id')->toArray();
+        }
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'showProductsTab' => $showProductsTab,
+            'products' => $allProducts,
+            'userProductIds' => $userProductIds,
         ]);
     }
 
@@ -56,5 +77,107 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    public function showSetupWizard()
+    {
+        $user = auth()->user();
+
+        // If user already has roles, redirect to dashboard
+        if ($user->roles->isNotEmpty()) {
+            return redirect()->route('dashboard');
+        }
+
+        $registrationRoles = collect(json_decode(option('registration_roles', '[]'), true))
+            ->map(fn($role) => strtolower($role))->toArray();
+        $products = [];
+
+        // Only fetch products if supplier is an option
+        if (in_array('supplier', $registrationRoles)) {
+            $products = Product::where('is_active',1)->get();
+        }
+
+        return view('profile.setup', [
+            'registrationRoles' => $registrationRoles,
+            'products' => $products,
+            'currentStep' => 1,
+            'totalSteps' => in_array('supplier', $registrationRoles) ? 2 : 1
+        ]);
+    }
+
+    /**
+     * Save the profile setup wizard data
+     */
+    public function saveSetupWizard(Request $request)
+    {
+        $user = auth()->user();
+
+        // Validate the request
+        $registrationRoles = collect(json_decode(option('registration_roles', '[]'), true))
+            ->map(fn($role) => strtolower($role))->toArray();
+        $validated = $request->validate([
+            'role' => 'required|string|in:' . implode(',', $registrationRoles),
+            // Only require products if role is supplier
+            'products' => 'sometimes|required_if:role,supplier|array',
+            'products.*' => 'exists:products,id',
+        ]);
+
+        // Resolve role model by name (case-insensitive) and assign
+        $guard = config('auth.defaults.guard') ?? 'web';
+        $roleModel = Role::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower($validated['role'])])
+            ->where('guard_name', $guard)
+            ->first();
+        if (!$roleModel) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected role is not available.'
+            ], 422);
+        }
+        $user->syncRoles([$roleModel]);
+
+        // If supplier, sync products; otherwise, detach any
+        if (strtolower($validated['role']) === 'supplier' && isset($validated['products'])) {
+            $user->products()->sync($validated['products']);
+        } else {
+            $user->products()->detach();
+        }
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('dashboard')
+        ]);
+    }
+
+    /**
+     * Update the user's products (Supplier/Farmer only).
+     */
+    public function updateProducts(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $roleNames = $user->roles->pluck('name')->map(fn($n) => strtolower($n));
+        $allowed = $roleNames->contains(function ($n) {
+            return in_array($n, ['supplier', 'farmer']);
+        });
+        if (!$allowed) {
+            abort(403, 'You are not allowed to manage products.');
+        }
+
+        $validated = $request->validate([
+            'products' => ['nullable', 'array'],
+            'products.*' => ['integer', 'exists:products,id'],
+        ]);
+
+        $ids = collect($validated['products'] ?? [])->unique()->values();
+
+        // Optionally constrain to active products if column exists
+        if (\Schema::hasColumn('products', 'is_active')) {
+            $ids = Product::whereIn('id', $ids)->where('is_active', 1)->pluck('id');
+        }
+
+        $user->products()->sync($ids);
+
+        return Redirect::route('profile.edit', ['tab' => 'products'])
+            ->with('status', 'products-updated');
     }
 }

@@ -25,6 +25,20 @@
 
                             </div>
 
+                            <!-- Producer -->
+                            <div>
+                                <x-label for="producer_id" :value="__('Producer')" required />
+                                <select id="producer_id" name="producer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    @if(old('producer_id'))
+                                        <option value="{{ old('producer_id') }}" selected>Loading...</option>
+                                    @else
+                                        <option value="">-- Select Producer --</option>
+                                    @endif
+                                </select>
+                                <x-input-error :messages="$errors->get('producer_id')" class="mt-2" />
+                                <p id="producer_help" class="mt-1 text-xs text-gray-500"></p>
+                            </div>
+
                             <!-- Source -->
                             <div>
                                 <x-label for="source_id" :value="__('Source')" required />
@@ -310,6 +324,153 @@
                                     // Initialize the calendar
                                     initCalendar();
                                 });
+                            </script>
+                            @endpush
+
+                            @push('scripts')
+                            <script>
+                                (function () {
+                                    function initBatchTomSelectCreate() {
+                                        const producerSel = document.getElementById('producer_id');
+                                        const sourceSel = document.getElementById('source_id');
+                                        const productSel = document.getElementById('product_id');
+                                        if (!producerSel || producerSel.dataset.tsInit === '1') return;
+                                        producerSel.dataset.tsInit = '1';
+
+                                        const producersUrl = @json(route('ajax.producers'));
+                                        const sourcesUrl = @json(route('ajax.sources.by-owner'));
+                                        const productsUrl = @json(route('ajax.products.by-owner'));
+
+                                        const initial = {
+                                            producerId: @json((int) old('producer_id')),
+                                            sourceId: @json((int) old('source_id')),
+                                            productId: @json((int) old('product_id')),
+                                        };
+
+                                        const producerTS = new TomSelect(producerSel, {
+                                            valueField: 'value',
+                                            labelField: 'text',
+                                            searchField: 'text',
+                                            preload: true,
+                                            load: function (query, callback) {
+                                                const url = producersUrl + (query ? ('?q=' + encodeURIComponent(query)) : '');
+                                                fetch(url)
+                                                    .then(r => r.json())
+                                                    .then(json => callback(json && json.success ? (json.data || []) : []))
+                                                    .catch(() => callback());
+                                            }
+                                        });
+
+                                        const sourceTS = new TomSelect(sourceSel, {
+                                            valueField: 'value',
+                                            labelField: 'text',
+                                            searchField: 'text',
+                                            options: [],
+                                            persist: false,
+                                            create: false,
+                                            closeAfterSelect: true,
+                                            maxOptions: 100
+                                        });
+
+                                        const productTS = new TomSelect(productSel, {
+                                            valueField: 'value',
+                                            labelField: 'text',
+                                            searchField: 'text',
+                                            options: [],
+                                            persist: false,
+                                            create: false,
+                                            closeAfterSelect: true,
+                                            maxOptions: 100
+                                        });
+
+                                        async function ensureProducerOption(id) {
+                                            if (!id) return;
+                                            try {
+                                                const res = await fetch(producersUrl + '?id=' + id);
+                                                const json = await res.json();
+                                                if (json && json.success && Array.isArray(json.data)) {
+                                                    json.data.forEach(o => producerTS.addOption(o));
+                                                }
+                                            } catch (e) { }
+                                        }
+
+                                        async function reloadSources(ownerId, productId) {
+                                            if (!ownerId) return;
+                                            try {
+                                                const u = new URL(sourcesUrl, window.location.origin);
+                                                u.searchParams.set('owner_id', ownerId);
+                                                if (productId) u.searchParams.set('product_id', productId);
+                                                const res = await fetch(u.toString());
+                                                const json = await res.json();
+                                                sourceTS.clearOptions();
+                                                if (json && json.success) {
+                                                    sourceTS.addOptions(json.data || []);
+                                                    if (initial.sourceId && (json.data || []).some(i => i.value == initial.sourceId)) {
+                                                        sourceTS.setValue(initial.sourceId, true);
+                                                    }
+                                                }
+                                            } catch (e) { }
+                                        }
+
+                                        async function reloadProducts(ownerId, sourceId) {
+                                            if (!ownerId) return;
+                                            try {
+                                                const u = new URL(productsUrl, window.location.origin);
+                                                u.searchParams.set('owner_id', ownerId);
+                                                if (sourceId) u.searchParams.set('source_id', sourceId);
+                                                const res = await fetch(u.toString());
+                                                const json = await res.json();
+                                                productTS.clearOptions();
+                                                if (json && json.success) {
+                                                    productTS.addOptions(json.data || []);
+                                                    if (initial.productId && (json.data || []).some(i => i.value == initial.productId)) {
+                                                        productTS.setValue(initial.productId, true);
+                                                    }
+                                                }
+                                            } catch (e) { }
+                                        }
+
+                                        producerTS.on('change', (val) => {
+                                            sourceTS.clear(true);
+                                            productTS.clear(true);
+                                            initial.sourceId = null;
+                                            initial.productId = null;
+                                            const ownerId = parseInt(val || 0);
+                                            if (ownerId) {
+                                                reloadSources(ownerId);
+                                                reloadProducts(ownerId);
+                                            }
+                                        });
+
+                                        productTS.on('change', (val) => {
+                                            const productId = parseInt(val || 0);
+                                            const ownerId = parseInt(producerTS.getValue() || 0);
+                                            if (ownerId) reloadSources(ownerId, productId || null);
+                                        });
+
+                                        sourceTS.on('change', (val) => {
+                                            const sourceId = parseInt(val || 0);
+                                            const ownerId = parseInt(producerTS.getValue() || 0);
+                                            if (ownerId) reloadProducts(ownerId, sourceId || null);
+                                        });
+
+                                        // Preselect initial values
+                                        if (initial.producerId) {
+                                            ensureProducerOption(initial.producerId).then(() => {
+                                                producerTS.setValue(initial.producerId, true);
+                                                reloadSources(initial.producerId, initial.productId || null);
+                                                reloadProducts(initial.producerId, initial.sourceId || null);
+                                            });
+                                        }
+                                    }
+
+                                    if (document.readyState === 'loading') {
+                                        document.addEventListener('DOMContentLoaded', initBatchTomSelectCreate);
+                                    } else {
+                                        initBatchTomSelectCreate();
+                                    }
+                                    document.addEventListener('turbo:load', initBatchTomSelectCreate);
+                                })();
                             </script>
                             @endpush
 

@@ -129,7 +129,16 @@ class SourceController extends Controller
 
         // Create the Source record
         try {
-            Source::create($validatedData);
+            // Ensure non-fillable keys are not passed to mass assignment
+            $data = $validatedData;
+            unset($data['product_ids']);
+
+            $source = Source::create($data);
+
+            // Sync optional products pivot (validated to belong to owner)
+            $productIds = (array) ($request->input('product_ids', []));
+            $source->products()->sync($productIds);
+
             return redirect()
                 ->route('sources.index')
                 ->with('success', 'Source created successfully.');
@@ -188,7 +197,15 @@ class SourceController extends Controller
         unset($validatedData['country']);
 
         try {
-            $source->update($validatedData);
+            $data = $validatedData;
+            unset($data['product_ids']);
+
+            $source->update($data);
+
+            // Sync optional products pivot (validated to belong to owner)
+            $productIds = (array) ($request->input('product_ids', []));
+            $source->products()->sync($productIds);
+
             return redirect()
                 ->route('sources.index')
                 ->with('success', 'Source updated successfully.');
@@ -232,5 +249,72 @@ class SourceController extends Controller
             'status' => $source->status,
             'status_label' => config('at.source_status')[$source->status] ?? $source->status
         ]);
+    }
+
+    /**
+     * AJAX: List sources by owner with optional product filter.
+     * Returns data formatted for TomSelect: [{ value, text }]
+     */
+    public function listByOwner(Request $request)
+    {
+        try {
+            $ownerId = (int) $request->query('owner_id');
+            if (!$ownerId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'owner_id is required'
+                ], 422);
+            }
+
+            $query = Source::query()->where('owner_id', $ownerId);
+
+            // Optional: filter by a specific product
+            if ($request->filled('product_id')) {
+                $productId = (int) $request->query('product_id');
+                $query->whereHas('products', function ($q) use ($productId) {
+                    $q->where('products.id', $productId);
+                });
+            }
+
+            // Optional search term for TomSelect
+            if ($request->filled('q')) {
+                $search = $request->query('q');
+                $query->where(function ($q) use ($search) {
+                    $q->where('address_line1', 'like', "%{$search}%")
+                      ->orWhere('state', 'like', "%{$search}%")
+                      ->orWhere('country_code', 'like', "%{$search}%")
+                      ->orWhere('type', 'like', "%{$search}%");
+                });
+            }
+
+            $items = $query->select('id', 'type', 'address_line1', 'state', 'country_code')
+                ->orderByDesc('id')
+                ->limit(50)
+                ->get()
+                ->map(function ($s) {
+                    $type = $s->type ?: 'Source';
+                    $parts = array_filter([$s->address_line1, $s->state, $s->country_code]);
+                    $label = trim($type . ' - ' . implode(', ', $parts), ' -');
+                    return [
+                        'value' => $s->id,
+                        'text' => $label,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $items,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching sources by owner: ' . $e->getMessage(), [
+                'owner_id' => $request->query('owner_id'),
+                'product_id' => $request->query('product_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch sources.'
+            ], 500);
+        }
     }
 }

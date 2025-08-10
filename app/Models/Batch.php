@@ -39,6 +39,7 @@ class Batch extends Model
         'batch_code',
         'source_id',
         'product_id',
+        'producer_id',
         'harvest_time',
         'status',
         'trace_code',
@@ -57,6 +58,7 @@ class Batch extends Model
         'harvest_time' => 'datetime',
         'source_id' => 'integer',
         'product_id' => 'integer',
+        'producer_id' => 'integer',
         'has_defect' => 'boolean',
     ];
 
@@ -203,6 +205,14 @@ class Batch extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the producer (owner user) associated with the batch.
+     */
+    public function producer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'producer_id');
     }
 
     /**

@@ -323,6 +323,18 @@
                             </a>
                             @endcan
                         </div>
+
+                        <!-- Development (local only) -->
+                        @if(app()->environment('local'))
+                        @can('manage_options')
+                        <a href="{{ route('admin.dev.seeder.index') }}" class="flex items-center px-4 py-2 mt-1 text-sm font-medium rounded-md hover:bg-gray-100 {{ request()->is('admin/dev/seeder*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->is('admin/dev/seeder*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h2l1 2h10l1-2h2m-2 6H5a2 2 0 01-2-2V8a2 2 0 012-2h14a2 2 0 012 2v6a2 2 0 01-2 2z" />
+                            </svg>
+                            Development Seeder
+                        </a>
+                        @endcan
+                        @endif
                     </div>
                     @endcanany
 

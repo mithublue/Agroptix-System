@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class BatchStoreRequest extends BaseFormRequest
 {
@@ -40,8 +41,22 @@ class BatchStoreRequest extends BaseFormRequest
     {
         return [
             'batch_code' => ['required', 'string', 'max:255'],
-            'source_id' => ['required', 'integer', 'exists:sources,id'],
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'producer_id' => ['required', 'integer', 'exists:users,id'],
+            'source_id' => [
+                'required',
+                'integer',
+                Rule::exists('sources', 'id')->where(function ($q) {
+                    $q->where('owner_id', (int) request('producer_id'));
+                }),
+            ],
+            'product_id' => [
+                'required',
+                'integer',
+                Rule::exists('products', 'id'),
+                Rule::exists('product_user', 'product_id')->where(function ($q) {
+                    $q->where('user_id', (int) request('producer_id'));
+                }),
+            ],
             'harvest_time' => ['required', 'date'],
             'status' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::STATUSES))],
             'weight' => ['nullable', 'numeric', 'min:0'],
