@@ -17,12 +17,51 @@ class UserController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
-        // Fetch all users, bypassing the global scope, and paginate
-        $users = User::withoutGlobalScope('activeApproved')->with('roles')->latest()->paginate(10);
-        return view('admin.users.index', compact('users'));
+
+        // Collect filters
+        $filters = $request->only(['q', 'role', 'is_active', 'is_approved']);
+
+        // Base query: show all users (bypass global scope) with roles eager loaded
+        $query = User::withoutGlobalScope('activeApproved')->with('roles');
+
+        // Search by name OR email
+        if ($request->filled('q')) {
+            $q = trim($request->q);
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
+        // Filter by role (Spatie roles)
+        if ($request->filled('role')) {
+            $roleId = (int) $request->role;
+            $query->whereHas('roles', function ($r) use ($roleId) {
+                $r->where('roles.id', $roleId);
+            });
+        }
+
+        // Filter by activity status
+        if ($request->filled('is_active') && in_array($request->is_active, ['0', '1'], true)) {
+            $query->where('is_active', (int) $request->is_active);
+        }
+
+        // Filter by approval status (1, 0, or null)
+        if ($request->filled('is_approved')) {
+            if ($request->is_approved === 'null') {
+                $query->whereNull('is_approved');
+            } elseif (in_array($request->is_approved, ['0', '1'], true)) {
+                $query->where('is_approved', (int) $request->is_approved);
+            }
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
+        $roles = Role::all(['id', 'name']);
+
+        return view('admin.users.index', compact('users', 'roles', 'filters'));
     }
 
     public function create()

@@ -28,6 +28,70 @@
                         </div>
                     @endif
 
+                    <!-- Filters -->
+                    <form id="users-filter-form" method="GET" action="{{ route('admin.users.index') }}" class="mb-6">
+                        <!-- Row 1: Type-sensitive combined search (name or email) -->
+                        <div class="grid grid-cols-1 gap-4 items-end mb-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Search (Name or Email)</label>
+                                <input id="filter-q" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Type name or email..." class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Other filters with buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select name="role" class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">All Roles</option>
+                                    @isset($roles)
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->id }}" {{ (string)($filters['role'] ?? '') === (string)$role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                        @endforeach
+                                    @endisset
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Activity Status</label>
+                                <select name="is_active" class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">All</option>
+                                    <option value="1" {{ ($filters['is_active'] ?? '') === '1' ? 'selected' : '' }}>Active</option>
+                                    <option value="0" {{ ($filters['is_active'] ?? '') === '0' ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Approval Status</label>
+                                <select name="is_approved" class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">All</option>
+                                    <option value="1" {{ ($filters['is_approved'] ?? '') === '1' ? 'selected' : '' }}>Approved</option>
+                                    <option value="0" {{ ($filters['is_approved'] ?? '') === '0' ? 'selected' : '' }}>Rejected</option>
+                                    <option value="null" {{ ($filters['is_approved'] ?? '') === 'null' ? 'selected' : '' }}>Pending</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-4 md:justify-end">
+                                <button type="submit" class="inline-flex items-center px-4 h-10 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">Apply</button>
+                                <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 h-10 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <script>
+                        (function() {
+                            const form = document.getElementById('users-filter-form');
+                            const qInput = document.getElementById('filter-q');
+
+                            let debounceTimer;
+                            function debounceSubmit() {
+                                if (debounceTimer) clearTimeout(debounceTimer);
+                                debounceTimer = setTimeout(() => {
+                                    form.requestSubmit ? form.requestSubmit() : form.submit();
+                                }, 400);
+                            }
+
+                            if (qInput) qInput.addEventListener('input', debounceSubmit);
+                        })();
+                    </script>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -86,7 +150,7 @@
                                                 </button>
                                                 <span class="ml-2 text-xs" x-text="isActive ? 'Active' : 'Inactive'"></span>
                                             </div>
-                                        </td> 
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
                                             <div x-data="{ isApproved: {{ is_null($user->is_approved) ? 'null' : ($user->is_approved ? 'true' : 'false') }}, isLoading: false }">
                                                 <template x-if="isApproved === null">
