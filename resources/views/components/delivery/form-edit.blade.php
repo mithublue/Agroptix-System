@@ -1,4 +1,4 @@
-<div x-data="deliveryForm({{ $delivery ? json_encode($delivery) : 'null' }})" x-init="init()" class="space-y-6">
+<div x-data="deliveryForm(@js($delivery))" x-init="init()" class="space-y-6">
     <form @submit.prevent="submitForm" enctype="multipart/form-data">
         <input type="hidden" name="_method" x-bind:value="deliveryId ? 'PUT' : 'POST'">
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
