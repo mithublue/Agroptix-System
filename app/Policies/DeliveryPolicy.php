@@ -30,7 +30,7 @@ class DeliveryPolicy
             return $user->can('view_deliveries') &&
                    ($user->hasRole('admin') ||
                     $user->hasRole('logistics_manager') ||
-                    $user->id === $delivery->batch->created_by);
+                    $user->id === $delivery->batch->producer_id);
         }
 
         // If checking for general view access

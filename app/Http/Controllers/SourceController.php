@@ -20,7 +20,7 @@ class SourceController extends Controller
         $this->authorize('viewAny', Source::class);
 
         // Get filter values from request
-        $filters = $request->only(['type', 'production_method', 'status', 'owner_id']);
+        $filters = $request->only(['type', 'production_method', 'status', 'owner_id', 'q']);
 
         // Get the sources based on user's permissions and filters
         $sources = Source::when(!auth()->user()->can('manage_source'), function($query) {
@@ -38,6 +38,24 @@ class SourceController extends Controller
             })
             ->when($request->filled('owner_id'), function($query) use ($request) {
                 return $query->where('owner_id', $request->owner_id);
+            })
+            // Type-sensitive search
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $q = trim((string) $request->q);
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('type', 'like', "%{$q}%")
+                        ->orWhere('production_method', 'like', "%{$q}%")
+                        ->orWhere('address_line1', 'like', "%{$q}%")
+                        ->orWhere('state', 'like', "%{$q}%")
+                        ->orWhere('country_code', 'like', "%{$q}%");
+                    if (is_numeric($q)) {
+                        $sub->orWhere('area', '=', (float) $q)
+                            ->orWhere('id', '=', (int) $q);
+                    }
+                    $sub->orWhereHas('owner', function ($o) use ($q) {
+                        $o->where('name', 'like', "%{$q}%");
+                    });
+                });
             })
             ->with('owner')
             ->latest()
@@ -65,6 +83,28 @@ class SourceController extends Controller
             'statuses',
             'owners'
         ));
+    }
+
+    /**
+     * Bulk delete selected sources.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user() && auth()->user()->can('delete_source'), 403);
+
+        $ids = array_filter(array_map('intval', (array) $request->input('ids', [])));
+        if (empty($ids)) {
+            return redirect()->to($request->input('redirect', route('sources.index')))
+                ->with('error', 'No sources selected.');
+        }
+
+        $count = Source::whereIn('id', $ids)->count();
+        if ($count > 0) {
+            Source::whereIn('id', $ids)->delete();
+        }
+
+        return redirect()->to($request->input('redirect', route('sources.index')))
+            ->with('success', $count . ' source(s) deleted successfully.');
     }
 
     public function create(): View

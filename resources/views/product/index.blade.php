@@ -134,6 +134,14 @@
         <div class="mb-6 bg-white p-4 rounded-lg shadow">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
             <form method="GET" action="{{ route('products.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Search -->
+                <div>
+                    <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input type="text" id="q" name="q"
+                           value="{{ request('q') }}"
+                           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                           placeholder="Search name, description, SKU, or exact price">
+                </div>
                 <!-- Min Price -->
                 <div>
                     <label for="min_price" class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
@@ -177,10 +185,21 @@
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
+        @can('delete_product')
+            <form id="bulk-delete-products" method="POST" action="{{ route('products.bulk-destroy') }}">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="redirect" value="{{ url()->full() }}">
+        @endcan
         @if($products->count() > 0)
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        @can('delete_product')
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="select-all-products" class="rounded border-gray-300">
+                        </th>
+                        @endcan
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Name
                         </th>
@@ -201,6 +220,11 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach($products as $product)
                     <tr>
+                        @can('delete_product')
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" name="ids[]" value="{{ $product->id }}" class="row-checkbox-product rounded border-gray-300">
+                        </td>
+                        @endcan
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900">
                                 {{ $product->name }}
@@ -317,6 +341,16 @@
                     @endforeach
                 </tbody>
             </table>
+            @can('delete_product')
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div>
+                    <span id="selected-count-products" class="text-sm text-gray-600">0 selected</span>
+                </div>
+                <div>
+                    <button type="submit" form="bulk-delete-products" id="bulk-delete-btn-products" disabled class="px-4 py-2 bg-red-600 text-white text-sm rounded disabled:opacity-50">Delete Selected</button>
+                </div>
+            </div>
+            @endcan
 
             <div class="px-6 py-4">
                 {{ $products->links() }}
@@ -326,6 +360,9 @@
                 No products found. @can('create_product')<a href="{{ route('products.create') }}" class="text-blue-600 hover:underline">Create one now</a>.@endcan
             </div>
         @endif
+        @can('delete_product')
+            </form>
+        @endcan
     </div>
         <!-- Product Details Drawer -->
         <div x-show="showViewDrawer"
@@ -376,3 +413,32 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('select-all-products');
+    const checkboxes = document.querySelectorAll('.row-checkbox-product');
+    const deleteBtn = document.getElementById('bulk-delete-btn-products');
+    const selectedCount = document.getElementById('selected-count-products');
+
+    function updateState() {
+        const selected = Array.from(checkboxes).filter(c => c.checked).length;
+        if (selectedCount) selectedCount.textContent = `${selected} selected`;
+        if (deleteBtn) deleteBtn.disabled = selected === 0;
+        if (selectAll) selectAll.checked = selected > 0 && selected === checkboxes.length;
+        if (selectAll) selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateState();
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+    updateState();
+});
+</script>
+@endpush

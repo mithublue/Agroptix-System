@@ -26,7 +26,15 @@
             <!-- Filters -->
             <div class="mb-6 bg-white p-4 rounded-lg shadow">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-                <form method="GET" action="{{ route('batches.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <form method="GET" action="{{ route('batches.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <input type="text" id="q" name="q"
+                               value="{{ request('q') }}"
+                               class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                               placeholder="Search batch code, trace code, status, product/source, or exact weight/id">
+                    </div>
                     <!-- Status Filter -->
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -76,10 +84,21 @@
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 @if($batches->count() > 0)
+                    @can('delete_batch')
+                        <form id="bulk-delete-batches" method="POST" action="{{ route('batches.bulk-destroy') }}">
+                            @csrf
+                            @method('DELETE')
+                            <input type="hidden" name="redirect" value="{{ url()->full() }}">
+                    @endcan
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    @can('delete_batch')
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input type="checkbox" id="select-all-batches" class="rounded border-gray-300">
+                                    </th>
+                                    @endcan
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harvest Time</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -93,6 +112,11 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($batches as $batch)
                                     <tr>
+                                        @can('delete_batch')
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="row-checkbox-batch rounded border-gray-300">
+                                        </td>
+                                        @endcan
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $batch->id }}
                                         </td>
@@ -261,11 +285,25 @@
                         </table>
                     </div>
 
+                    @can('delete_batch')
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <span id="selected-count-batches" class="text-sm text-gray-600">0 selected</span>
+                        </div>
+                        <div>
+                            <button type="submit" form="bulk-delete-batches" id="bulk-delete-btn-batches" disabled class="px-4 py-2 bg-red-600 text-white text-sm rounded disabled:opacity-50">Delete Selected</button>
+                        </div>
+                    </div>
+                    @endcan
+
                     @if($batches->hasPages())
                         <div class="px-6 py-4 bg-gray-50">
                             {{ $batches->links() }}
                         </div>
                     @endif
+                    @can('delete_batch')
+                        </form>
+                    @endcan
                 @else
                     <div class="p-6 text-center text-gray-500">
                         No batches found.
@@ -278,3 +316,32 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('select-all-batches');
+    const checkboxes = document.querySelectorAll('.row-checkbox-batch');
+    const deleteBtn = document.getElementById('bulk-delete-btn-batches');
+    const selectedCount = document.getElementById('selected-count-batches');
+
+    function updateState() {
+        const selected = Array.from(checkboxes).filter(c => c.checked).length;
+        if (selectedCount) selectedCount.textContent = `${selected} selected`;
+        if (deleteBtn) deleteBtn.disabled = selected === 0;
+        if (selectAll) selectAll.checked = selected > 0 && selected === checkboxes.length;
+        if (selectAll) selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateState();
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+    updateState();
+});
+</script>
+@endpush

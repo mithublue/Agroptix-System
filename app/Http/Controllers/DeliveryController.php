@@ -42,10 +42,10 @@ class DeliveryController extends Controller
         $user = auth()->user();
         $query = Delivery::with(['batch']);
 
-        // If user doesn't have permission to view all deliveries, show only their own
+        // If user doesn't have permission to view all deliveries, show only their own (by batch producer)
         if (!$user->hasRole(['admin', 'logistics_manager'])) {
             $query->whereHas('batch', function($q) use ($user) {
-                $q->where('created_by', $user->id);
+                $q->where('producer_id', $user->id);
             });
         }
 

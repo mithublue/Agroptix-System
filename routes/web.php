@@ -100,6 +100,11 @@ Route::middleware('auth')->group(function () {
         Route::get('sources/{source}', [App\Http\Controllers\SourceController::class, 'show'])->name('sources.show');
     });
 
+    // Bulk destroy for sources (place before parameterized delete route)
+    Route::delete('sources/bulk-destroy', [App\Http\Controllers\SourceController::class, 'bulkDestroy'])
+        ->name('sources.bulk-destroy')
+        ->middleware('can:delete_source');
+
     Route::middleware(['can:edit_source'])->group(function () {
         Route::get('sources/{source}/edit', [\App\Http\Controllers\SourceController::class, 'edit'])->name('sources.edit');
         Route::put('sources/{source}', [\App\Http\Controllers\SourceController::class, 'update'])->name('sources.update');
@@ -116,6 +121,11 @@ Route::middleware('auth')->group(function () {
         Route::get('products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
         Route::get('products/{product}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
     });
+
+    // Bulk destroy for products (place before parameterized delete route)
+    Route::delete('products/bulk-destroy', [\App\Http\Controllers\ProductController::class, 'bulkDestroy'])
+        ->name('products.bulk-destroy')
+        ->middleware('can:delete_product');
 
     Route::middleware(['can:edit_product'])->group(function () {
         Route::get('products/{product}/edit', [\App\Http\Controllers\ProductController::class, 'edit'])->name('products.edit');
@@ -149,6 +159,11 @@ Route::middleware('auth')->group(function () {
         Route::get('batches', [\App\Http\Controllers\BatchController::class, 'index'])->name('batches.index');
         Route::get('batches/{batch}', [\App\Http\Controllers\BatchController::class, 'show'])->name('batches.show');
     });
+
+    // Bulk destroy for batches (place before parameterized delete route)
+    Route::delete('batches/bulk-destroy', [\App\Http\Controllers\BatchController::class, 'bulkDestroy'])
+        ->name('batches.bulk-destroy')
+        ->middleware('can:delete_batch');
 
     Route::middleware(['can:edit_batch'])->group(function () {
         Route::get('batches/{batch}/edit', [\App\Http\Controllers\BatchController::class, 'edit'])->name('batches.edit');

@@ -77,32 +77,57 @@ class ProductController extends Controller
     }
     public function index(Request $request): View
     {
-        // Get filter values from request
-        $filters = $request->only(['min_price', 'max_price', 'status']);
-
-        // Build the query
+        $filters = $request->only(['min_price', 'max_price', 'status', 'q']);
         $query = Product::query();
-
-        // Apply price filters if provided
         if ($request->filled('min_price')) {
             $query->where('price', '>=', $request->min_price);
         }
         if ($request->filled('max_price')) {
             $query->where('price', '<=', $request->max_price);
         }
-
-        // Apply status filter if provided
         if ($request->filled('status') && in_array($request->status, ['0', '1'])) {
             $query->where('is_active', (bool)$request->status);
         }
-
-        // Get paginated results
+        // Type-sensitive search across name, description, and numeric price
+        if ($request->filled('q')) {
+            $q = trim((string) $request->q);
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%");
+                // If numeric, allow searching exact price
+                if (is_numeric($q)) {
+                    $sub->orWhere('price', '=', (float) $q);
+                }
+            });
+        }
         $products = $query->latest()->paginate(10)->withQueryString();
-
         return view('product.index', [
             'products' => $products,
             'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Bulk delete selected products.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        // Permission check aligns with route middleware but adds defense-in-depth
+        abort_unless(auth()->user() && auth()->user()->can('delete_product'), 403);
+
+        $ids = array_filter(array_map('intval', (array) $request->input('ids', [])));
+        if (empty($ids)) {
+            return redirect()->to($request->input('redirect', route('products.index')))
+                ->with('error', 'No products selected.');
+        }
+
+        $count = Product::whereIn('id', $ids)->count();
+        if ($count > 0) {
+            Product::whereIn('id', $ids)->delete();
+        }
+
+        return redirect()->to($request->input('redirect', route('products.index')))
+            ->with('success', $count . ' product(s) deleted successfully.');
     }
 
     public function create(Request $request): View

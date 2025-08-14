@@ -38,6 +38,55 @@ class BatchController extends Controller
         $this->middleware('can:view_batch')->only(['show', 'showTimeline', 'showQrCode', 'listTraceEvents']);
     }
 
+    /**
+     * Bulk delete selected batches.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user() && auth()->user()->can('delete_batch'), 403);
+
+        $ids = array_filter(array_map('intval', (array) $request->input('ids', [])));
+        if (empty($ids)) {
+            return redirect()->to($request->input('redirect', route('batches.index')))
+                ->with('error', 'No batches selected.');
+        }
+
+        $batches = Batch::whereIn('id', $ids)->get();
+        $count = $batches->count();
+
+        foreach ($batches as $batch) {
+            try {
+                // Log deletion similar to destroy()
+                try {
+                    $this->traceabilityService->logEvent(
+                        batch: $batch,
+                        eventType: \App\Models\TraceEvent::TYPE_DISPOSED,
+                        actor: Auth::user(),
+                        data: [
+                            'batch_code' => $batch->batch_code,
+                            'source_id' => $batch->source_id,
+                            'product_id' => $batch->product_id,
+                            'action' => 'deleted_bulk',
+                            'ip_address' => $request->ip()
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to log batch bulk deletion event: ' . $e->getMessage(), [
+                        'batch_id' => $batch->id,
+                    ]);
+                }
+                $batch->delete();
+            } catch (\Exception $e) {
+                Log::error('Failed to delete batch in bulk: ' . $e->getMessage(), [
+                    'batch_id' => $batch->id,
+                ]);
+            }
+        }
+
+        return redirect()->to($request->input('redirect', route('batches.index')))
+            ->with('success', $count . ' batch(es) deleted successfully.');
+    }
+
     public function index(Request $request): View
     {
         $query = Batch::with(['source', 'product']);
@@ -55,6 +104,26 @@ class BatchController extends Controller
         // Apply product filter if provided
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
+        }
+
+        // Type-sensitive search
+        if ($request->filled('q')) {
+            $q = trim((string) $request->q);
+            $query->where(function ($sub) use ($q) {
+                $sub->where('batch_code', 'like', "%{$q}%")
+                    ->orWhere('trace_code', 'like', "%{$q}%")
+                    ->orWhere('status', 'like', "%{$q}%");
+                if (is_numeric($q)) {
+                    $sub->orWhere('weight', '=', (float) $q)
+                        ->orWhere('id', '=', (int) $q);
+                }
+                $sub->orWhereHas('product', function ($p) use ($q) {
+                    $p->where('name', 'like', "%{$q}%");
+                });
+                $sub->orWhereHas('source', function ($s) use ($q) {
+                    $s->where('type', 'like', "%{$q}%");
+                });
+            });
         }
 
         $batches = $query->latest()->paginate(10)->withQueryString();
@@ -80,7 +149,7 @@ class BatchController extends Controller
         // Get products for filter dropdown
         $products = Product::pluck('name', 'id');
 
-        $filters = $request->only(['status', 'source_id', 'product_id']);
+        $filters = $request->only(['status', 'source_id', 'product_id', 'q']);
 
         return view('batch.index', compact(
             'batches',
