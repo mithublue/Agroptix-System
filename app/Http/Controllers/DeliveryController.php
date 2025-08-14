@@ -42,23 +42,29 @@ class DeliveryController extends Controller
         $user = auth()->user();
         $query = Delivery::with(['batch']);
 
-        // If user doesn't have permission to view all deliveries, show only their own (by batch producer)
-        if (!$user->hasRole(['admin', 'logistics_manager'])) {
-            $query->whereHas('batch', function($q) use ($user) {
-                $q->where('producer_id', $user->id);
+        // If user doesn't have permission to view all deliveries, show only their own
+        // Prefer batches where producer_id matches; fallback to source.owner_id for legacy data
+
+        if (!$user->hasRole(['Admin', 'logistics_manager'])) {
+            $query->where(function($outer) use ($user) {
+                $outer->whereHas('batch', function($b) use ($user) {
+                    $b->where('producer_id', $user->id);
+                })->orWhereHas('batch.source', function($s) use ($user) {
+                    $s->where('owner_id', $user->id);
+                });
             });
         }
 
-        // Apply filters
-        if ($request->has('status')) {
+        // Apply filters (ignore empty values)
+        if ($request->filled('status')) {
             $query->where('delivery_status', $request->input('status'));
         }
 
-        if ($request->has('batch_id')) {
+        if ($request->filled('batch_id')) {
             $query->where('batch_id', $request->input('batch_id'));
         }
 
-        if ($request->has('date_from') && $request->has('date_to')) {
+        if ($request->filled('date_from') && $request->filled('date_to')) {
             $query->whereBetween('delivery_date', [
                 $request->input('date_from'),
                 $request->input('date_to')

@@ -28,9 +28,12 @@ class DeliveryPolicy
         // If checking for a specific delivery
         if ($delivery) {
             return $user->can('view_deliveries') &&
-                   ($user->hasRole('admin') ||
-                    $user->hasRole('logistics_manager') ||
-                    $user->id === $delivery->batch->producer_id);
+                   (
+                       $user->hasRole('admin') ||
+                       $user->hasRole('logistics_manager') ||
+                       $user->id === optional($delivery->batch)->producer_id ||
+                       $user->id === optional(optional($delivery->batch)->source)->owner_id
+                   );
         }
 
         // If checking for general view access
