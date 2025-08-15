@@ -7,6 +7,8 @@ use App\Policies\RolePolicy;
 use Spatie\Permission\Models\Role;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Conversation;
+use App\Policies\ConversationPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,7 @@ class AuthServiceProvider extends ServiceProvider
         Role::class => RolePolicy::class,
         \Spatie\Permission\Models\Permission::class => \App\Policies\PermissionPolicy::class,
         \App\Models\Delivery::class => \App\Policies\DeliveryPolicy::class,
+        Conversation::class => ConversationPolicy::class,
     ];
 
     /**

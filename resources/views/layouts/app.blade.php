@@ -13,6 +13,7 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-100 h-full" x-data="{ sidebarOpen: window.innerWidth > 1024, mobileSidebarOpen: false }">
     <div class="flex h-full">
@@ -323,6 +324,14 @@
                             </a>
                             @endcan
                         </div>
+
+                        <!-- Messaging -->
+                        <a href="{{ route('conversations.index') }}" class="flex items-center px-4 py-2 mt-1 text-sm font-medium rounded-md hover:bg-gray-100 {{ request()->is('conversations*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->is('conversations*') ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l.8-4A7.83 7.83 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            Messaging
+                        </a>
 
                         <!-- Development (local only) -->
                         @if(app()->environment('local'))

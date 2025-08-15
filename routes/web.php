@@ -150,6 +150,11 @@ Route::middleware('auth')->group(function () {
          ->name('ajax.producers')
          ->middleware('can:create_batch');
 
+    // Users AJAX (for admin selects)
+    Route::get('ajax/users', [\App\Http\Controllers\UserAjaxController::class, 'list'])
+         ->name('ajax.users')
+         ->middleware('can:manage_users');
+
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
         Route::get('batches/create', [\App\Http\Controllers\BatchController::class, 'create'])->name('batches.create');
@@ -279,6 +284,21 @@ Route::middleware('auth')->group(function () {
         });
 
     });
+});
+
+// Conversations & Messages
+Route::middleware(['auth'])->group(function () {
+    // Conversations
+    Route::get('conversations', [\App\Http\Controllers\ConversationController::class, 'index'])
+        ->name('conversations.index');
+    Route::post('conversations', [\App\Http\Controllers\ConversationController::class, 'store'])
+        ->name('conversations.store');
+    Route::get('conversations/{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])
+        ->name('conversations.show');
+
+    // Messages
+    Route::post('conversations/{conversation}/messages', [\App\Http\Controllers\MessageController::class, 'store'])
+        ->name('conversations.messages.store');
 });
 
 // Phone OTP verification routes

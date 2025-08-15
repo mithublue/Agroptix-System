@@ -6,17 +6,20 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-D5Imu8e5.css",
+    "file": "assets/app-DHCmhmz-.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BypB3qlV.js",
+    "file": "assets/app-CR5R7k5i.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
       "node_modules/@rails/actioncable/src/index.js"
+    ],
+    "css": [
+      "assets/app-DQKaNtan.css"
     ]
   }
 }
