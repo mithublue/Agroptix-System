@@ -21,12 +21,27 @@ class ProductController extends Controller
     {
         // Basic auth protection via routes; additional checks can be added if needed
         try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.'
+                ], 401);
+            }
+
             $ownerId = (int) $request->query('owner_id');
             if (!$ownerId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'owner_id is required'
                 ], 422);
+            }
+
+            if ($user->id !== $ownerId && $user->cannot('view_product')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to view products for this owner.'
+                ], 403);
             }
 
             $query = Product::query()

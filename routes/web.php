@@ -141,8 +141,7 @@ Route::middleware('auth')->group(function () {
 
     // AJAX endpoints for dynamic selects (TomSelect)
     Route::get('ajax/products/by-owner', [\App\Http\Controllers\ProductController::class, 'listByOwner'])
-         ->name('ajax.products.by-owner')
-         ->middleware('can:view_product');
+         ->name('ajax.products.by-owner');
     Route::get('ajax/sources/by-owner', [\App\Http\Controllers\SourceController::class, 'listByOwner'])
          ->name('ajax.sources.by-owner')
          ->middleware('can:view_source');
