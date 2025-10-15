@@ -369,6 +369,11 @@ Route::get('/debug-permissions', function () {
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    // Live Monitoring
+    Route::get('/live-monitoring', [\App\Http\Controllers\Admin\LiveMonitoringController::class, 'index'])
+         ->name('live-monitoring.index')
+         ->middleware('can:view_monitoring');
+
     // Users
     Route::middleware(['can:manage_users'])->group(function () {
         // Place static routes BEFORE resource to avoid collision with users/{user}

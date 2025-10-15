@@ -244,6 +244,18 @@
                     @canany(['manage_users', 'manage_roles', 'manage_permissions'])
                     <div class="pt-4 mt-4 border-t border-gray-200">
                         <h3 class="px-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">Administration</h3>
+
+                        <!-- Live Monitoring -->
+                        @can('view_monitoring')
+                        <a href="{{ route('admin.live-monitoring.index') }}" class="flex items-center px-4 py-2 mt-2 text-sm font-medium rounded-md group {{ request()->routeIs('admin.live-monitoring.*') ? 'bg-gray-100 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.live-monitoring.*') ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Live Monitoring
+                        </a>
+                        @endcan
+
                         <!-- Users -->
                         <div x-data="{ open: {{ request()->is('admin/users*') ? 'true' : 'false' }} }">
                             <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2 mt-2 text-sm font-medium text-left rounded-md hover:bg-gray-100 {{ request()->is('admin/users*') ? 'text-indigo-600 bg-gray-50' : 'text-gray-700' }}">

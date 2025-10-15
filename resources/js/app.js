@@ -8,7 +8,9 @@ import './country-state';
 import axios from 'axios';
 import TomSelect from "tom-select";
 import "tom-select/dist/css/tom-select.css";
+import Chart from 'chart.js/auto';
 window.TomSelect = TomSelect;
+window.Chart = Chart;
 
 // Ensure Alpine.data is always registered after Turbo navigation
 window.Alpine = Alpine;
@@ -78,7 +80,7 @@ Alpine.directive('click-outside', (el, { expression }, { evaluateLater, effect }
     };
 
     document.addEventListener('click', handleClick);
-    
+
     // Cleanup
     el._clickOutsideCleanup = () => {
         document.removeEventListener('click', handleClick);
@@ -112,7 +114,7 @@ document.addEventListener('turbo:load', () => {
 // Persist Alpine stores across Turbo navigation
 document.addEventListener('turbo:before-render', () => {
     const alpinePersisted = {};
-    
+
     // Save all Alpine stores
     document.querySelectorAll('[x-data]').forEach(el => {
         try {
@@ -120,7 +122,7 @@ document.addEventListener('turbo:before-render', () => {
             if (el.__x && el.__x.$data) {
                 const alpineComponent = el.__x.$data;
                 const componentId = el.getAttribute('x-id') || el.getAttribute('id');
-                
+
                 if (componentId && alpineComponent.$data) {
                     // Only save serializable data
                     alpinePersisted[componentId] = JSON.parse(JSON.stringify(alpineComponent.$data));
@@ -144,7 +146,7 @@ document.addEventListener('turbo:before-render', () => {
                             Object.assign(el.__x.$data.$data, alpinePersisted[componentId]);
                         }
                     }, 10);
-                    
+
                     // Timeout after 1 second if Alpine doesn't initialize
                     setTimeout(() => clearInterval(checkAlpine), 1000);
                 }

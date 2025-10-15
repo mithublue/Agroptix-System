@@ -18,10 +18,12 @@ class DatabaseSeeder extends Seeder
         // Create roles and basic permissions
         $this->call([
             RolesAndPermissionsSeeder::class,
+            AdminPermissionsSeeder::class,
             DeliveryPermissionsSeeder::class,
+            MonitoringPermissionsSeeder::class,
             TestUsersSeeder::class,
         ]);
-        
+
         // Seed RPC Units, Packaging, and Test Data
         $this->call([
             RpcUnitSeeder::class,
@@ -43,25 +45,25 @@ class DatabaseSeeder extends Seeder
 
         // Get or create admin role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        
+
         // Assign admin role to admin user
         $adminUser->assignRole($adminRole);
-        
+
         // Define modules and their permissions
         $modules = ['source', 'product', 'batch', 'quality_test', 'shipment'];
         $actions = ['create', 'view', 'edit', 'delete'];
-        
+
         // Initialize permissions array with admin specific permissions
         $permissions = [
             'manage_users',
             'manage_roles',
             'manage_permissions',
         ];
-        
+
         // Add manage_{module} permissions for each module
         foreach ($modules as $module) {
             $permissions[] = 'manage_' . $module;
-            
+
             // Add CRUD permissions for each module
             foreach ($actions as $action) {
                 $permissions[] = $action . '_' . $module;
