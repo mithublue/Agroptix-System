@@ -106,6 +106,7 @@
                         el.dataset.tsInit='1';
                         try {
                             new TomSelect(el, {
+                                plugins: ['remove_button'],
                                 maxOptions: 500,
                                 searchField: 'text',
                                 closeAfterSelect: false,
