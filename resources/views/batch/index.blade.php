@@ -104,6 +104,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eco Processes</th>
                                     <th scope="col" class="relative px-6 py-3">
                                         <span class="sr-only">Actions</span>
                                     </th>
@@ -222,6 +223,35 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $batch->product->name ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            @php
+                                                $ecoStatusColors = [
+                                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                                    'in_progress' => 'bg-blue-100 text-blue-800',
+                                                    'completed' => 'bg-green-100 text-green-800',
+                                                    'failed' => 'bg-red-100 text-red-800',
+                                                ];
+                                            @endphp
+                                            @if($batch->ecoProcesses->isEmpty())
+                                                <span class="text-xs text-gray-400">None</span>
+                                            @else
+                                                <div class="flex flex-col space-y-1">
+                                                    @foreach($batch->ecoProcesses as $ecoProcess)
+                                                        @php
+                                                            $statusColor = $ecoStatusColors[$ecoProcess->status] ?? 'bg-gray-100 text-gray-800';
+                                                            $formattedStatus = str_replace('_', ' ', ucfirst($ecoProcess->status));
+                                                            $formattedStage = str_replace('_', ' ', $ecoProcess->stage ?? 'Stage');
+                                                        @endphp
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="text-xs text-gray-500">{{ $formattedStage }}</span>
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusColor }}">
+                                                                {{ $formattedStatus }}
+                                                            </span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-2">

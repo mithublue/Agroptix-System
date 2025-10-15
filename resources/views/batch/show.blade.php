@@ -1,44 +1,68 @@
 <x-app-layout>
     @push('scripts')
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('batchTabs', () => ({
-                activeTab: 'overview',
+        (function () {
+            const register = () => {
+                if (!window.Alpine || window.__batchTabsRegistered) {
+                    return;
+                }
+                window.__batchTabsRegistered = true;
 
-                init() {
-                    // Set initial tab from URL hash if valid
-                    if (window.location.hash) {
-                        const hash = window.location.hash.substring(1);
-                        if (['overview', 'timeline', 'traceability'].includes(hash)) {
-                            this.activeTab = hash;
-                        }
-                    }
+                window.Alpine.data('batchTabs', () => ({
+                    activeTab: 'overview',
 
-                    // Handle browser back/forward navigation
-                    window.addEventListener('popstate', () => {
+                    init() {
                         if (window.location.hash) {
                             const hash = window.location.hash.substring(1);
                             if (['overview', 'timeline', 'traceability'].includes(hash)) {
                                 this.activeTab = hash;
-                                return;
                             }
                         }
-                        this.activeTab = 'overview';
-                    });
-                },
 
-                setActiveTab(tab) {
-                    if (this.activeTab !== tab) {
-                        this.activeTab = tab;
-                        window.history.pushState({}, '', window.location.pathname + '#' + tab);
+                        if (window.__batchTabsPopstateHandler) {
+                            window.removeEventListener('popstate', window.__batchTabsPopstateHandler);
+                        }
+
+                        window.__batchTabsPopstateHandler = () => {
+                            if (window.location.hash) {
+                                const hash = window.location.hash.substring(1);
+                                if (['overview', 'timeline', 'traceability'].includes(hash)) {
+                                    this.activeTab = hash;
+                                    return;
+                                }
+                            }
+                            this.activeTab = 'overview';
+                        };
+
+                        window.addEventListener('popstate', window.__batchTabsPopstateHandler);
+                    },
+
+                    setActiveTab(tab) {
+                        if (this.activeTab !== tab) {
+                            this.activeTab = tab;
+                            window.history.pushState({}, '', window.location.pathname + '#' + tab);
+                        }
+                    },
+
+                    isActive(tab) {
+                        return this.activeTab === tab;
                     }
-                },
+                }));
+            };
 
-                isActive(tab) {
-                    return this.activeTab === tab;
+            if (window.Alpine) {
+                register();
+            } else {
+                document.addEventListener('alpine:init', register, { once: true });
+            }
+
+            document.addEventListener('turbo:before-cache', () => {
+                if (window.__batchTabsPopstateHandler) {
+                    window.removeEventListener('popstate', window.__batchTabsPopstateHandler);
+                    window.__batchTabsPopstateHandler = null;
                 }
-            }));
-        });
+            });
+        })();
     </script>
     @endpush
 

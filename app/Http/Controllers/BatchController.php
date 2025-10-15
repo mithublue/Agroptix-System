@@ -89,7 +89,7 @@ class BatchController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Batch::with(['source', 'product']);
+        $query = Batch::with(['source', 'product', 'ecoProcesses']);
 
         // Apply status filter if provided
         if ($request->filled('status')) {
@@ -262,7 +262,7 @@ class BatchController extends Controller
     {
         $batch->load(['source', 'product', 'traceEvents.actor']);
         $timeline = $batch->traceEvents()->with('actor')->latest()->paginate(10);
-        
+
         return view('batch.show', [
             'batch' => $batch,
             'timeline' => $timeline
@@ -478,18 +478,18 @@ class BatchController extends Controller
         try {
             // Generate the QR code URL for this batch's timeline
             $qrCodeUrl = route('batches.timeline', $batch->trace_code);
-            
+
             // Generate the QR code as an SVG string
             $qrCode = QrCode::format('svg')
                 ->size(300)
                 ->generate($qrCodeUrl);
-            
+
             return view('batch.qr-code', [
                 'batch' => $batch,
                 'qrCode' => $qrCode,
                 'title' => 'QR Code: ' . $batch->batch_code
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to generate QR code: ' . $e->getMessage(), [
                 'batch_id' => $batch->id,
