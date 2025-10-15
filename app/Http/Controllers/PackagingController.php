@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Packaging;
+use App\Models\Batch;
+use App\Models\RpcUnit;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PackagingController extends Controller
@@ -44,7 +47,31 @@ class PackagingController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.packaging.index', compact('packages'));
+        $availableBatches = Batch::readyForPackaging()
+            ->with('product')
+            ->latest()
+            ->get();
+
+        $packagedBatchIds = $packages->pluck('batch_id')->filter()->unique();
+        if ($packagedBatchIds->isNotEmpty()) {
+            $additionalBatches = Batch::with('product')
+                ->whereIn('id', $packagedBatchIds)
+                ->get();
+            $availableBatches = $availableBatches
+                ->concat($additionalBatches)
+                ->unique('id')
+                ->values();
+        }
+
+        $rpcUnits = RpcUnit::all();
+        $users = User::orderBy('name')->get();
+
+        return view('admin.packaging.index', [
+            'packages' => $packages,
+            'batches' => $availableBatches,
+            'rpcUnits' => $rpcUnits,
+            'users' => $users,
+        ]);
     }
 
     /**
@@ -85,6 +112,13 @@ class PackagingController extends Controller
             $validated['qr_code'] = 'PKG-' . uniqid();
 
             $packaging = Packaging::create($validated);
+
+            $batch = Batch::find($validated['batch_id']);
+
+            if ($batch && $batch->status == Batch::STATUS_READY_FOR_PACKAGING) {
+                $batch->status = Batch::STATUS_PACKAGED;
+                $batch->save();
+            }
 
             return response()->json([
                 'message' => 'Packaging created successfully',

@@ -27,12 +27,23 @@ class QualityTestController extends Controller
 
     public function batchList(Request $request)
     {
-        $batches = Batch::where('status', 'Completed')
-                       ->with('product')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+        $batches = Batch::where(function ($query) {
+                $query->whereRaw('LOWER(status) = ?', ['completed'])
+                      ->orWhereRaw('LOWER(status) = ?', ['packaging']);
+            })
+            ->with('product')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        return view('qualityTest.batch-list', compact('batches'));
+        $readyBatchIds = $batches->getCollection()
+            ->filter(fn (Batch $batch) => $batch->isReadyForPackaging())
+            ->pluck('id')
+            ->values();
+
+        return view('qualityTest.batch-list', [
+            'batches' => $batches,
+            'readyBatchIds' => $readyBatchIds,
+        ]);
     }
 
     /**
@@ -145,9 +156,51 @@ class QualityTestController extends Controller
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
             );
         }
+    }
 
-            // Error response is already handled above
+    public function markReadyForPackaging(Request $request, Batch $batch): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user || (!$user->can('create_quality_test') && !$user->can('edit_batch') && !$user->can('manage_batch'))) {
+            abort(403, 'This action is unauthorized.');
         }
+
+        $tests = $batch->qualityTests()->get(['result']);
+
+        if ($tests->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No quality tests found for this batch.'
+            ], 422);
+        }
+
+        $allPassed = $tests->every(fn ($test) => strtolower((string) $test->result) === 'pass');
+
+        if (!$allPassed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'All quality tests must pass before proceeding to the next stage.'
+            ], 422);
+        }
+
+        if ($batch->isReadyForPackaging()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Batch is already marked as ready for packaging.',
+                'status' => $batch->status
+            ]);
+        }
+
+        $batch->status = Batch::STATUS_PACKAGING;
+        $batch->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Batch marked as ready for packaging.',
+            'status' => $batch->status
+        ]);
+    }
 
     /**
      * Handle AJAX file upload for test certificates

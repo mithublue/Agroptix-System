@@ -12,6 +12,8 @@
                 tests: {},
                 loadedBatches: new Set(),
                 error: null,
+                proceedingBatch: null,
+                readyBatches: @json($readyBatchIds ?? []),
 
                 // Initialize Axios instance with default config
                 axiosInstance: axios.create({
@@ -74,6 +76,67 @@
                     } finally {
                         console.log('Finished loading tests for batch', batchId);
                         this.loadingTests = false;
+                    }
+                },
+
+                areAllTestsPassed(batchId) {
+                    const tests = this.tests[batchId] || [];
+                    if (!tests.length) return false;
+                    return tests.every(test => (test.result || '').toString().toLowerCase() === 'pass');
+                },
+
+                isBatchReady(batchId) {
+                    return this.readyBatches.includes(batchId);
+                },
+
+                async proceedToNextStage(batchId) {
+                    if (this.proceedingBatch === batchId) return;
+
+                    this.proceedingBatch = batchId;
+                    this.error = null;
+
+                    try {
+                        const url = `{{ url('batches') }}/${batchId}/quality-tests/ready`;
+                        const response = await this.axiosInstance.post(url);
+
+                        if (!response.data?.success) {
+                            throw new Error(response.data?.message || 'Failed to mark batch ready for packaging.');
+                        }
+
+                        if (!this.readyBatches.includes(batchId)) {
+                            this.readyBatches.push(batchId);
+                        }
+
+                        const Toast = Swal?.mixin ? Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1200,
+                            timerProgressBar: true,
+                            didOpen: toast => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        }) : null;
+
+                        if (Toast) {
+                            Toast.fire({ icon: 'success', title: 'Batch is ready for packaging.' });
+                        } else {
+                            alert('Batch is ready for packaging.');
+                        }
+
+                        setTimeout(() => window.location.reload(), 1300);
+                    } catch (error) {
+                        console.error('Error marking batch ready:', error);
+                        const message = error.response?.data?.message || error.message || 'Failed to proceed to next stage.';
+                        this.error = message;
+                        if (Swal?.fire) {
+                            Swal.fire({ icon: 'error', title: 'Error', text: message });
+                        } else {
+                            alert(message);
+                        }
+                    } finally {
+                        this.proceedingBatch = null;
                     }
                 },
 
@@ -194,6 +257,28 @@
                                                         + New Test
                                                     </a>
                                                 @endcan
+                                                <div class="flex items-center space-x-3">
+                                                    <template x-if="tests[{{ $batch->id }}] && tests[{{ $batch->id }}].length && areAllTestsPassed({{ $batch->id }}) && !isBatchReady({{ $batch->id }})">
+                                                        <button @click="proceedToNextStage({{ $batch->id }})"
+                                                                :disabled="proceedingBatch === {{ $batch->id }}"
+                                                                class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                            <span x-show="proceedingBatch !== {{ $batch->id }}">Proceed to next stage</span>
+                                                            <span x-show="proceedingBatch === {{ $batch->id }}" class="flex items-center">
+                                                                <svg class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                </svg>
+                                                                Processing
+                                                            </span>
+                                                        </button>
+                                                    </template>
+                                                    <template x-if="tests[{{ $batch->id }}] && tests[{{ $batch->id }}].length && !areAllTestsPassed({{ $batch->id }})">
+                                                        <span class="text-xs text-red-500">All tests must pass before proceeding.</span>
+                                                    </template>
+                                                    <template x-if="isBatchReady({{ $batch->id }})">
+                                                        <span class="text-xs text-green-600 font-medium">Batch ready for packaging</span>
+                                                    </template>
+                                                </div>
                                             </div>
                                             <div x-show="loadingTests && openBatch === {{ $batch->id }}" class="text-center py-4">
                                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>

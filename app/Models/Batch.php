@@ -262,4 +262,20 @@ class Batch extends Model
     {
         $query->where('harvest_time', '>=', Carbon::parse($date));
     }
+
+    /**
+     * Scope a query to only include batches that are ready for packaging.
+     */
+    public function scopeReadyForPackaging(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PACKAGING);
+    }
+
+    /**
+     * Check if the batch is ready for packaging.
+     */
+    public function isReadyForPackaging(): bool
+    {
+        return $this->status === self::STATUS_PACKAGING;
+    }
 }
