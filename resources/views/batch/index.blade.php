@@ -38,7 +38,8 @@
                     <!-- Status Filter -->
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="status" name="status" class="select2-status mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <select id="status" name="status" data-tom-select data-placeholder="All Statuses"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option value="">All Statuses</option>
                             @foreach($statuses as $value => $label)
                                 <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>{{ $label }}</option>
@@ -49,7 +50,8 @@
                     <!-- Source Filter -->
                     <div>
                         <label for="source_id" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
-                        <select id="source_id" name="source_id" class="select2-source mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <select id="source_id" name="source_id" data-tom-select data-placeholder="All Sources"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option value="">All Sources</option>
                             @foreach($sources as $id => $name)
                                 <option value="{{ $id }}" {{ request('source_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -60,7 +62,8 @@
                     <!-- Product Filter -->
                     <div>
                         <label for="product_id" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
-                        <select id="product_id" name="product_id" class="select2-product mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <select id="product_id" name="product_id" data-tom-select data-placeholder="All Products"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option value="">All Products</option>
                             @foreach($products as $id => $name)
                                 <option value="{{ $id }}" {{ request('product_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -372,6 +375,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkboxes.forEach(cb => cb.addEventListener('change', updateState));
     updateState();
+
+    if (window.initTomSelectCollection) {
+        window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
+    }
 });
 </script>
 @endpush

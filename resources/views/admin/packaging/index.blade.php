@@ -174,7 +174,8 @@
                         <!-- Batch Filter -->
                         <div class="w-full sm:w-1/4">
                             <label for="batch_id" class="block text-sm font-medium text-gray-700">Batch</label>
-                            <select id="batch_id" name="batch_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <select id="batch_id" name="batch_id" data-tom-select data-placeholder="All Batches"
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                 <option value="">All Batches</option>
                                 @foreach(\App\Models\Batch::all() as $batch)
                                     <option value="{{ $batch->id }}" {{ request('batch_id') == $batch->id ? 'selected' : '' }}>
@@ -387,10 +388,16 @@
                             if (window.Alpine.store('drawer').open !== value) {
                                 window.Alpine.store('drawer').open = value;
                             }
+                            if (value) {
+                                this.refreshTomSelects();
+                            }
                         });
                         this.$watch('$store.drawer.open', value => {
                             if (this.open !== value) {
                                 this.open = value;
+                            }
+                            if (value) {
+                                this.refreshTomSelects();
                             }
                         });
                         this.$el.addEventListener('close-drawer', () => {
@@ -400,6 +407,14 @@
 
                     close() {
                         this.open = false;
+                    },
+
+                    refreshTomSelects() {
+                        this.$nextTick(() => {
+                            if (window.initTomSelectCollection) {
+                                window.initTomSelectCollection(this.$el.querySelectorAll('[data-tom-select]'));
+                            }
+                        });
                     }
                 };
             }
@@ -467,7 +482,9 @@
         @push('scripts')
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    // This script can be used for any additional client-side functionality
+                    if (window.initTomSelectCollection) {
+                        window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
+                    }
                 });
             </script>
         @endpush

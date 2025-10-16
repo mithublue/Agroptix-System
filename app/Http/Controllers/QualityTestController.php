@@ -6,6 +6,8 @@ use App\Http\Requests\QualityTestStoreRequest;
 use App\Http\Requests\QualityTestUpdateRequest;
 use App\Models\QualityTest;
 use App\Models\Batch;
+use App\Models\Product;
+use App\Models\Source;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class QualityTestController extends Controller
 {
@@ -27,22 +30,79 @@ class QualityTestController extends Controller
 
     public function batchList(Request $request)
     {
-        $batches = Batch::where(function ($query) {
-                $query->whereRaw('LOWER(status) = ?', ['completed'])
-                      ->orWhereRaw('LOWER(status) = ?', ['packaging']);
+        $query = Batch::query()
+            ->where(function ($builder) {
+                $builder->whereRaw('LOWER(status) = ?', ['completed'])
+                    ->orWhereRaw('LOWER(status) = ?', ['packaging']);
             })
-            ->with('product')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->with(['product', 'source']);
+
+        $search = trim((string) $request->input('batch_code', ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('batch_code', 'like', "%{$search}%")
+                    ->orWhere('trace_code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->input('product_id'));
+        }
+
+        if ($request->filled('source_id')) {
+            $query->where('source_id', $request->input('source_id'));
+        }
+
+        $result = trim((string) $request->input('result', ''));
+        if ($result !== '') {
+            if ($result === 'no_result') {
+                $query->whereDoesntHave('qualityTests');
+            } else {
+                $query->whereHas('qualityTests', function ($builder) use ($result) {
+                    $builder->whereRaw('LOWER(result) = ?', [strtolower($result)]);
+                });
+            }
+        }
+
+        $batches = $query
+            ->orderByDesc('created_at')
+            ->paginate($request->integer('per_page', 10))
+            ->withQueryString();
 
         $readyBatchIds = $batches->getCollection()
             ->filter(fn (Batch $batch) => $batch->isReadyForPackaging())
             ->pluck('id')
             ->values();
 
+        $products = Product::orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (Product $product) => [$product->id => $product->name ?? "Product #{$product->id}"]);
+
+        $sources = Source::orderBy('id')
+            ->get()
+            ->mapWithKeys(function (Source $source) {
+                $label = $source->type
+                    ? Str::title(str_replace('_', ' ', $source->type))
+                    : 'Source';
+
+                return [$source->id => $label . " (#{$source->id})"];
+            });
+
+        $resultOptions = QualityTest::query()
+            ->select('result')
+            ->whereNotNull('result')
+            ->distinct()
+            ->orderBy('result')
+            ->pluck('result')
+            ->filter()
+            ->values();
+
         return view('qualityTest.batch-list', [
             'batches' => $batches,
             'readyBatchIds' => $readyBatchIds,
+            'products' => $products,
+            'sources' => $sources,
+            'resultOptions' => $resultOptions,
         ]);
     }
 

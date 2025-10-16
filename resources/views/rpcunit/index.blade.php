@@ -263,7 +263,8 @@
                             <!-- Material Type -->
                             <div class="lg:col-span-1">
                                 <label for="material_type" class="block text-sm font-medium text-gray-700">Material Type</label>
-                                <select id="material_type" name="material_type" class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <select id="material_type" name="material_type" data-tom-select data-placeholder="All Types"
+                                        class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Types</option>
                                     @foreach(['plastic', 'metal', 'wood', 'other'] as $type)
                                         <option value="{{ $type }}" {{ request('material_type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
@@ -274,7 +275,8 @@
                             <!-- Status -->
                             <div class="lg:col-span-1">
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                <select id="status" name="status" class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <select id="status" name="status" data-tom-select data-placeholder="All Statuses"
+                                        class="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Statuses</option>
                                     @foreach(['available', 'in_use', 'maintenance', 'retired'] as $status)
                                         <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>

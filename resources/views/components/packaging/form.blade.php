@@ -20,7 +20,7 @@
                 <!-- Batch Selection -->
                 <div>
                     <label for="batch_id" class="block text-sm font-medium text-gray-700">Batch</label>
-                    <select id="batch_id" name="batch_id" x-model="formData.batch_id"
+                    <select id="batch_id" name="batch_id" x-model="formData.batch_id" data-tom-select data-placeholder="Select a batch"
                             class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         <option value="">Select a batch</option>
                         @foreach($batches as $batch)
@@ -65,7 +65,7 @@
                 <!-- RPC Unit -->
                 <div>
                     <label for="rpc_unit_id" class="block text-sm font-medium text-gray-700">RPC Unit (Optional)</label>
-                    <select id="rpc_unit_id" name="rpc_unit_id" x-model="formData.rpc_unit_id"
+                    <select id="rpc_unit_id" name="rpc_unit_id" x-model="formData.rpc_unit_id" data-tom-select data-placeholder="Select an RPC unit"
                             class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         <option value="">Select an RPC unit (optional)</option>
                         @foreach($rpcUnits as $unit)
@@ -78,7 +78,7 @@
                 <!-- Packer -->
                 <div>
                     <label for="packer_id" class="block text-sm font-medium text-gray-700">Packer</label>
-                    <select id="packer_id" name="packer_id" x-model="formData.packer_id"
+                    <select id="packer_id" name="packer_id" x-model="formData.packer_id" data-tom-select data-placeholder="Select a packer"
                             class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         <option value="">Select a packer</option>
                         @foreach($users as $user)
@@ -161,6 +161,7 @@
                         ...this.store.packagingData,
                         _method: 'PUT'
                     };
+                    this.refreshTomSelects();
                 }
                 if (this.store) {
                     this.$watch('store.packagingData', (data) => {
@@ -171,11 +172,13 @@
                                 ...data,
                                 _method: 'PUT'
                             };
+                            this.refreshTomSelects();
                         } else {
                             this.resetForm();
                         }
                     });
                 }
+                this.refreshTomSelects();
             },
 
             resetForm() {
@@ -197,6 +200,7 @@
                 if (form) {
                     form.reset();
                 }
+                this.refreshTomSelects();
             },
 
             async submitForm() {
@@ -269,6 +273,14 @@
                 } finally {
                     this.loading = false;
                 }
+            },
+
+            refreshTomSelects() {
+                this.$nextTick(() => {
+                    if (window.initTomSelectCollection) {
+                        window.initTomSelectCollection(this.$el.querySelectorAll('[data-tom-select]'));
+                    }
+                });
             }
         };
     }

@@ -194,7 +194,67 @@
 
     <div class="py-12" x-data="qualityTests()">
 
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="bg-white border border-gray-200 shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+                    <form method="GET" action="{{ route('quality-tests.batchList') }}" class="grid grid-cols-1 gap-4 md:grid-cols-5">
+                        <div class="md:col-span-2">
+                            <label for="batch_code" class="block text-sm font-medium text-gray-700 mb-1">Batch Code</label>
+                            <input type="text" name="batch_code" id="batch_code"
+                                   value="{{ request('batch_code') }}"
+                                   placeholder="Search by batch or trace code"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                        </div>
+
+                        <div>
+                            <label for="product_id" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                            <select id="product_id" name="product_id" data-tom-select data-placeholder="All Products"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">All Products</option>
+                                @foreach(($products ?? []) as $id => $name)
+                                    <option value="{{ $id }}" {{ (string)request('product_id') === (string)$id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="source_id" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                            <select id="source_id" name="source_id" data-tom-select data-placeholder="All Sources"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">All Sources</option>
+                                @foreach(($sources ?? []) as $id => $label)
+                                    <option value="{{ $id }}" {{ (string)request('source_id') === (string)$id ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="result" class="block text-sm font-medium text-gray-700 mb-1">Result</label>
+                            <select id="result" name="result" data-tom-select data-placeholder="Any Result"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">All Results</option>
+                                <option value="no_result" {{ request('result') === 'no_result' ? 'selected' : '' }}>No Test Results</option>
+                                @foreach(($resultOptions ?? collect()) as $option)
+                                    <option value="{{ $option }}" {{ request('result') === $option ? 'selected' : '' }}>{{ \Illuminate\Support\Str::title($option) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-5 lg:col-span-1 flex items-end space-x-2">
+                            <button type="submit"
+                                    class="inline-flex flex-1 justify-center items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                Apply
+                            </button>
+                            <a href="{{ route('quality-tests.batchList') }}"
+                               class="inline-flex justify-center items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="overflow-x-auto">
@@ -222,9 +282,14 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         @if($batch->source)
-                                            Source#{{ is_object($batch->source) ? $batch->source->id : $batch->source }}
+                                            <div class="text-gray-900 text-sm font-medium">
+                                                {{ $batch->source->name ?? 'Source #' . $batch->source->id }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ $batch->source->type ? \Illuminate\Support\Str::title(str_replace('_', ' ', $batch->source->type)) : 'ID #' . $batch->source->id }}
+                                            </div>
                                         @else
-                                            N/A
+                                            <span class="text-sm text-gray-400">N/A</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -8,8 +8,53 @@ import './country-state';
 import axios from 'axios';
 import TomSelect from "tom-select";
 import "tom-select/dist/css/tom-select.css";
-import Chart from 'chart.js/auto';
 window.TomSelect = TomSelect;
+window.initTomSelect = function(element, config = {}) {
+    if (!window.TomSelect || !element) {
+        return null;
+    }
+
+    if (element.tomselect) {
+        element.tomselect.destroy();
+    }
+
+    const options = Object.assign({
+        allowEmptyOption: true,
+        placeholder: element.getAttribute('data-placeholder') || element.getAttribute('placeholder') || '',
+    }, config);
+
+    return new TomSelect(element, options);
+};
+
+window.initTomSelectCollection = function(target, config = {}) {
+    if (!window.TomSelect) {
+        return;
+    }
+
+    const elements = typeof target === 'string'
+        ? document.querySelectorAll(target)
+        : target;
+
+    if (!elements || typeof elements.forEach !== 'function') {
+        return;
+    }
+
+    elements.forEach((el) => window.initTomSelect(el, config));
+};
+
+const initTomSelectOnLoad = () => {
+    if (!window.TomSelect) {
+        return;
+    }
+
+    window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
+};
+
+document.addEventListener('DOMContentLoaded', initTomSelectOnLoad);
+if (window.Turbo) {
+    document.addEventListener('turbo:load', initTomSelectOnLoad);
+}
+import Chart from 'chart.js/auto';
 window.Chart = Chart;
 
 // Ensure Alpine.data is always registered after Turbo navigation
