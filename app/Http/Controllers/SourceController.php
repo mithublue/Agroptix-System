@@ -306,7 +306,9 @@ class SourceController extends Controller
                 ], 422);
             }
 
-            $query = Source::query()->where('owner_id', $ownerId);
+            $query = Source::query()
+                ->where('owner_id', $ownerId)
+                ->where('status', 'approved'); // Only show approved sources
 
             // Optional: filter by a specific product
             if ($request->filled('product_id')) {
@@ -327,7 +329,7 @@ class SourceController extends Controller
                 });
             }
 
-            $items = $query->select('id', 'type', 'address_line1', 'state', 'country_code')
+            $items = $query->select('id', 'type', 'address_line1', 'state', 'country_code', 'status')
                 ->orderByDesc('id')
                 ->limit(50)
                 ->get()

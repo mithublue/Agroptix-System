@@ -270,10 +270,20 @@
                                     // Preselect initial values
                                     if (initial.producerId) {
                                         ensureProducerOption(initial.producerId).then(() => {
+                                            // Set the producer value silently (without triggering change event)
                                             producerTS.setValue(initial.producerId, true);
+                                            // Then reload sources and products
                                             reloadSources(initial.producerId, initial.productId || null);
                                             reloadProducts(initial.producerId, initial.sourceId || null);
                                         });
+                                    } else {
+                                        // If no initial producer, still try to load the option to prevent "Loading..."
+                                        const producerIdFromSelect = producerSel.value;
+                                        if (producerIdFromSelect) {
+                                            ensureProducerOption(producerIdFromSelect).then(() => {
+                                                producerTS.setValue(producerIdFromSelect, true);
+                                            });
+                                        }
                                     }
                                 }
 

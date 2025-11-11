@@ -242,9 +242,26 @@ class ProductController extends Controller
 
     public function destroy(Request $request, Product $product): RedirectResponse
     {
-        $product->delete();
+        try {
+            // Detach all pivot relationships before deleting
+            $product->users()->detach();
+            $product->sources()->detach();
+            
+            // Now delete the product
+            $product->delete();
 
-        return redirect()->route('products.index');
+            return redirect()
+                ->route('products.index')
+                ->with('success', 'Product deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete product: ' . $e->getMessage(), [
+                'product_id' => $product->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()
+                ->with('error', 'Failed to delete product: ' . $e->getMessage());
+        }
     }
 
     /**
