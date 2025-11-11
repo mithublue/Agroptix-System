@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProductStoreRequest extends BaseFormRequest
 {
@@ -21,7 +22,7 @@ class ProductStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('products', 'name')],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'type' => ['nullable', 'string', 'max:20'],

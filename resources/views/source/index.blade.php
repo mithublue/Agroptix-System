@@ -27,7 +27,7 @@
                     <!-- Filters -->
                     <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-                        <form method="GET" action="{{ route('sources.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <form method="GET" action="{{ route('sources.index') }}" class="grid grid-cols-1 md:grid-cols-{{ auth()->user()->can('manage_source') ? '6' : '5' }} gap-4">
                             <!-- Search -->
                             <div>
                                 <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -66,15 +66,17 @@
                                 </select>
                             </div>
 
-                            <!-- Owner Filter -->
-                            <div>
-                                <label for="owner_id" class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-                                <select id="owner_id" name="owner_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    @foreach($owners as $id => $name)
-                                        <option value="{{ $id }}" {{ request('owner_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            @can('manage_source')
+                                <!-- Owner Filter -->
+                                <div>
+                                    <label for="owner_id" class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                                    <select id="owner_id" name="owner_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        @foreach($owners as $id => $name)
+                                            <option value="{{ $id }}" {{ request('owner_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endcan
 
                             <!-- Filter Buttons -->
                             <div class="flex flex-col justify-end">
