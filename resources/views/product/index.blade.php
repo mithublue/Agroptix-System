@@ -185,19 +185,20 @@
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
-        @can('delete_product')
-            <form id="bulk-delete-products" method="POST" action="{{ route('products.bulk-destroy') }}">
-                @csrf
-                @method('DELETE')
-                <input type="hidden" name="redirect" value="{{ url()->full() }}">
-        @endcan
         @if($products->count() > 0)
+            @can('delete_product')
+                <form id="bulk-delete-products" method="POST" action="{{ route('products.bulk-destroy') }}">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="redirect" value="{{ url()->full() }}">
+                </form>
+            @endcan
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         @can('delete_product')
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input type="checkbox" id="select-all-products" class="rounded border-gray-300">
+                            <input type="checkbox" id="select-all-products" class="rounded border-gray-300" form="bulk-delete-products">
                         </th>
                         @endcan
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -222,7 +223,7 @@
                     <tr>
                         @can('delete_product')
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" name="ids[]" value="{{ $product->id }}" class="row-checkbox-product rounded border-gray-300">
+                            <input type="checkbox" name="ids[]" value="{{ $product->id }}" class="row-checkbox-product rounded border-gray-300" form="bulk-delete-products">
                         </td>
                         @endcan
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -360,9 +361,6 @@
                 No products found. @can('create_product')<a href="{{ route('products.create') }}" class="text-blue-600 hover:underline">Create one now</a>.@endcan
             </div>
         @endif
-        @can('delete_product')
-            </form>
-        @endcan
     </div>
         <!-- Product Details Drawer -->
         <div x-show="showViewDrawer"
