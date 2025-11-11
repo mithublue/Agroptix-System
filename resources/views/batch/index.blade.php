@@ -88,10 +88,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 @if($batches->count() > 0)
                     @can('delete_batch')
-                        <form id="bulk-delete-batches" method="POST" action="{{ route('batches.bulk-destroy') }}">
+                        <form id="bulk-delete-batches" method="POST" action="{{ route('batches.bulk-destroy') }}" class="hidden">
                             @csrf
                             @method('DELETE')
                             <input type="hidden" name="redirect" value="{{ url()->full() }}">
+                        </form>
                     @endcan
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -99,7 +100,7 @@
                                 <tr>
                                     @can('delete_batch')
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <input type="checkbox" id="select-all-batches" class="rounded border-gray-300">
+                                        <input type="checkbox" id="select-all-batches" class="rounded border-gray-300" form="bulk-delete-batches">
                                     </th>
                                     @endcan
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -118,7 +119,7 @@
                                     <tr>
                                         @can('delete_batch')
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="row-checkbox-batch rounded border-gray-300">
+                                            <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="row-checkbox-batch rounded border-gray-300" form="bulk-delete-batches">
                                         </td>
                                         @endcan
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -271,7 +272,7 @@
 
                                                 @can('delete_batch')
                                                     <div x-data="{ showDeleteConfirm: false }" class="relative">
-                                                        <button @click="showDeleteConfirm = true"
+                                                        <button type="button" @click="showDeleteConfirm = true"
                                                                 class="text-red-600 hover:text-red-900 focus:outline-none">
                                                             Delete
                                                         </button>
@@ -293,22 +294,23 @@
                                                                 </p>
                                                                 <div class="border-t border-gray-100"></div>
                                                                 <div class="flex justify-end px-4 py-2 space-x-2">
-                                                                    <button @click="showDeleteConfirm = false"
+                                                                    <button type="button" @click="showDeleteConfirm = false"
                                                                             class="text-sm text-gray-700 hover:bg-gray-100 px-2 py-1 rounded">
                                                                         Cancel
                                                                     </button>
-                                                                    <form action="{{ route('batches.destroy', $batch) }}" method="POST" class="inline">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button type="submit"
-                                                                                class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
-                                                                            Delete
-                                                                        </button>
-                                                                    </form>
+                                                                    <button type="button"
+                                                                            @click="document.getElementById('delete-batch-form-{{ $batch->id }}').submit()"
+                                                                            class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
+                                                                        Delete
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <form id="delete-batch-form-{{ $batch->id }}" action="{{ route('batches.destroy', $batch) }}" method="POST" class="hidden">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
                                                 @endcan
                                             </div>
                                         </td>
@@ -334,9 +336,6 @@
                             {{ $batches->links() }}
                         </div>
                     @endif
-                    @can('delete_batch')
-                        </form>
-                    @endcan
                 @else
                     <div class="p-6 text-center text-gray-500">
                         No batches found.
@@ -352,23 +351,34 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const selectAll = document.getElementById('select-all-batches');
-    const checkboxes = document.querySelectorAll('.row-checkbox-batch');
+function initBatchIndexPage() {
     const deleteBtn = document.getElementById('bulk-delete-btn-batches');
+    if (!deleteBtn || deleteBtn.dataset.batchIndexInit === '1') {
+        return;
+    }
+    deleteBtn.dataset.batchIndexInit = '1';
+
+    const selectAll = document.getElementById('select-all-batches');
+    const checkboxes = Array.from(document.querySelectorAll('.row-checkbox-batch'));
     const selectedCount = document.getElementById('selected-count-batches');
 
-    function updateState() {
-        const selected = Array.from(checkboxes).filter(c => c.checked).length;
-        if (selectedCount) selectedCount.textContent = `${selected} selected`;
-        if (deleteBtn) deleteBtn.disabled = selected === 0;
-        if (selectAll) selectAll.checked = selected > 0 && selected === checkboxes.length;
-        if (selectAll) selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
-    }
+    const updateState = () => {
+        const selected = checkboxes.filter(cb => cb.checked).length;
+        if (selectedCount) {
+            selectedCount.textContent = `${selected} selected`;
+        }
+        deleteBtn.disabled = selected === 0;
+        if (selectAll) {
+            selectAll.checked = selected > 0 && selected === checkboxes.length;
+            selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+        }
+    };
 
     if (selectAll) {
-        selectAll.addEventListener('change', function () {
-            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
             updateState();
         });
     }
@@ -379,6 +389,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.initTomSelectCollection) {
         window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBatchIndexPage);
+} else {
+    initBatchIndexPage();
+}
+document.addEventListener('turbo:load', initBatchIndexPage);
 </script>
 @endpush
