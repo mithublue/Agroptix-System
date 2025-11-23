@@ -64,9 +64,28 @@ class OptionController extends Controller
     {
         $validated = $request->validate([
             'project_name' => 'required|string|max:255',
+            'favicon' => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:2048',
         ]);
 
+        // Save project name
         Option::set('project_name', $validated['project_name']);
+
+        // Handle favicon upload
+        if ($request->hasFile('favicon')) {
+            // Get old favicon path
+            $oldFavicon = option('favicon');
+            
+            // Delete old favicon if it exists
+            if ($oldFavicon && \Storage::disk('public')->exists($oldFavicon)) {
+                \Storage::disk('public')->delete($oldFavicon);
+            }
+
+            // Store new favicon
+            $faviconPath = $request->file('favicon')->store('favicons', 'public');
+            
+            // Save favicon path to database
+            Option::set('favicon', $faviconPath);
+        }
 
         return redirect()->route('admin.options.general')->with('success', 'General settings updated successfully.');
     }
