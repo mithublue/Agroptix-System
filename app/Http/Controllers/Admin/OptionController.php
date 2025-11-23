@@ -54,4 +54,20 @@ class OptionController extends Controller
 
         return redirect()->route('admin.options.index')->with('success', 'User options updated.');
     }
+
+    public function generalSettings()
+    {
+        return view('admin.options.general');
+    }
+
+    public function saveGeneralSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'project_name' => 'required|string|max:255',
+        ]);
+
+        Option::set('project_name', $validated['project_name']);
+
+        return redirect()->route('admin.options.general')->with('success', 'General settings updated successfully.');
+    }
 }

@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'project_name' => env('PROJECT_NAME', 'Agroptix'),
+    
     'type' => [
         'perishable' => 'Perishable',
         'non_perishable' => 'Non Perishable'
