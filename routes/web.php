@@ -457,6 +457,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     });
 });
 
+// System Migration (requires system key from .env) - Public route for fresh installations
+Route::prefix('admin/system')->name('admin.system.')->group(function () {
+    Route::get('migrate', [\App\Http\Controllers\Admin\SystemMigrationController::class, 'showForm'])->name('migrate');
+    Route::post('migrate', [\App\Http\Controllers\Admin\SystemMigrationController::class, 'migrate'])->name('migrate.run');
+});
+
 // Batch status update route - outside admin prefix but still protected by auth and permission
 Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::class, 'updateStatus'])
      ->name('batches.status.update')

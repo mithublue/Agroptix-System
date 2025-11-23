@@ -83,8 +83,9 @@ class TestDataSeeder extends Seeder
             Source::create($sourceData);
         }
 
-        // Create products
+        // Create products with more variety
         $products = [
+            // Fruits
             [
                 'name' => 'Mango',
                 'type' => 'fruit',
@@ -108,7 +109,64 @@ class TestDataSeeder extends Seeder
                 'type' => 'fruit',
                 'is_perishable' => '1',
                 'hs_code' => '080390'
-            ]
+            ],
+            [
+                'name' => 'Lychee',
+                'type' => 'fruit',
+                'is_perishable' => '1',
+                'hs_code' => '081090'
+            ],
+            // Vegetables
+            [
+                'name' => 'Tomato',
+                'type' => 'vegetable',
+                'is_perishable' => '1',
+                'hs_code' => '070200'
+            ],
+            [
+                'name' => 'Potato',
+                'type' => 'vegetable',
+                'is_perishable' => '0',
+                'hs_code' => '070190'
+            ],
+            [
+                'name' => 'Eggplant',
+                'type' => 'vegetable',
+                'is_perishable' => '1',
+                'hs_code' => '070930'
+            ],
+            [
+                'name' => 'Bitter Gourd',
+                'type' => 'vegetable',
+                'is_perishable' => '1',
+                'hs_code' => '070990'
+            ],
+            // Grains
+            [
+                'name' => 'Rice',
+                'type' => 'grain',
+                'is_perishable' => '0',
+                'hs_code' => '100630'
+            ],
+            [
+                'name' => 'Wheat',
+                'type' => 'grain',
+                'is_perishable' => '0',
+                'hs_code' => '100199'
+            ],
+            // Spices
+            [
+                'name' => 'Turmeric',
+                'type' => 'spice',
+                'is_perishable' => '0',
+                'hs_code' => '091030'
+            ],
+            [
+                'name' => 'Ginger',
+                'type' => 'spice',
+                'is_perishable' => '1',
+                'hs_code' => '091010'
+            ],
         ];
 
         foreach ($products as $productData) {
