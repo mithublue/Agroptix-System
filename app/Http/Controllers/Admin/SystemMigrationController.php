@@ -24,6 +24,7 @@ class SystemMigrationController extends Controller
     {
         $request->validate([
             'system_key' => 'required|string',
+            'run_composer' => 'nullable|boolean',
             'migration_type' => 'required|in:migrate,refresh',
             'run_seeders' => 'nullable|boolean',
             'create_admin' => 'nullable|boolean',
@@ -52,6 +53,25 @@ class SystemMigrationController extends Controller
         try {
             $migrationType = $request->input('migration_type');
             $output = '';
+
+            // Run composer install if requested
+            if ($request->input('run_composer')) {
+                $output .= "=== Running Composer Install ===\n";
+                
+                Log::info('Running composer install via system migration', [
+                    'ip' => $request->ip(),
+                ]);
+
+                // Execute composer install
+                $composerOutput = shell_exec('cd ' . base_path() . ' && composer install --no-interaction --prefer-dist --optimize-autoloader 2>&1');
+                
+                if ($composerOutput) {
+                    $output .= $composerOutput . "\n";
+                    $output .= "✓ Composer install completed\n\n";
+                } else {
+                    $output .= "⚠ Composer install may have failed or produced no output\n\n";
+                }
+            }
 
             // Run migrations based on type
             Log::info('Running database migrations via system key', [

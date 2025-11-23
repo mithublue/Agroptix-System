@@ -69,6 +69,17 @@
                         <p class="text-gray-500 text-sm mt-1">Enter the SYSTEM_KEY value from your .env file to proceed.</p>
                     </div>
 
+                    <!-- Run Composer Install -->
+                    <div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-md">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="run_composer" value="1" class="form-checkbox text-indigo-600">
+                            <span class="ml-2 font-medium text-gray-700">Run Composer Install</span>
+                        </label>
+                        <p class="text-gray-600 text-sm mt-2 ml-6">
+                            Install/update PHP dependencies before running migrations (recommended for fresh deployments)
+                        </p>
+                    </div>
+
                     <!-- Migration Type -->
                     <div class="mb-6">
                         <label class="block font-medium text-gray-700 text-lg mb-2">
