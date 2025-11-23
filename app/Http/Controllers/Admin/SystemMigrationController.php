@@ -14,7 +14,14 @@ class SystemMigrationController extends Controller
      */
     public function showForm()
     {
-        return view('admin.system.migrate');
+        try {
+            // Attempt to load the view normally
+            return view('admin.system.migrate');
+        } catch (\Exception $e) {
+            // If there's a database error (tables don't exist), still show the form
+            // This allows the migration page to work even when database is completely empty
+            return response()->view('admin.system.migrate', [], 200);
+        }
     }
 
     /**

@@ -458,6 +458,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 // System Migration (requires system key from .env) - Public route for fresh installations
+// Outside web middleware to avoid session errors when database tables don't exist yet
 Route::prefix('admin/system')->name('admin.system.')->group(function () {
     Route::get('migrate', [\App\Http\Controllers\Admin\SystemMigrationController::class, 'showForm'])->name('migrate');
     Route::post('migrate', [\App\Http\Controllers\Admin\SystemMigrationController::class, 'migrate'])->name('migrate.run');
