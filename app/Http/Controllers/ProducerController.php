@@ -23,7 +23,10 @@ class ProducerController extends Controller
                 $query->where('is_active', true);
             }
             if (\Schema::hasColumn('users', 'is_approved')) {
-                $query->where('is_approved', true);
+                $query->where(function($q) {
+                    $q->where('is_approved', true)
+                      ->orWhereNull('is_approved');
+                });
             }
 
             // Optional: fetch a specific user by id for preselection

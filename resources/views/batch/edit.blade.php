@@ -163,13 +163,18 @@
                                         valueField: 'value',
                                         labelField: 'text',
                                         searchField: 'text',
-                                        preload: true,
+                                        options: [],
                                         load: function (query, callback) {
                                             const url = producersUrl + (query ? ('?q=' + encodeURIComponent(query)) : '');
                                             fetch(url)
                                                 .then(r => r.json())
                                                 .then(json => callback(json && json.success ? (json.data || []) : []))
                                                 .catch(() => callback());
+                                        },
+                                        onFocus: function() {
+                                            if (!this.loading && !this.options || Object.keys(this.options).length === 0) {
+                                                this.load('');
+                                            }
                                         }
                                     });
 

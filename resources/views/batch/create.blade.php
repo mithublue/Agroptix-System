@@ -351,13 +351,26 @@
                                             valueField: 'value',
                                             labelField: 'text',
                                             searchField: 'text',
-                                            preload: true,
+                                            options: [],
                                             load: function (query, callback) {
-                                                const url = producersUrl + (query ? ('?q=' + encodeURIComponent(query)) : '');
+                                                const url = producersUrl + (query ? ('?q=' + encodeURIComponent(query)) : '');                            
                                                 fetch(url)
                                                     .then(r => r.json())
-                                                    .then(json => callback(json && json.success ? (json.data || []) : []))
-                                                    .catch(() => callback());
+                                                    .then(json => {
+                                                        const data = json && json.success ? (json.data || []) : [];                                                        
+                                                        callback(data);
+                                                    })
+                                                    .catch(err => {
+                                                        console.error('Error loading producers:', err);
+                                                        callback();
+                                                    });
+                                            },
+                                            onFocus: function() {
+                                                console.log('Producer field focused');
+                                                if (!this.loading && !this.options || Object.keys(this.options).length === 0) {
+                                                    console.log('Loading producers on focus...');
+                                                    this.load('');
+                                                }
                                             }
                                         });
 
