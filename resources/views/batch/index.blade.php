@@ -100,7 +100,7 @@
                                 <tr>
                                     @can('delete_batch')
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <input type="checkbox" id="select-all-batches" class="rounded border-gray-300" form="bulk-delete-batches">
+                                        <input type="checkbox" id="select-all-batches" class="rounded border-gray-300">
                                     </th>
                                     @endcan
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -119,7 +119,7 @@
                                     <tr>
                                         @can('delete_batch')
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="row-checkbox-batch rounded border-gray-300" form="bulk-delete-batches">
+                                            <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="batch-checkbox rounded border-gray-300" data-batch-id="{{ $batch->id }}">
                                         </td>
                                         @endcan
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -323,10 +323,10 @@
                     @can('delete_batch')
                     <div class="px-6 py-4 flex items-center justify-between">
                         <div>
-                            <span id="selected-count-batches" class="text-sm text-gray-600">0 selected</span>
+                            <span id="selected-count" class="text-sm text-gray-600">0 selected</span>
                         </div>
                         <div>
-                            <button type="submit" form="bulk-delete-batches" id="bulk-delete-btn-batches" disabled class="px-4 py-2 bg-red-600 text-white text-sm rounded disabled:opacity-50">Delete Selected</button>
+                            <button type="button" id="delete-selected-btn" disabled class="px-4 py-2 bg-red-600 text-white text-sm rounded disabled:opacity-50 hover:bg-red-700">Delete Selected</button>
                         </div>
                     </div>
                     @endcan
@@ -347,55 +347,114 @@
             </div>
         </div>
     </div>
-</x-app-layout>
-
-@push('scripts')
-<script>
-function initBatchIndexPage() {
-    const deleteBtn = document.getElementById('bulk-delete-btn-batches');
-    if (!deleteBtn || deleteBtn.dataset.batchIndexInit === '1') {
-        return;
-    }
-    deleteBtn.dataset.batchIndexInit = '1';
-
-    const selectAll = document.getElementById('select-all-batches');
-    const checkboxes = Array.from(document.querySelectorAll('.row-checkbox-batch'));
-    const selectedCount = document.getElementById('selected-count-batches');
-
-    const updateState = () => {
-        const selected = checkboxes.filter(cb => cb.checked).length;
-        if (selectedCount) {
-            selectedCount.textContent = `${selected} selected`;
+    
+    @push('scripts')
+    <script>  
+    alert('qwewq');
+    (function() {
+        'use strict';
+        
+        // Wait for DOM to be fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
         }
-        deleteBtn.disabled = selected === 0;
-        if (selectAll) {
-            selectAll.checked = selected > 0 && selected === checkboxes.length;
-            selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
-        }
-    };
-
-    if (selectAll) {
-        selectAll.addEventListener('change', () => {
-            checkboxes.forEach(cb => {
-                cb.checked = selectAll.checked;
+        function init() {
+            const selectAll = document.getElementById('select-all-batches');
+            const deleteBtn = document.getElementById('delete-selected-btn');
+            const countSpan = document.getElementById('selected-count');
+            const bulkForm = document.getElementById('bulk-delete-batches');
+            
+            if (!selectAll || !deleteBtn) {
+                console.log('Batch checkboxes not found - bulk delete may be disabled');
+                return;
+            }
+            
+            // Get all batch checkboxes
+            function getCheckboxes() {
+                return document.querySelectorAll('.batch-checkbox');
+            }
+            
+            // Update UI based on selection
+            function updateUI() {
+                const checkboxes = getCheckboxes();
+                const checked = Array.from(checkboxes).filter(cb => cb.checked);
+                const count = checked.length;
+                const total = checkboxes.length;
+                
+                // Update count display
+                if (countSpan) {
+                    countSpan.textContent = count + ' selected';
+                }
+                
+                // Enable/disable delete button
+                deleteBtn.disabled = count === 0;
+                
+                // Update select-all checkbox state
+                if (total > 0) {
+                    selectAll.checked = count === total;
+                    selectAll.indeterminate = count > 0 && count < total;
+                }
+            }
+            
+            // Handle select all click
+            selectAll.addEventListener('change', function() {
+                const checkboxes = getCheckboxes();
+                const isChecked = this.checked;
+                
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = isChecked;
+                });
+                
+                updateUI();
             });
-            updateState();
-        });
-    }
-
-    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
-    updateState();
-
-    if (window.initTomSelectCollection) {
-        window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initBatchIndexPage);
-} else {
-    initBatchIndexPage();
-}
-document.addEventListener('turbo:load', initBatchIndexPage);
-</script>
-@endpush
+            
+            // Handle individual checkbox changes
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('batch-checkbox')) {
+                    updateUI();
+                }
+            });
+            
+            // Handle delete button click
+            deleteBtn.addEventListener('click', function() {
+                const checkboxes = Array.from(getCheckboxes()).filter(cb => cb.checked);
+                
+                if (checkboxes.length === 0) {
+                    return;
+                }
+                
+                if (!confirm('Are you sure you want to delete ' + checkboxes.length + ' batch(es)?')) {
+                    return;
+                }
+                
+                // Clear existing hidden inputs
+                const existingInputs = bulkForm.querySelectorAll('input[name="ids[]"]');
+                existingInputs.forEach(input => input.remove());
+                
+                // Add selected IDs to form
+                checkboxes.forEach(function(checkbox) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = checkbox.dataset.batchId;
+                    bulkForm.appendChild(input);
+                });
+                
+                // Submit the form
+                bulkForm.submit();
+            });
+            
+            // Initial update
+            updateUI();
+            
+            // Initialize TomSelect if available
+            if (window.initTomSelectCollection) {
+                window.initTomSelectCollection(document.querySelectorAll('[data-tom-select]'));
+            }
+        }
+    })();
+    </script>
+    @endpush
+</x-app-layout>

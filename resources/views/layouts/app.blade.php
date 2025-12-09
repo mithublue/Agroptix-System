@@ -453,8 +453,5 @@
             // You can add Alpine.js components here if needed
         });
     </script>
-
-    <!-- Scripts Stack -->
-    @stack('scripts')
 </body>
 </html>

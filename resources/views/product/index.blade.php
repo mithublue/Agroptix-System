@@ -410,7 +410,6 @@
             </div>
         </div>
     </div>
-</x-app-layout>
 
 @push('scripts')
 <script>
@@ -440,3 +439,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+</x-app-layout>
