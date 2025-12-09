@@ -116,7 +116,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($batches as $batch)
-                                    <tr>
+                                    <tr id="batch-row-{{ $batch->id }}">
                                         @can('delete_batch')
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <input type="checkbox" name="ids[]" value="{{ $batch->id }}" class="batch-checkbox rounded border-gray-300" data-batch-id="{{ $batch->id }}">
@@ -271,7 +271,56 @@
                                                 @endcan
 
                                                 @can('delete_batch')
-                                                    <div x-data="{ showDeleteConfirm: false }" class="relative">
+                                                    <div x-data="{ 
+                                                        showDeleteConfirm: false,
+                                                        isDeleting: false,
+                                                        deleteBatch() {
+                                                            if (this.isDeleting) return;
+                                                            
+                                                            this.isDeleting = true;
+                                                            const row = document.getElementById('batch-row-{{ $batch->id }}');
+                                                            
+                                                            fetch('{{ route('batches.destroy', $batch) }}', {
+                                                                method: 'DELETE',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                    'Accept': 'application/json',
+                                                                    'X-Requested-With': 'XMLHttpRequest'
+                                                                }
+                                                            })
+                                                            .then(response => response.json())
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    // Fade out and remove the row
+                                                                    row.style.transition = 'opacity 0.3s ease-out';
+                                                                    row.style.opacity = '0';
+                                                                    
+                                                                    setTimeout(() => {
+                                                                        row.remove();
+                                                                        
+                                                                        // Show success message if notification system exists
+                                                                        if (typeof window.$dispatch !== 'undefined') {
+                                                                            window.$dispatch('notify', {
+                                                                                type: 'success',
+                                                                                message: data.message || 'Batch deleted successfully'
+                                                                            });
+                                                                        }
+                                                                    }, 300);
+                                                                } else {
+                                                                    this.isDeleting = false;
+                                                                    this.showDeleteConfirm = false;
+                                                                    alert(data.message || 'Failed to delete batch');
+                                                                }
+                                                            })
+                                                            .catch(error => {
+                                                                console.error('Delete error:', error);
+                                                                this.isDeleting = false;
+                                                                this.showDeleteConfirm = false;
+                                                                alert('Failed to delete batch. Please try again.');
+                                                            });
+                                                        }
+                                                    }" class="relative">
                                                         <button type="button" @click="showDeleteConfirm = true"
                                                                 class="text-red-600 hover:text-red-900 focus:outline-none">
                                                             Delete
@@ -299,18 +348,16 @@
                                                                         Cancel
                                                                     </button>
                                                                     <button type="button"
-                                                                            @click="document.getElementById('delete-batch-form-{{ $batch->id }}').submit()"
-                                                                            class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
-                                                                        Delete
+                                                                            @click="deleteBatch()"
+                                                                            :disabled="isDeleting"
+                                                                            class="text-sm text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded disabled:opacity-50">
+                                                                        <span x-show="!isDeleting">Delete</span>
+                                                                        <span x-show="isDeleting">Deleting...</span>
                                                                     </button>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <form id="delete-batch-form-{{ $batch->id }}" action="{{ route('batches.destroy', $batch) }}" method="POST" class="hidden">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                    </form>
                                                 @endcan
                                             </div>
                                         </td>
@@ -350,7 +397,6 @@
     
     @push('scripts')
     <script>  
-    alert('qwewq');
     (function() {
         'use strict';
         

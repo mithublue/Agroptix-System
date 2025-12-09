@@ -387,6 +387,14 @@ class BatchController extends Controller
             // Delete the batch
             $batch->delete();
 
+            // Check if this is an AJAX request
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Batch deleted successfully'
+                ]);
+            }
+
             return redirect()->route('batches.index')
                 ->with('success', 'Batch deleted successfully');
 
@@ -395,6 +403,14 @@ class BatchController extends Controller
                 'batch_id' => $batch->id,
                 'trace' => $e->getTraceAsString()
             ]);
+
+            // Check if this is an AJAX request
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete batch: ' . $e->getMessage()
+                ], 500);
+            }
 
             return back()->with('error', 'Failed to delete batch: ' . $e->getMessage());
         }
