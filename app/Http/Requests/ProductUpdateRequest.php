@@ -20,12 +20,20 @@ class ProductUpdateRequest extends BaseFormRequest
      */
     public function rules(): array
     {
+        // Get the product ID from the route parameter
+        $productId = $this->route('product');
+        
+        // If it's a Product model instance, get the ID
+        if ($productId instanceof \App\Models\Product) {
+            $productId = $productId->id;
+        }
+        
         return [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('products', 'name')->ignore($this->route('product')?->id)
+                Rule::unique('products', 'name')->ignore($productId)
             ],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],

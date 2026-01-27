@@ -213,7 +213,17 @@ class ProductController extends Controller
         }
 
         // 3. Get the validation rules from your Form Request class.
+        // Merge the product into the request so the FormRequest can access it
+        $request->merge(['_product_id' => $product->id]);
         $rules = $formRequest->rules();
+        
+        // Override the name rule to properly exclude current product
+        $rules['name'] = [
+            'required',
+            'string',
+            'max:255',
+            \Illuminate\Validation\Rule::unique('products', 'name')->ignore($product->id)
+        ];
 
         // 4. Create a new validator instance manually.
         $validator = Validator::make($request->all(), $rules);
