@@ -16,9 +16,18 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
+use App\Models\TraceEvent;
+use Illuminate\Support\Facades\Auth;
+use App\Services\TraceabilityService;
 
 class QualityTestController extends Controller
 {
+    protected $traceabilityService;
+
+    public function __construct(TraceabilityService $traceabilityService)
+    {
+        $this->traceabilityService = $traceabilityService;
+    }
     public function index(Request $request): View
     {
         $qualityTests = QualityTest::all();
@@ -70,13 +79,13 @@ class QualityTestController extends Controller
             ->withQueryString();
 
         $readyBatchIds = $batches->getCollection()
-            ->filter(fn (Batch $batch) => $batch->isReadyForPackaging())
+            ->filter(fn(Batch $batch) => $batch->isReadyForPackaging())
             ->pluck('id')
             ->values();
 
         $products = Product::orderBy('name')
             ->get()
-            ->mapWithKeys(fn (Product $product) => [$product->id => $product->name ?? "Product #{$product->id}"]);
+            ->mapWithKeys(fn(Product $product) => [$product->id => $product->name ?? "Product #{$product->id}"]);
 
         $sources = Source::orderBy('id')
             ->get()
@@ -158,7 +167,7 @@ class QualityTestController extends Controller
 
             Log::debug('Raw tests from database:', $tests->toArray());
 
-            $formattedTests = $tests->map(function($test) {
+            $formattedTests = $tests->map(function ($test) {
                 return [
                     'id' => $test->id,
                     'batch_id' => $test->batch_id,
@@ -235,7 +244,7 @@ class QualityTestController extends Controller
             ], 422);
         }
 
-        $allPassed = $tests->every(fn ($test) => strtolower((string) $test->result) === 'pass');
+        $allPassed = $tests->every(fn($test) => strtolower((string) $test->result) === 'pass');
 
         if (!$allPassed) {
             return response()->json([
@@ -339,7 +348,7 @@ class QualityTestController extends Controller
             'batch_id' => $request['batch_id'] ?? null,
             'test_date' => $request['test_date'] ?? null,
             'lab_name' => $request['lab_name'] ?? null,
-            'parameter_tested' => json_encode($request['parameters_tested'] ?? [] ),
+            'parameter_tested' => json_encode($request['parameters_tested'] ?? []),
             'result' => $request['final_pass_fail'] ?? null,
             'test_certificate' => $request['test_certificate'] ?? null, // Use the path from AJAX upload
             'remarks' => $request['remarks'] ?? null,
@@ -356,7 +365,7 @@ class QualityTestController extends Controller
         $insertData['result_status'] = json_encode($result_status);
 
         // 4. Create a new validator instance manually.
-        $validator = Validator::make( $insertData, $rules);
+        $validator = Validator::make($insertData, $rules);
         // Validate the request
         if ($validator->fails()) {
 
@@ -383,7 +392,86 @@ class QualityTestController extends Controller
             }
         }
 
-        QualityTest::create($validatedData);
+        // --- TRACESURE AUTO-VALIDATION START ---
+        $batch = Batch::with(['product', 'source'])->find($validatedData['batch_id']);
+        if ($batch && $batch->product && $batch->source) {
+            $region = $batch->source->region ?? 'EU'; // Default to EU if not set
+            $cropType = $batch->product->name; // Assuming product name maps to crop type
+
+            // Get active standards for this context
+            $standards = \App\Models\ComplianceStandard::where('is_active', true)
+                ->where('region', $region)
+                ->where('crop_type', $cropType)
+                ->get();
+
+            $autoFail = false;
+            $validationRemarks = [];
+
+            foreach ($standards as $standard) {
+                // Check if this parameter was tested
+                $paramKey = strtolower(str_replace(' ', '_', $standard->parameter_name));
+                // We need to match the standard's parameter_name with the form's parameter keys
+                // The form uses dynamic keys e.g., 'pesticide_residue_result'
+                // We iterate through tested parameters to find a match
+                foreach (($request['parameters_tested'] ?? []) as $testedParam) {
+                    if (str_contains(strtolower($testedParam), $paramKey) || str_contains($paramKey, strtolower($testedParam))) {
+                        $resultKey = $testedParam . '_result';
+                        $measuredValue = $request[$resultKey] ?? null;
+
+                        if ($measuredValue !== null && is_numeric($measuredValue)) {
+                            // Check Max Value
+                            if ($standard->max_value !== null && $measuredValue > $standard->max_value) {
+                                $msg = "VIOLATION: {$standard->parameter_name} ({$measuredValue} {$standard->unit}) exceeds limit ({$standard->max_value} {$standard->unit})";
+                                $validationRemarks[] = $msg;
+                                if ($standard->critical_action === 'reject_batch') {
+                                    $autoFail = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($autoFail) {
+                $validatedData['result'] = 'fail';
+                $validationRemarks[] = "Result AUTO-FAILED due to critical compliance violation.";
+            }
+
+            if (!empty($validationRemarks)) {
+                $existingRemarks = $validatedData['remarks'] ?? '';
+                $validatedData['remarks'] = $existingRemarks . "\n\n[System Validation]:\n" . implode("\n", $validationRemarks);
+            }
+        }
+        // --- TRACESURE AUTO-VALIDATION END ---
+
+        $qualityTest = QualityTest::create($validatedData);
+
+        // --- TRACESURE AUTO-REJECTION TRIGGER ---
+        if ($autoFail) {
+            try {
+                // Log the rejection event securely on the blockchain ledger
+                $this->traceabilityService->logEvent(
+                    batch: $batch,
+                    eventType: TraceEvent::TYPE_QC_REJECTION,
+                    actor: Auth::user() ?? \App\Models\User::first(), // Fallback if automated
+                    data: [
+                        'test_id' => $qualityTest->id,
+                        'reason' => 'Auto-Validation Protocol Violation',
+                        'remarks' => implode("; ", $validationRemarks)
+                    ],
+                    location: 'Automated QC System',
+                    ipAddress: $request->ip()
+                );
+
+                // Force Batch Status to REJECTED to prevent further processing
+                // This is a "Kill Switch" for the batch
+                $batch->status = 'qc_rejected'; // Using string directly or Batch::STATUS_QC_REJECTED
+                $batch->save();
+            } catch (\Exception $e) {
+                \Log::error('Auto-Rejection Log Failed: ' . $e->getMessage());
+            }
+        }
+        // --- END TRACESURE TRIGGER ---
 
         // If this is an AJAX request, return JSON response
         if ($request->wantsJson() || $request->ajax()) {

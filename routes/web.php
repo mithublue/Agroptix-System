@@ -445,6 +445,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::post('options/save-user-options', [\App\Http\Controllers\Admin\OptionController::class, 'saveUserOptions'])->name('options.saveUserOptions')->middleware(['auth', 'can:manage_options']);
         Route::get('options/general', [\App\Http\Controllers\Admin\OptionController::class, 'generalSettings'])->name('options.general');
         Route::post('options/general', [\App\Http\Controllers\Admin\OptionController::class, 'saveGeneralSettings'])->name('options.saveGeneralSettings');
+
+        // Compliance Standards
+        Route::resource('compliance-standards', \App\Http\Controllers\ComplianceStandardController::class);
     });
 
     // Permissions
