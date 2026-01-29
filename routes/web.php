@@ -8,7 +8,7 @@ use App\Models\User;
 
 // Test route for debugging
 Route::get('/test-eco-process-create/{batch}', [EcoProcessController::class, 'create'])
-     ->name('test.eco-process.create');
+    ->name('test.eco-process.create');
 
 // Test route - basic route test
 Route::get('/test-route', function () {
@@ -34,7 +34,7 @@ Route::get('/debug-permissions', function () {
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'email_verified' => (bool)$user->email_verified_at,
+            'email_verified' => (bool) $user->email_verified_at,
         ],
         'roles' => $user->getRoleNames(),
         'permissions' => $user->getAllPermissions()->pluck('name'),
@@ -72,13 +72,13 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-     ->middleware(['auth'])
-     ->name('dashboard');
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 // Source status update route
 Route::patch('/sources/{source}/status', [\App\Http\Controllers\SourceController::class, 'updateStatus'])
-     ->name('sources.update.status')
-     ->middleware('can:manage_source');
+    ->name('sources.update.status')
+    ->middleware('can:manage_source');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -112,6 +112,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['can:delete_source'])->delete('sources/{source}', [\App\Http\Controllers\SourceController::class, 'destroy'])->name('sources.destroy');
 
+    // Certifications
+    Route::post('certifications', [\App\Http\Controllers\CertificationController::class, 'store'])->name('certifications.store');
+    Route::delete('certifications/{certification}', [\App\Http\Controllers\CertificationController::class, 'destroy'])->name('certifications.destroy');
+
     // Products
     Route::middleware(['can:create_product'])->group(function () {
         Route::get('products/create', [\App\Http\Controllers\ProductController::class, 'create'])->name('products.create');
@@ -136,23 +140,23 @@ Route::middleware('auth')->group(function () {
 
     // Product status update route
     Route::patch('/products/{product}/status', [\App\Http\Controllers\ProductController::class, 'updateStatus'])
-         ->name('products.update.status')
-         ->middleware('can:edit_product');
+        ->name('products.update.status')
+        ->middleware('can:edit_product');
 
     // AJAX endpoints for dynamic selects (TomSelect)
     Route::get('ajax/products/by-owner', [\App\Http\Controllers\ProductController::class, 'listByOwner'])
-         ->name('ajax.products.by-owner');
+        ->name('ajax.products.by-owner');
     Route::get('ajax/sources/by-owner', [\App\Http\Controllers\SourceController::class, 'listByOwner'])
-         ->name('ajax.sources.by-owner')
-         ->middleware('can:view_source');
+        ->name('ajax.sources.by-owner')
+        ->middleware('can:view_source');
     Route::get('ajax/producers', [\App\Http\Controllers\ProducerController::class, 'list'])
-         ->name('ajax.producers')
-         ->middleware('can:create_batch');
+        ->name('ajax.producers')
+        ->middleware('can:create_batch');
 
     // Users AJAX (for admin selects)
     Route::get('ajax/users', [\App\Http\Controllers\UserAjaxController::class, 'list'])
-         ->name('ajax.users')
-         ->middleware('can:manage_users');
+        ->name('ajax.users')
+        ->middleware('can:manage_users');
 
     // Batches
     Route::middleware(['can:create_batch'])->group(function () {
@@ -208,8 +212,8 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::post('quality-tests/ready', [\App\Http\Controllers\QualityTestController::class, 'markReadyForPackaging'])
-             ->name('quality-tests.ready')
-             ->middleware(['can:create_quality_test']);
+            ->name('quality-tests.ready')
+            ->middleware(['can:create_quality_test']);
     });
 
     // Shipments
@@ -248,41 +252,41 @@ Route::middleware('auth')->group(function () {
     Route::prefix('batches/{batch}')->middleware(['can:view_batch'])->group(function () {
         // Timeline routes
         Route::get('/timeline', [\App\Http\Controllers\BatchController::class, 'showTimeline'])
-             ->name('batches.timeline');
+            ->name('batches.timeline');
 
         // QR Code route
         Route::get('/qrcode', [\App\Http\Controllers\BatchController::class, 'showQrCode'])
-             ->name('batches.qr-code');
+            ->name('batches.qr-code');
 
         Route::get('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'index'])
-             ->name('batches.eco-processes.index');
+            ->name('batches.eco-processes.index');
 
         Route::get('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'show'])
-             ->name('batches.eco-processes.show')
-             ->where('ecoProcess', '[0-9]+');
+            ->name('batches.eco-processes.show')
+            ->where('ecoProcess', '[0-9]+');
 
         Route::middleware(['can:create_batch'])->group(function () {
             Route::get('/eco-processes/create', [\App\Http\Controllers\EcoProcessController::class, 'create'])
-                 ->name('batches.eco-processes.create');
+                ->name('batches.eco-processes.create');
 
             Route::post('/eco-processes', [\App\Http\Controllers\EcoProcessController::class, 'store'])
-                 ->name('batches.eco-processes.store');
+                ->name('batches.eco-processes.store');
 
         });
         // Update status route
         Route::patch('/eco-processes/{ecoProcess}/status', [\App\Http\Controllers\EcoProcessController::class, 'updateStatus'])
-             ->name('batches.eco-processes.status.update')
-             ->middleware(['auth', 'can:manage_batch']);
+            ->name('batches.eco-processes.status.update')
+            ->middleware(['auth', 'can:manage_batch']);
 
         Route::delete('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'destroy'])
-             ->name('batches.eco-processes.destroy')
-             ->middleware(['auth', 'can:delete_batch']);
+            ->name('batches.eco-processes.destroy')
+            ->middleware(['auth', 'can:delete_batch']);
 
         Route::middleware(['can:edit_batch'])->group(function () {
             Route::get('/eco-processes/{ecoProcess}/edit', [\App\Http\Controllers\EcoProcessController::class, 'edit'])
-                 ->name('batches.eco-processes.edit');
+                ->name('batches.eco-processes.edit');
             Route::put('/eco-processes/{ecoProcess}', [\App\Http\Controllers\EcoProcessController::class, 'update'])
-                 ->name('batches.eco-processes.update');
+                ->name('batches.eco-processes.update');
         });
 
     });
@@ -309,7 +313,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'verify'])->name('auth.phone.verify');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // RPC Units
 Route::middleware(['auth'])->group(function () {
@@ -353,7 +357,7 @@ Route::get('/debug-permissions', function () {
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'email_verified' => (bool)$user->email_verified_at,
+            'email_verified' => (bool) $user->email_verified_at,
         ],
         'roles' => $user->getRoleNames(),
         'permissions' => $user->getAllPermissions()->pluck('name'),
@@ -371,8 +375,8 @@ Route::get('/debug-permissions', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     // Live Monitoring
     Route::get('/live-monitoring', [\App\Http\Controllers\Admin\LiveMonitoringController::class, 'index'])
-         ->name('live-monitoring.index')
-         ->middleware('can:view_monitoring');
+        ->name('live-monitoring.index')
+        ->middleware('can:view_monitoring');
 
     // Users
     Route::middleware(['can:manage_users'])->group(function () {
@@ -422,17 +426,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
         // Explicitly define the update route to ensure it's included
         Route::put('packaging/{packaging}', [\App\Http\Controllers\PackagingController::class, 'update'])
-             ->name('packaging.update')
-             ->middleware('can:edit_packaging');
+            ->name('packaging.update')
+            ->middleware('can:edit_packaging');
 
         // Additional routes for packaging
         Route::post('packaging/import', [\App\Http\Controllers\PackagingController::class, 'import'])
-             ->name('packaging.import')
-             ->middleware('can:import_packaging');
+            ->name('packaging.import')
+            ->middleware('can:import_packaging');
 
         Route::get('packaging/export', [\App\Http\Controllers\PackagingController::class, 'export'])
-             ->name('packaging.export')
-             ->middleware('can:export_packaging');
+            ->name('packaging.export')
+            ->middleware('can:export_packaging');
     });
 
     // Options
@@ -446,7 +450,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Permissions
     Route::middleware(['can:manage_permissions'])->group(function () {
         Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])
-             ->name('permissions.index');
+            ->name('permissions.index');
     });
 
     // Development: Interactive Seeder UI (local only)
@@ -466,8 +470,8 @@ Route::prefix('admin/system')->name('admin.system.')->group(function () {
 
 // Batch status update route - outside admin prefix but still protected by auth and permission
 Route::patch('batches/{batch}/status', [\App\Http\Controllers\BatchController::class, 'updateStatus'])
-     ->name('batches.status.update')
-     ->middleware(['auth', 'can:manage_batch']);
+    ->name('batches.status.update')
+    ->middleware(['auth', 'can:manage_batch']);
 
 // Delivery Routes
 Route::middleware(['auth'])->group(function () {
@@ -482,10 +486,10 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('deliveries')->group(function () {
         // Update delivery status
         Route::patch('{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])
-             ->name('deliveries.status.update');
+            ->name('deliveries.status.update');
 
         // Show delivery details (using GET for better readability in URLs)
         Route::get('show/{delivery}', [\App\Http\Controllers\DeliveryController::class, 'show'])
-             ->name('deliveries.show');
+            ->name('deliveries.show');
     });
 });

@@ -64,4 +64,9 @@ class Source extends Model
     {
         return $this->belongsToMany(Product::class, 'product_source');
     }
+
+    public function certifications()
+    {
+        return $this->hasMany(Certification::class);
+    }
 }
