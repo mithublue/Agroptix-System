@@ -19,6 +19,9 @@ class EcoProcess extends Model
         'start_time',
         'end_time',
         'status',
+        'water_usage',
+        'energy_usage',
+        'waste_generated',
     ];
 
     /**

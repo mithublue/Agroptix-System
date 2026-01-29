@@ -26,6 +26,7 @@ class TraceEvent extends Model
     public const TYPE_DELIVERED = 'delivered';
     public const TYPE_QUARANTINE = 'quarantine';
     public const TYPE_DISPOSED = 'disposed';
+    public const TYPE_PROCESSING_DELETED = 'processing_deleted';
 
     /**
      * The attributes that are mass assignable.

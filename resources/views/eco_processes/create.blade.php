@@ -4,7 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ isset($ecoProcess) ? 'Edit' : 'Create' }} Eco Process
             </h2>
-            <a href="{{ route('batches.eco-processes.index', $batch) }}" class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 focus:bg-gray-600 active:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
+            <a href="{{ route('batches.eco-processes.index', $batch) }}"
+                class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 focus:bg-gray-600 active:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
                 {{ __('Back to Eco Processes') }}
             </a>
         </div>
@@ -14,9 +15,8 @@
     @endphp
 
     <form method="POST"
-          action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess]) : route('batches.eco-processes.store', $batch) }}"
-          x-on:submit.prevent="submitForm()"
-          x-data="formHandler()">
+        action="{{ isset($ecoProcess) ? route('batches.eco-processes.update', [$batch, $ecoProcess]) : route('batches.eco-processes.store', $batch) }}"
+        x-on:submit.prevent="submitForm()" x-data="formHandler()">
         @csrf
         @if(isset($ecoProcess))
             @method('PUT')
@@ -38,11 +38,8 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">
                                     Processing Stage *
                                 </label>
-                                <select
-                                    x-model="formData.stage"
-                                    @change="updateFormData('stage', $event.target.value)"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                >
+                                <select x-model="formData.stage" @change="updateFormData('stage', $event.target.value)"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                     <option value="">Select a stage...</option>
                                     <template x-for="[key, label] in Object.entries(config.stage.values)" :key="key">
                                         <option :value="key" x-text="label" :selected="formData.stage === key"></option>
@@ -52,109 +49,100 @@
 
                             <!-- Dynamic Fields -->
                             <div x-show="formData.stage" class="space-y-4">
-                                <template x-for="[fieldKey, fieldConfig] in Object.entries(getConditionalFields(formData.stage))" :key="fieldKey">
+                                <template
+                                    x-for="[fieldKey, fieldConfig] in Object.entries(getConditionalFields(formData.stage))"
+                                    :key="fieldKey">
                                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                                         <!-- Text Input -->
                                         <template x-if="fieldConfig.type === 'text'">
                                             <div>
-                                                <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-2">
+                                                <label :for="fieldKey"
+                                                    class="block text-sm font-medium text-gray-700 mb-2">
                                                     <span x-text="fieldConfig.label"></span>
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
-                                                <input
-                                                    :id="fieldKey"
-                                                    type="text"
-                                                    x-model="formData[fieldKey]"
+                                                <input :id="fieldKey" type="text" x-model="formData[fieldKey]"
                                                     :placeholder="fieldConfig.placeholder || ''"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                                             </div>
                                         </template>
 
                                         <!-- Textarea -->
                                         <template x-if="fieldConfig.type === 'textarea'">
                                             <div>
-                                                <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-2">
+                                                <label :for="fieldKey"
+                                                    class="block text-sm font-medium text-gray-700 mb-2">
                                                     <span x-text="fieldConfig.label"></span>
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
-                                                <textarea
-                                                    :id="fieldKey"
-                                                    x-model="formData[fieldKey]"
-                                                    :placeholder="fieldConfig.placeholder || ''"
-                                                    rows="3"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                ></textarea>
+                                                <textarea :id="fieldKey" x-model="formData[fieldKey]"
+                                                    :placeholder="fieldConfig.placeholder || ''" rows="3"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                                             </div>
                                         </template>
 
                                         <!-- Number Input -->
                                         <template x-if="fieldConfig.type === 'number'">
                                             <div>
-                                                <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-2">
+                                                <label :for="fieldKey"
+                                                    class="block text-sm font-medium text-gray-700 mb-2">
                                                     <span x-text="fieldConfig.label"></span>
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
-                                                <input
-                                                    :id="fieldKey"
-                                                    type="number"
-                                                    x-model="formData[fieldKey]"
-                                                    :min="fieldConfig.min || 0"
-                                                    :max="fieldConfig.max || ''"
+                                                <input :id="fieldKey" type="number" x-model="formData[fieldKey]"
+                                                    :min="fieldConfig.min || 0" :max="fieldConfig.max || ''"
                                                     :step="fieldConfig.step || '1'"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                                             </div>
                                         </template>
 
                                         <!-- DateTime Input -->
                                         <template x-if="fieldConfig.type === 'datetime-local'">
                                             <div>
-                                                <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-2">
+                                                <label :for="fieldKey"
+                                                    class="block text-sm font-medium text-gray-700 mb-2">
                                                     <span x-text="fieldConfig.label"></span>
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
-                                                <input
-                                                    :id="fieldKey"
-                                                    type="datetime-local"
-                                                    x-model="formData[fieldKey]"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
+                                                <input :id="fieldKey" type="datetime-local" x-model="formData[fieldKey]"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                                             </div>
                                         </template>
 
                                         <!-- Select Dropdown -->
                                         <template x-if="fieldConfig.type === 'select'">
                                             <div>
-                                                <label :for="fieldKey" class="block text-sm font-medium text-gray-700 mb-2">
+                                                <label :for="fieldKey"
+                                                    class="block text-sm font-medium text-gray-700 mb-2">
                                                     <span x-text="fieldConfig.label"></span>
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
-                                                <select
-                                                    :id="fieldKey"
-                                                    x-model="formData[fieldKey]"
+                                                <select :id="fieldKey" x-model="formData[fieldKey]"
                                                     @change="handleSelectChange(fieldKey, $event.target.value)"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                                >
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                                     <option value="">Select an option...</option>
-                                                    <template x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)" :key="optKey">
+                                                    <template
+                                                        x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)"
+                                                        :key="optKey">
                                                         <option :value="optKey" x-text="optLabel"></option>
                                                     </template>
                                                 </select>
 
                                                 <!-- Nested conditional fields for select -->
-                                                <template x-if="fieldConfig.conditional_field_group && formData[fieldKey]">
+                                                <template
+                                                    x-if="fieldConfig.conditional_field_group && formData[fieldKey]">
                                                     <div class="mt-4 pl-4 border-l-2 border-blue-200 space-y-3">
-                                                        <template x-for="[nestedKey, nestedConfig] in Object.entries(getNestedConditionalFields(fieldKey, 'any'))" :key="nestedKey">
+                                                        <template
+                                                            x-for="[nestedKey, nestedConfig] in Object.entries(getNestedConditionalFields(fieldKey, 'any'))"
+                                                            :key="nestedKey">
                                                             <div>
-                                                                <label :for="nestedKey" class="block text-sm font-medium text-gray-600 mb-1" x-text="nestedConfig.label"></label>
-                                                                <input
-                                                                    :id="nestedKey"
-                                                                    :type="nestedConfig.type"
+                                                                <label :for="nestedKey"
+                                                                    class="block text-sm font-medium text-gray-600 mb-1"
+                                                                    x-text="nestedConfig.label"></label>
+                                                                <input :id="nestedKey" :type="nestedConfig.type"
                                                                     x-model="formData[nestedKey]"
                                                                     :min="nestedConfig.min || 0"
-                                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                                />
+                                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                                                             </div>
                                                         </template>
                                                     </div>
@@ -170,35 +158,39 @@
                                                     <span x-show="fieldConfig.required" class="text-red-500">*</span>
                                                 </label>
                                                 <div class="space-y-2">
-                                                    <template x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)" :key="optKey">
-                                                        <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                :value="optKey"
+                                                    <template
+                                                        x-for="[optKey, optLabel] in Object.entries(fieldConfig.values)"
+                                                        :key="optKey">
+                                                        <label
+                                                            class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer">
+                                                            <input type="checkbox" :value="optKey"
                                                                 x-model="formData[fieldKey]"
                                                                 @change="handleCheckboxChange(fieldKey, optKey, $event.target.checked)"
-                                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                            />
-                                                            <span class="text-sm text-gray-700" x-text="optLabel"></span>
+                                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                                            <span class="text-sm text-gray-700"
+                                                                x-text="optLabel"></span>
                                                         </label>
                                                     </template>
                                                 </div>
 
                                                 <!-- Nested conditional fields for checkboxes -->
-                                                <template x-if="fieldConfig.conditional_field_group && formData[fieldKey] && formData[fieldKey].length > 0">
+                                                <template
+                                                    x-if="fieldConfig.conditional_field_group && formData[fieldKey] && formData[fieldKey].length > 0">
                                                     <div class="mt-4 pl-4 border-l-2 border-green-200 space-y-3">
-                                                        <template x-for="checkedValue in formData[fieldKey]" :key="checkedValue">
-                                                            <template x-for="[nestedKey, nestedConfig] in Object.entries(getNestedConditionalFields(fieldKey, checkedValue))" :key="nestedKey">
+                                                        <template x-for="checkedValue in formData[fieldKey]"
+                                                            :key="checkedValue">
+                                                            <template
+                                                                x-for="[nestedKey, nestedConfig] in Object.entries(getNestedConditionalFields(fieldKey, checkedValue))"
+                                                                :key="nestedKey">
                                                                 <div>
-                                                                    <label :for="nestedKey" class="block text-sm font-medium text-gray-600 mb-1" x-text="nestedConfig.label"></label>
-                                                                    <input
-                                                                        :id="nestedKey"
-                                                                        :type="nestedConfig.type"
+                                                                    <label :for="nestedKey"
+                                                                        class="block text-sm font-medium text-gray-600 mb-1"
+                                                                        x-text="nestedConfig.label"></label>
+                                                                    <input :id="nestedKey" :type="nestedConfig.type"
                                                                         x-model="formData[nestedKey]"
                                                                         :min="nestedConfig.min || 0"
                                                                         :max="nestedConfig.max || ''"
-                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                                    />
+                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                                                                 </div>
                                                             </template>
                                                         </template>
@@ -212,10 +204,8 @@
 
                             <!-- Submit Button -->
                             <div x-show="formData.stage" class="pt-4">
-                                <button
-                                    type="submit"
-                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium"
-                                >
+                                <button type="submit"
+                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium">
                                     Submit Form
                                 </button>
                             </div>
@@ -226,20 +216,27 @@
                             <div class="bg-gray-900 rounded-lg p-4">
                                 <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
                                     </svg>
                                     Form Data (JSON)
                                 </h3>
-                                <pre class="text-green-400 text-sm overflow-auto max-h-96 bg-gray-800 p-3 rounded border" x-text="JSON.stringify(formData, null, 2)"></pre>
+                                <pre class="text-green-400 text-sm overflow-auto max-h-96 bg-gray-800 p-3 rounded border"
+                                    x-text="JSON.stringify(formData, null, 2)"></pre>
                             </div>
 
                             <!-- Field Count Info -->
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <h4 class="font-medium text-blue-900 mb-2">Form Statistics</h4>
                                 <div class="text-sm text-blue-700 space-y-1">
-                                    <div>Total Fields: <span class="font-medium" x-text="Object.keys(formData).length"></span></div>
-                                    <div>Current Stage: <span class="font-medium" x-text="formData.stage || 'None selected'"></span></div>
-                                    <div>Filled Fields: <span class="font-medium" x-text="Object.values(formData).filter(v => v !== '' && v !== 0 && (!Array.isArray(v) || v.length > 0)).length"></span></div>
+                                    <div>Total Fields: <span class="font-medium"
+                                            x-text="Object.keys(formData).length"></span></div>
+                                    <div>Current Stage: <span class="font-medium"
+                                            x-text="formData.stage || 'None selected'"></span></div>
+                                    <div>Filled Fields: <span class="font-medium"
+                                            x-text="Object.values(formData).filter(v => v !== '' && v !== 0 && (!Array.isArray(v) || v.length > 0)).length"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -288,6 +285,7 @@
                                 on: 'stage:cutting_peeling',
                                 fields: {
                                     processing_type: { label: 'Processing Type', type: 'checkbox', values: { peeling: 'Peeling', segmenting: 'Segmenting', chipping: 'Chipping', pulping: 'Pulping' } },
+                                    energy_usage: { label: 'Energy Usage (kWh)', type: 'number', step: '0.01', min: 0 },
                                     sanitizer_type: {
                                         label: 'Sanitizer Type',
                                         type: 'select',
@@ -321,7 +319,8 @@
                             {
                                 on: 'stage:washing_n_treatment',
                                 fields: {
-                                    washing_water_usage: { label: 'Washing Water Usage', type: 'number', min: 0, max: 100 },
+                                    washing_water_usage: { label: 'Washing Water Usage (Liters)', type: 'number', min: 0, max: 1000 },
+                                    energy_usage: { label: 'Energy Usage (kWh)', type: 'number', step: '0.01', min: 0 },
                                     disinfection_steps: {
                                         label: 'Disinfection Steps',
                                         type: 'checkbox',
@@ -356,6 +355,7 @@
                             {
                                 on: 'stage:drying_n_pre_cooling',
                                 fields: {
+                                    energy_usage: { label: 'Energy Usage (kWh)', type: 'number', step: '0.01', min: 0 },
                                     cold_storage: {
                                         label: 'Cold Storage',
                                         type: 'checkbox',
@@ -502,48 +502,48 @@
                         },
                         body: formData
                     })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw err; });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Show success toast with SweetAlert2
-                        const Toast = Swal.mixin({
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 1000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener('mouseenter', Swal.stopTimer);
-                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => { throw err; });
                             }
-                        });
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Show success toast with SweetAlert2
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1000,
+                                timerProgressBar: true,
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                }
+                            });
 
-                        Toast.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Eco process has been saved successfully.'
-                        }).then(() => {
-                            // Redirect after toast is closed
-                            window.location.href = data.redirect || '/dashboard';
-                        });
-                    })
-                    .catch(error => {
-                        // Show error toast with SweetAlert2
-                        console.error('Error:', error);
-                        const errorMessage = error.message || 'An error occurred while submitting the form.';
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Eco process has been saved successfully.'
+                            }).then(() => {
+                                // Redirect after toast is closed
+                                window.location.href = data.redirect || '/dashboard';
+                            });
+                        })
+                        .catch(error => {
+                            // Show error toast with SweetAlert2
+                            console.error('Error:', error);
+                            const errorMessage = error.message || 'An error occurred while submitting the form.';
 
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: errorMessage,
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#3b82f6'
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: errorMessage,
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#3b82f6'
+                            });
                         });
-                    });
                 }
             }
         }

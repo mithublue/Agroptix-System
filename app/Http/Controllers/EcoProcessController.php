@@ -2,16 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\EcoProcess;
-use App\Http\Requests\EcoProcessRequest;
+use App\Models\TraceEvent;
+use App\Services\TraceabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class EcoProcessController extends Controller
 {
+    protected $traceabilityService;
+
+    public function __construct(TraceabilityService $traceabilityService)
+    {
+        $this->traceabilityService = $traceabilityService;
+    }
     /**
      * Display a listing of the eco processes for a batch.
      */
@@ -73,6 +83,9 @@ class EcoProcessController extends Controller
                 'data' => $formData,
                 'status' => 'in_progress',
                 'start_time' => now(),
+                'water_usage' => $formData['washing_water_usage'] ?? $formData['washwater_amount'] ?? 0,
+                'waste_generated' => $formData['rejection_weight'] ?? 0,
+                'energy_usage' => $formData['energy_usage'] ?? 0,
             ];
 
             // Create the eco process
@@ -146,6 +159,9 @@ class EcoProcessController extends Controller
                 'data' => $formData,
                 'status' => 'in_progress',
                 'start_time' => now(),
+                'water_usage' => $formData['washing_water_usage'] ?? $formData['washwater_amount'] ?? 0,
+                'waste_generated' => $formData['rejection_weight'] ?? 0,
+                'energy_usage' => $formData['energy_usage'] ?? 0,
             ];
             $ecoProcess->update($ecoProcessData);
 
@@ -212,7 +228,7 @@ class EcoProcessController extends Controller
                 ]);
                 // Continue with deletion even if logging fails
             }
-            
+
             // Delete the eco process
             $ecoProcess->delete();
 
@@ -226,14 +242,14 @@ class EcoProcessController extends Controller
             return redirect()
                 ->route('batches.eco-processes.index', $batch->id)
                 ->with('success', 'Eco process deleted successfully');
-                
+
         } catch (\Exception $e) {
             Log::error('Failed to delete eco process: ' . $e->getMessage(), [
                 'process_id' => $ecoProcess->id,
                 'batch_id' => $batch->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
