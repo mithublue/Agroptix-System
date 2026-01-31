@@ -24,10 +24,24 @@ class ComprehensiveTestDataSeeder extends Seeder
         ]);
         $this->command->newLine();
 
+        // Step 1b: Compliance Standards
+        $this->command->info('Step 1b: Seeding compliance standards...');
+        $this->call([
+            ComplianceStandardSeeder::class,
+        ]);
+        $this->command->newLine();
+
         // Step 2: Core Data (Sources, Products, Batches, Quality Tests)
         $this->command->info('Step 2/9: Seeding core data (sources, products, batches, quality tests)...');
         $this->call([
             TestDataSeeder::class,
+        ]);
+        $this->command->newLine();
+
+        // Step 2b: Certifications
+        $this->command->info('Step 2b: Seeding certifications...');
+        $this->call([
+            CertificationSeeder::class,
         ]);
         $this->command->newLine();
 
@@ -82,7 +96,7 @@ class ComprehensiveTestDataSeeder extends Seeder
 
         $this->command->info('✓ Comprehensive test data seeding completed successfully!');
         $this->command->newLine();
-        
+
         // Display summary
         $this->displaySummary();
     }
@@ -93,7 +107,7 @@ class ComprehensiveTestDataSeeder extends Seeder
     private function displaySummary(): void
     {
         $this->command->info('=== Data Summary ===');
-        
+
         $models = [
             'Users' => \App\Models\User::class,
             'Sources' => \App\Models\Source::class,
@@ -108,6 +122,8 @@ class ComprehensiveTestDataSeeder extends Seeder
             'Trace Events' => \App\Models\TraceEvent::class,
             'RPC Units' => \App\Models\RpcUnit::class,
             'Packaging' => \App\Models\Packaging::class,
+            'Compliance Standards' => \App\Models\ComplianceStandard::class,
+            'Certifications' => \App\Models\Certification::class,
         ];
 
         foreach ($models as $label => $modelClass) {
@@ -116,7 +132,7 @@ class ComprehensiveTestDataSeeder extends Seeder
                 $this->command->info(sprintf('%-20s: %d records', $label, $count));
             }
         }
-        
+
         $this->command->newLine();
         $this->command->info('Your development environment is now fully seeded with test data!');
     }

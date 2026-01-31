@@ -63,7 +63,7 @@ class EcoProcessSeeder extends Seeder
         foreach ($batches as $batch) {
             $baseTime = $batch->created_at;
             $processCount = rand(3, 6); // 3-6 processes per batch
-            
+
             // Randomly select stages
             $selectedStages = array_rand($stages, $processCount);
             if (!is_array($selectedStages)) {
@@ -72,22 +72,22 @@ class EcoProcessSeeder extends Seeder
 
             foreach ($selectedStages as $index => $stageName) {
                 $stageConfig = $stages[$stageName];
-                
+
                 // Generate random data for this stage
                 $data = [];
                 foreach ($stageConfig as $key => $options) {
                     $data[$key] = $options[array_rand($options)];
                 }
-                
+
                 // Add common data fields
                 $data['notes'] = 'Process completed as per standard operating procedures.';
                 $data['operator'] = 'Operator ' . rand(1, 10);
-                
+
                 // Calculate start and end times
                 $startTime = $baseTime->copy()->addHours($index * rand(2, 8));
                 $duration = rand(1, 6); // 1-6 hours
                 $endTime = $startTime->copy()->addHours($duration);
-                
+
                 // Determine status (90% completed, 5% in_progress, 5% failed)
                 $statusRand = rand(1, 100);
                 if ($statusRand <= 90) {
@@ -100,6 +100,11 @@ class EcoProcessSeeder extends Seeder
                     $data['failure_reason'] = 'Equipment malfunction';
                 }
 
+                // Calculate random resource usage
+                $waterUsage = rand(50, 500); // Liters
+                $energyUsage = rand(10, 100); // kWh
+                $wasteGenerated = rand(1, 50); // Kg
+
                 EcoProcess::create([
                     'batch_id' => $batch->id,
                     'stage' => $stageName,
@@ -107,6 +112,9 @@ class EcoProcessSeeder extends Seeder
                     'start_time' => $startTime,
                     'end_time' => $endTime,
                     'status' => $status,
+                    'water_usage' => $waterUsage,
+                    'energy_usage' => $energyUsage,
+                    'waste_generated' => $wasteGenerated,
                 ]);
             }
         }

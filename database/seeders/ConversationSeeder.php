@@ -18,13 +18,17 @@ class ConversationSeeder extends Seeder
     public function run(): void
     {
         // Clear existing data
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         Message::truncate();
         ConversationParticipant::truncate();
         Conversation::truncate();
+        // Also truncate message_reads table if it exists as it depends on messages
+        \Illuminate\Support\Facades\DB::table('message_reads')->truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // Get users
         $users = User::all();
-        
+
         if ($users->count() < 2) {
             $this->command->warn('Not enough users found. Please run TestUsersSeeder first.');
             return;
@@ -33,7 +37,7 @@ class ConversationSeeder extends Seeder
         // Get subjects (batches and products)
         $batches = Batch::all();
         $products = Product::all();
-        
+
         if ($batches->isEmpty() && $products->isEmpty()) {
             $this->command->warn('No batches or products found. Please run TestDataSeeder first.');
             return;
@@ -77,16 +81,16 @@ class ConversationSeeder extends Seeder
             // Select random users as customer and supplier
             $customer = $users->random();
             $supplier = $users->where('id', '!=', $customer->id)->random();
-            
+
             // Select random subject (batch or product)
             $subjectType = rand(0, 1) === 0 && $batches->isNotEmpty() ? 'batch' : 'product';
             $subject = $subjectType === 'batch' ? $batches->random() : $products->random();
-            
+
             // Determine if conversation is closed (30% chance)
             $isClosed = rand(1, 100) <= 30;
             $closedAt = $isClosed ? now()->subDays(rand(1, 10)) : null;
             $closedById = $isClosed ? [$customer->id, $supplier->id][array_rand([$customer->id, $supplier->id])] : null;
-            
+
             // Create conversation
             $conversation = Conversation::create([
                 'customer_id' => $customer->id,
@@ -114,11 +118,11 @@ class ConversationSeeder extends Seeder
             // Create messages (3-10 messages per conversation)
             $messageCount = rand(3, 10);
             $baseTime = $conversation->created_at;
-            
+
             for ($j = 0; $j < $messageCount; $j++) {
                 // Alternate between customer and supplier
                 $author = $j % 2 === 0 ? $customer : $supplier;
-                
+
                 // Select message template based on position
                 if ($j === 0) {
                     $template = $messageTemplates['inquiry'][array_rand($messageTemplates['inquiry'])];
@@ -131,14 +135,14 @@ class ConversationSeeder extends Seeder
                 } else {
                     $template = $messageTemplates['confirmation'][array_rand($messageTemplates['confirmation'])];
                 }
-                
+
                 // Replace {subject} placeholder
                 $subjectName = $subjectType === 'batch' ? 'batch ' . $subject->batch_code : 'product ' . $subject->name;
                 $body = str_replace('{subject}', $subjectName, $template);
-                
+
                 // Calculate message time (incrementing from base time)
                 $messageTime = $baseTime->copy()->addHours($j * rand(1, 12))->addMinutes(rand(0, 59));
-                
+
                 Message::create([
                     'conversation_id' => $conversation->id,
                     'author_id' => $author->id,
@@ -149,7 +153,7 @@ class ConversationSeeder extends Seeder
                     'created_at' => $messageTime,
                     'updated_at' => $messageTime,
                 ]);
-                
+
                 // Update conversation's last_message_at
                 $conversation->update(['last_message_at' => $messageTime]);
             }

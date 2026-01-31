@@ -50,40 +50,40 @@ class DeliverySeeder extends Seeder
         $statusWeights = [15, 25, 55, 5]; // 55% delivered, 25% in_transit, 15% pending, 5% failed
 
         // Create deliveries for 60% of batches
-        foreach ($batches->random(min((int)($batches->count() * 0.6), $batches->count())) as $batch) {
+        foreach ($batches->random(min((int) ($batches->count() * 0.6), $batches->count())) as $batch) {
             $deliveryPerson = $deliveryPersons[array_rand($deliveryPersons)];
             $address = $addresses[array_rand($addresses)];
-            
+
             // Select status based on weights
             $statusIndex = $this->weightedRandom($statusWeights);
             $status = $statuses[$statusIndex];
-            
+
             // Generate delivery date (within last 30 days or future for pending)
             if ($status === 'pending') {
                 $deliveryDate = now()->addDays(rand(1, 14));
             } else {
                 $deliveryDate = now()->subDays(rand(1, 30));
             }
-            
+
             // Generate contact number
             $contact = '+880' . rand(1000000000, 1999999999);
-            
+
             // Delivery confirmation and checks (only for delivered status)
             $deliveryConfirmation = $status === 'delivered';
             $temperatureCheck = $status === 'delivered' ? (rand(1, 100) > 10) : false; // 90% pass
             $qualityCheck = $status === 'delivered' ? (rand(1, 100) > 15) : false; // 85% pass
-            
+
             // Customer feedback (only for delivered)
             $customerRating = null;
             $customerComments = null;
             $feedbackSubmittedAt = null;
-            $feedbackStatus = null;
-            
+            $feedbackStatus = 'pending';
+
             if ($status === 'delivered' && rand(1, 100) <= 70) { // 70% of delivered orders have feedback
                 $customerRating = rand(3, 5); // 3-5 stars
                 $feedbackSubmittedAt = $deliveryDate->copy()->addHours(rand(1, 48));
                 $feedbackStatus = 'submitted';
-                
+
                 $comments = [
                     'Excellent quality! Very fresh products.',
                     'Good delivery service. Products arrived in perfect condition.',
@@ -94,7 +94,7 @@ class DeliverySeeder extends Seeder
                 ];
                 $customerComments = $comments[array_rand($comments)];
             }
-            
+
             // Signature data (for delivered)
             $signatureRecipientName = null;
             $signatureData = null;
@@ -102,7 +102,7 @@ class DeliverySeeder extends Seeder
                 $signatureRecipientName = 'Recipient ' . rand(1, 100);
                 $signatureData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
             }
-            
+
             // Additional notes
             $additionalNotes = null;
             if ($status === 'failed') {
@@ -150,7 +150,7 @@ class DeliverySeeder extends Seeder
     {
         $total = array_sum($weights);
         $random = rand(1, $total);
-        
+
         $sum = 0;
         foreach ($weights as $index => $weight) {
             $sum += $weight;
@@ -158,7 +158,7 @@ class DeliverySeeder extends Seeder
                 return $index;
             }
         }
-        
+
         return 0;
     }
 }
