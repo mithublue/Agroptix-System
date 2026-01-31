@@ -30,6 +30,11 @@
                             {{ __('Batches') }}
                         </x-nav-link>
                     @endcan
+                    @can('view_shipment')
+                        <x-nav-link :href="route('shipments.index')" :active="request()->routeIs('shipments.*')">
+                            {{ __('Shipments') }}
+                        </x-nav-link>
+                    @endcan
                     @can('manage_options')
                         <x-nav-link :href="route('admin.compliance-standards.index')"
                             :active="request()->routeIs('admin.compliance-standards.*')">

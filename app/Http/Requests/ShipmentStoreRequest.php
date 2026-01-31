@@ -20,13 +20,17 @@ class ShipmentStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
-            'origin' => ['nullable', 'string'],
-            'destination' => ['nullable', 'string'],
-            'vehicle_type' => ['nullable', 'string'],
-            'co2_estimate' => ['nullable', 'numeric', 'between:-999999.99,999999.99'],
-            'departure_time' => ['nullable', 'string'],
-            'arrival_time' => ['nullable', 'string'],
+            'batch_id' => ['required', 'integer', 'exists:batches,id'],
+            'origin' => ['required', 'string', 'max:255'],
+            'destination' => ['required', 'string', 'max:255'],
+            'vehicle_type' => ['nullable', 'string', 'max:255'],
+            'mode' => ['required', 'string', 'in:Road,Air,Sea,Rail'],
+            'route_distance' => ['required', 'numeric', 'min:0'],
+            'fuel_type' => ['nullable', 'string', 'max:255'],
+            'temperature' => ['nullable', 'numeric'],
+            'co2_estimate' => ['nullable', 'numeric'],
+            'departure_time' => ['nullable', 'date'],
+            'arrival_time' => ['nullable', 'date', 'after_or_equal:departure_time'],
         ];
     }
 }

@@ -6,13 +6,21 @@ use App\Http\Requests\ShipmentStoreRequest;
 use App\Http\Requests\ShipmentUpdateRequest;
 use App\Models\Batch;
 use App\Models\Shipment;
+use App\Models\TraceEvent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class ShipmentController extends Controller
 {
+    protected $traceabilityService;
+
+    public function __construct(\App\Services\TraceabilityService $traceabilityService)
+    {
+        $this->traceabilityService = $traceabilityService;
+    }
     public function index(Request $request): View
     {
         $query = Shipment::with(['batch']);
@@ -70,10 +78,11 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
         $this->authorize('create_shipment');
-        return view('shipment.create');
+        $batches = Batch::select('id', 'batch_code')->latest()->get();
+        return view('shipment.create', compact('batches'));
     }
 
     public function store(ShipmentStoreRequest $request)
