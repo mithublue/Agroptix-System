@@ -102,6 +102,23 @@
                                 @enderror
                             </div>
 
+                            <!-- Fair Trade Premium -->
+                            <div>
+                                <x-label for="fair_trade_premium" :value="__('Ethical Sourcing Premium (SAR)')" />
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">SAR</span>
+                                    </div>
+                                    <input type="number" name="fair_trade_premium" id="fair_trade_premium" step="0.01"
+                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 sm:text-sm border-gray-300 rounded-md"
+                                           placeholder="0.00" value="{{ old('fair_trade_premium', $batch->fair_trade_premium) }}">
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Optional: Extra amount paid for ethical sourcing.</p>
+                                @error('fair_trade_premium')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <!-- Grade -->
                             <div>
                                 <x-label for="grade" :value="__('Grade')" />

@@ -44,6 +44,8 @@ class BatchUpdateRequest extends BaseFormRequest
             'grade' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::GRADES))],
             'has_defect' => ['sometimes', 'boolean'],
             'remark' => ['nullable', 'string', 'max:1000'],
+            'fair_trade_premium' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:3'],
         ];
     }
 }

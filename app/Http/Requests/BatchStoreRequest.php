@@ -30,7 +30,7 @@ class BatchStoreRequest extends BaseFormRequest
         // Process inputs
         $this->merge([
             'batch_code' => trim($this->batch_code ?? ''),
-            'has_defect' => (bool)($this->has_defect ?? false),
+            'has_defect' => (bool) ($this->has_defect ?? false),
         ]);
 
         // Log the processed data
@@ -62,7 +62,9 @@ class BatchStoreRequest extends BaseFormRequest
             'weight' => ['nullable', 'numeric', 'min:0'],
             'grade' => ['nullable', 'string', 'in:' . implode(',', array_keys(\App\Models\Batch::GRADES))],
             'has_defect' => ['sometimes', 'boolean'],
-            'remark' => ['nullable', 'string', 'max:1000']
+            'remark' => ['nullable', 'string', 'max:1000'],
+            'fair_trade_premium' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:3'],
         ];
     }
 

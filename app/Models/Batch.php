@@ -47,6 +47,8 @@ class Batch extends Model
         'grade',
         'has_defect',
         'remark',
+        'fair_trade_premium',
+        'currency',
     ];
 
     /**
@@ -245,6 +247,40 @@ class Batch extends Model
     public function delivery()
     {
         return $this->hasOne(Delivery::class);
+    }
+
+    /**
+     * Get the shipments associated with the batch.
+     */
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
+    }
+
+    /**
+     * Calculate total Carbon Footprint for this batch's logistics.
+     * Returns kg CO2e.
+     */
+    public function calculateCarbonFootprint(): float
+    {
+        $totalEmission = 0;
+        $weight = $this->weight ?? 0;
+
+        if ($weight <= 0) {
+            return 0;
+        }
+
+        foreach ($this->shipments as $shipment) {
+            if ($shipment->route_distance > 0 && $shipment->mode) {
+                $totalEmission += \App\Services\CarbonFootprintService::calculateEmission(
+                    (float) $shipment->route_distance,
+                    (float) $weight,
+                    (string) $shipment->mode
+                );
+            }
+        }
+
+        return round($totalEmission, 2);
     }
 
     /**
