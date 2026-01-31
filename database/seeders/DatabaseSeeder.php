@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             PackagingPermissionsSeeder::class,
             TestDataSeeder::class,  // This includes test batches, products, etc.
             TraceEventsSeeder::class,  // Seed trace events for all batches
+            ComplianceStandardSeeder::class, // Seed default compliance standards
         ]);
 
         // Create admin user
@@ -81,6 +82,7 @@ class DatabaseSeeder extends Seeder
         if (!app()->environment('production')) {
             $this->call([
                 TestDataSeeder::class,
+                CertificationSeeder::class, // Add random certifications to sources
             ]);
         }
 
