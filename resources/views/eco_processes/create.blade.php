@@ -286,6 +286,7 @@
                                 fields: {
                                     processing_type: { label: 'Processing Type', type: 'checkbox', values: { peeling: 'Peeling', segmenting: 'Segmenting', chipping: 'Chipping', pulping: 'Pulping' } },
                                     energy_usage: { label: 'Energy Usage (kWh)', type: 'number', step: '0.01', min: 0 },
+                                    waste_generated: { label: 'Waste Generated (kg)', type: 'number', step: '0.01', min: 0 },
                                     sanitizer_type: {
                                         label: 'Sanitizer Type',
                                         type: 'select',
@@ -321,6 +322,7 @@
                                 fields: {
                                     washing_water_usage: { label: 'Washing Water Usage (Liters)', type: 'number', min: 0, max: 1000 },
                                     energy_usage: { label: 'Energy Usage (kWh)', type: 'number', step: '0.01', min: 0 },
+                                    waste_generated: { label: 'Waste Generated (kg)', type: 'number', step: '0.01', min: 0 },
                                     disinfection_steps: {
                                         label: 'Disinfection Steps',
                                         type: 'checkbox',

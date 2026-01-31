@@ -374,8 +374,22 @@ Route::get('/debug-permissions', function () {
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     // Live Monitoring
+    // Live Monitoring (Legacy/Demo Dashboard)
     Route::get('/live-monitoring', [\App\Http\Controllers\Admin\LiveMonitoringController::class, 'index'])
         ->name('live-monitoring.index')
+        ->middleware('can:view_monitoring');
+
+    // Live Tracking (Real GPS Map)
+    Route::get('/live-monitoring/map', [\App\Http\Controllers\Admin\LiveTrackingController::class, 'index'])
+        ->name('live-monitoring.map')
+        ->middleware('can:view_monitoring');
+
+    Route::get('/live-monitoring/api', [\App\Http\Controllers\Admin\LiveTrackingController::class, 'apiLocations'])
+        ->name('live-monitoring.api')
+        ->middleware('can:view_monitoring');
+
+    Route::post('/live-monitoring/update/{shipment}', [\App\Http\Controllers\Admin\LiveTrackingController::class, 'updateLocation'])
+        ->name('live-monitoring.update')
         ->middleware('can:view_monitoring');
 
     // Users

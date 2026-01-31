@@ -27,6 +27,10 @@ class Shipment extends Model
         'temperature',
         'mode',
         'route_distance',
+        'current_location_lat',
+        'current_location_lng',
+        'last_location_update',
+        'tracking_status',
     ];
 
     /**
@@ -40,6 +44,9 @@ class Shipment extends Model
             'id' => 'integer',
             'batch_id' => 'integer',
             'co2_estimate' => 'decimal:2',
+            'current_location_lat' => 'decimal:8',
+            'current_location_lng' => 'decimal:8',
+            'last_location_update' => 'datetime',
         ];
     }
 

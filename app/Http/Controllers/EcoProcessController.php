@@ -84,7 +84,7 @@ class EcoProcessController extends Controller
                 'status' => 'in_progress',
                 'start_time' => now(),
                 'water_usage' => $formData['washing_water_usage'] ?? $formData['washwater_amount'] ?? 0,
-                'waste_generated' => $formData['rejection_weight'] ?? 0,
+                'waste_generated' => $formData['waste_generated'] ?? $formData['rejection_weight'] ?? 0,
                 'energy_usage' => $formData['energy_usage'] ?? 0,
             ];
 
@@ -133,7 +133,7 @@ class EcoProcessController extends Controller
     /**
      * Update the specified eco process in storage.
      */
-    public function update(Request $request, Batch $batch, EcoProcess $ecoProcess): JsonResponse
+    public function update(Request $request, Batch $batch, EcoProcess $ecoProcess)
     {
         try {
             // Get the raw JSON data if it was sent
@@ -160,7 +160,7 @@ class EcoProcessController extends Controller
                 'status' => 'in_progress',
                 'start_time' => now(),
                 'water_usage' => $formData['washing_water_usage'] ?? $formData['washwater_amount'] ?? 0,
-                'waste_generated' => $formData['rejection_weight'] ?? 0,
+                'waste_generated' => $formData['waste_generated'] ?? $formData['rejection_weight'] ?? 0,
                 'energy_usage' => $formData['energy_usage'] ?? 0,
             ];
             $ecoProcess->update($ecoProcessData);
