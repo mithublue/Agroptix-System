@@ -506,16 +506,19 @@
                                 <x-input-error :messages="$errors->get('weight')" class="mt-2" />
                             </div>
 
-                            <!-- Fair Trade Premium -->
+                            <!-- Fair Trade Premium & Currency -->
                             <div>
-                                <x-label for="fair_trade_premium" :value="__('Ethical Sourcing Premium (SAR)')" />
-                                <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">SAR</span>
-                                    </div>
+                                <x-label for="fair_trade_premium" :value="__('Ethical Sourcing Premium')" />
+                                <div class="mt-1 relative rounded-md shadow-sm flex">
                                     <input type="number" name="fair_trade_premium" id="fair_trade_premium" step="0.01"
-                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 sm:text-sm border-gray-300 rounded-md"
+                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
                                            placeholder="0.00" value="{{ old('fair_trade_premium') }}">
+                                    <select name="currency" id="currency"
+                                            class="focus:ring-indigo-500 focus:border-indigo-500 h-full py-0 pl-2 pr-7 border-l-0 bg-gray-50 text-gray-500 sm:text-sm rounded-r-md border-gray-300">
+                                        @foreach(['SAR', 'USD', 'EUR', 'GBP', 'AED'] as $curr)
+                                            <option value="{{ $curr }}" {{ old('currency', 'SAR') === $curr ? 'selected' : '' }}>{{ $curr }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <p class="mt-1 text-xs text-gray-500">Optional: Extra amount paid for ethical sourcing.</p>
                                 <x-input-error :messages="$errors->get('fair_trade_premium')" class="mt-2" />
