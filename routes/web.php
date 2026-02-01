@@ -450,8 +450,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
             ->middleware('can:import_packaging');
 
         Route::get('packaging/export', [\App\Http\Controllers\PackagingController::class, 'export'])
-            ->name('packaging.export')
             ->middleware('can:export_packaging');
+
+        Route::patch('packaging/{packaging}/status', [\App\Http\Controllers\PackagingController::class, 'updateStatus'])
+            ->name('packaging.update.status');
     });
 
     // Options

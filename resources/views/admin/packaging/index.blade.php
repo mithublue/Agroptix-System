@@ -233,6 +233,9 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Batch
                             </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
                             <th scope="col" class="relative px-6 py-3">
                                 <span class="sr-only">Actions</span>
                             </th>
@@ -248,6 +251,68 @@
                                     </template>
                                     <template x-if="!pkg.batch">
                                         <span>N/A</span>
+                                    </template>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <template x-if="pkg.batch">
+                                        <div x-data="{
+                                            isLoading: false,
+                                            status: pkg.batch.status,
+                                            updateStatus(newStatus) {
+                                                this.isLoading = true;
+                                                const url = '{{ route('admin.packaging.update.status', ':id') }}'.replace(':id', pkg.id);
+                                                fetch(url, {
+                                                    method: 'PATCH',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                        'Accept': 'application/json'
+                                                    },
+                                                    body: JSON.stringify({ status: newStatus })
+                                                })
+                                                .then(response => {
+                                                     if (!response.ok) {
+                                                         throw new Error('Network response was not ok');
+                                                     }
+                                                     return response.json();
+                                                })
+                                                .then(data => {
+                                                    this.$dispatch('notify', {
+                                                        type: 'success',
+                                                        message: 'Status updated successfully'
+                                                    });
+                                                    this.status = newStatus;
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error:', error);
+                                                    this.$dispatch('notify', {
+                                                        type: 'error',
+                                                        message: 'Failed to update status'
+                                                    });
+                                                    // Revert select to old value if needed, but since it binds to x-model, simpler just to keep current
+                                                })
+                                                .finally(() => {
+                                                    this.isLoading = false;
+                                                });
+                                            }
+                                        }">
+                                            @can('manage_packaging')
+                                                <select x-model="status" @change="updateStatus($event.target.value)" :disabled="isLoading"
+                                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                    <option value="packaging">Packaging</option>
+                                                    <option value="packaged">Packaged</option>
+                                                </select>
+                                                <div x-show="isLoading" class="text-xs text-gray-500 mt-1">Updating...</div>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                      :class="{
+                                                          'bg-yellow-100 text-yellow-800': status === 'packaging',
+                                                          'bg-green-100 text-green-800': status === 'packaged'
+                                                      }"
+                                                      x-text="status.charAt(0).toUpperCase() + status.slice(1)">
+                                                </span>
+                                            @endcan
+                                        </div>
                                     </template>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

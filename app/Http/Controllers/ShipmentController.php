@@ -75,13 +75,14 @@ class ShipmentController extends Controller
             'vehicleTypes' => $vehicleTypes,
             'modes' => $modes,
             'filters' => $request->only(['origin', 'destination', 'vehicle_type', 'mode']),
+            'batches' => Batch::where('status', Batch::STATUS_PACKAGED)->select('id', 'batch_code')->latest()->get(),
         ]);
     }
 
     public function create(Request $request): View
     {
         $this->authorize('create_shipment');
-        $batches = Batch::select('id', 'batch_code')->latest()->get();
+        $batches = Batch::where('status', Batch::STATUS_PACKAGED)->select('id', 'batch_code')->latest()->get();
         return view('shipment.create', compact('batches'));
     }
 

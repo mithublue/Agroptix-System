@@ -210,7 +210,7 @@ class PackagingController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Packaging  $packaging
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy(Packaging $packaging, Request $request)
     {
@@ -236,9 +236,9 @@ class PackagingController extends Controller
                             'quantity' => $packaging->quantity_of_units,
                             'packaging_date' => $packaging->packaging_date,
                             'expiry_date' => $packaging->expiry_date,
-                        ],
-                        location: 'Packaging Facility',
-                        ipAddress: request()->ip()
+                            'location' => 'Packaging Facility',
+                            'ip_address' => request()->ip()
+                        ]
                     );
 
                     // If this was the last package, update batch status
@@ -283,5 +283,62 @@ class PackagingController extends Controller
 
             return back()->with('error', 'Error deleting packaging: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Update the status of the batch associated with the packaging.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Packaging  $packaging
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Request $request, Packaging $packaging)
+    {
+        // Check if user has permission to manage packaging status
+        if (!Auth::user()->can('manage_packaging')) {
+            return response()->json(['message' => 'Unauthorized. Manage Packaging permission required.'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|string|in:' . implode(',', [
+                Batch::STATUS_PACKAGING,
+                Batch::STATUS_PACKAGED,
+            ])
+        ]);
+
+        $batch = $packaging->batch;
+
+        if (!$batch) {
+            return response()->json(['message' => 'No batch associated with this packaging.'], 404);
+        }
+
+        $oldStatus = $batch->status;
+        $newStatus = $request->status;
+
+        if ($oldStatus !== $newStatus) {
+            $batch->status = $newStatus;
+            $batch->save();
+
+            // Log the status change event
+            $this->traceabilityService->logEvent(
+                batch: $batch,
+                eventType: 'status_change', // Using a generic string or define a constant if available
+                actor: Auth::user(),
+                data: [
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'reason' => 'Packaging status update',
+                    'package_id' => $packaging->id,
+                    'location' => 'Packaging Facility',
+                    'ip_address' => $request->ip()
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully',
+            'status' => $batch->status
+        ]);
     }
 }

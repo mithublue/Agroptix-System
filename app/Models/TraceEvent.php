@@ -28,6 +28,7 @@ class TraceEvent extends Model
     public const TYPE_DISPOSED = 'disposed';
     public const TYPE_PROCESSING_DELETED = 'processing_deleted';
     public const TYPE_SHIPPING_DELETED = 'shipping_deleted';
+    public const TYPE_PACKAGING_DELETED = 'packaging_deleted';
     public const TYPE_QC_REJECTION = 'qc_rejection';
 
     /**
