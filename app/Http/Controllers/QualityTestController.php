@@ -272,6 +272,55 @@ class QualityTestController extends Controller
     }
 
     /**
+     * Proceed to next stage (packaging ready) for a batch if all quality tests pass
+     */
+    public function proceedToNextStage(Batch $batch)
+    {
+        // Check if all quality tests pass
+        if (!$batch->allQualityTestsPassed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'All quality tests must pass before proceeding to packaging.'
+            ], 400);
+        }
+
+        try {
+            // Update batch status to packaging ready
+            $batch->status = Batch::STATUS_PACKAGING;
+            $batch->save();
+
+            // Log the event
+            $this->traceabilityService->logEvent(
+                batch: $batch,
+                eventType: TraceEvent::TYPE_QC_APPROVED,
+                actor: Auth::user(),
+                data: [
+                    'action' => 'proceeded_to_packaging',
+                    'quality_tests_passed' => true
+                ],
+                location: 'Lab'
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Batch is now ready for packaging.',
+                'batch_status' => $batch->status
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to proceed to next stage: ' . $e->getMessage(), [
+                'batch_id' => $batch->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to proceed to next stage: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Handle AJAX file upload for test certificates
      *
      * @param  \Illuminate\Http\Request  $request

@@ -184,6 +184,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['can:view_quality_test'])->group(function () {
         Route::get('quality-tests/batches', [App\Http\Controllers\QualityTestController::class, 'batchList'])->name('quality-tests.batchList');
         Route::get('batches/{batch}/qualitytests', [App\Http\Controllers\QualityTestController::class, 'getTestsForBatch'])->name('batches.quality-tests.index');
+        Route::post('batches/{batch}/qualitytests/proceed', [App\Http\Controllers\QualityTestController::class, 'proceedToNextStage'])->name('batches.quality-tests.proceed');
     });
     Route::prefix('batches/{batch}')->group(function () {
         // Create routes

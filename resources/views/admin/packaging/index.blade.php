@@ -359,7 +359,7 @@
                          x-transition:leave-end="translate-x-full">
                         <div class="h-full flex flex-col bg-white shadow-xl">
                             @php
-                                $batches = \App\Models\Batch::with('product')->latest()->get();
+                                // $batches comes from controller
                                 $rpcUnits = \App\Models\RpcUnit::all();
                                 $users = \App\Models\User::all();
                             @endphp

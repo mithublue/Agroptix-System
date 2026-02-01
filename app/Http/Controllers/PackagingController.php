@@ -8,8 +8,18 @@ use App\Models\RpcUnit;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+use App\Models\TraceEvent;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 class PackagingController extends Controller
 {
+    protected $traceabilityService;
+
+    public function __construct(\App\Services\TraceabilityService $traceabilityService)
+    {
+        $this->traceabilityService = $traceabilityService;
+    }
     /**
      * Display a listing of the packaging records.
      *
@@ -27,20 +37,20 @@ class PackagingController extends Controller
 
         // Define valid per page values
         $perPage = in_array($request->per_page, [5, 10, 20, 30, 50])
-            ? (int)$request->per_page
+            ? (int) $request->per_page
             : 15; // Default to 15 if not specified or invalid
 
         $packages = Packaging::with('batch')
-            ->when($request->filled('batch_id'), function($query) use ($request) {
+            ->when($request->filled('batch_id'), function ($query) use ($request) {
                 $query->where('batch_id', $request->batch_id);
             })
-            ->when($request->filled('package_type'), function($query) use ($request) {
+            ->when($request->filled('package_type'), function ($query) use ($request) {
                 $query->where('package_type', 'like', '%' . $request->package_type . '%');
             })
-            ->when($request->filled('material_type'), function($query) use ($request) {
+            ->when($request->filled('material_type'), function ($query) use ($request) {
                 $query->where('material_type', 'like', '%' . $request->material_type . '%');
             })
-            ->when($request->filled('quantity_of_units'), function($query) use ($request) {
+            ->when($request->filled('quantity_of_units'), function ($query) use ($request) {
                 $query->where('quantity_of_units', $request->quantity_of_units);
             })
             ->latest()
@@ -115,7 +125,7 @@ class PackagingController extends Controller
 
             $batch = Batch::find($validated['batch_id']);
 
-            if ($batch && $batch->status == Batch::STATUS_READY_FOR_PACKAGING) {
+            if ($batch && $batch->status == Batch::STATUS_PACKAGING) {
                 $batch->status = Batch::STATUS_PACKAGED;
                 $batch->save();
             }
@@ -250,7 +260,7 @@ class PackagingController extends Controller
             // Delete the packaging record
             $packaging->delete();
             return redirect()->route('admin.packaging.index')
-                             ->with('success', 'Packaging record deleted successfully');
+                ->with('success', 'Packaging record deleted successfully');
             /*return response()->json([
                 'success' => true,
                 'message' => 'Packaging record deleted successfully',
