@@ -53,6 +53,11 @@ class PackagingController extends Controller
             ->when($request->filled('quantity_of_units'), function ($query) use ($request) {
                 $query->where('quantity_of_units', $request->quantity_of_units);
             })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->whereHas('batch', function ($q) use ($request) {
+                    $q->where('status', $request->status);
+                });
+            })
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
