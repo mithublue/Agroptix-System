@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ option('project_name', config('app.name', 'Agroptix')) }}</title>
+    <title>{{ option('project_name', config('app.name', '')) }}</title>
 
     <!-- Favicon -->
     @if(option('favicon'))
@@ -40,7 +40,7 @@
                 <!-- Logo -->
                 <div class="flex items-center justify-center h-16 px-4 bg-indigo-600">
                     <a href="{{ route('dashboard') }}"><span
-                            class="text-xl font-semibold text-white">{{ option('project_name', 'Agroptix') }}</span></a>
+                            class="text-xl font-semibold text-white">{{ option('project_name', config('app.name', '')) }}</span></a>
                 </div>
 
                 <!-- Navigation -->
